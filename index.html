@@ -11,86 +11,115 @@
     --green-dark: #1a8a5a;
     --green-light: #e8faf3;
     --gold: #f5a623;
-    --gold-light: #fff8ee;
-    --red-light: #fff1f1;
     --red: #e05555;
     --gray-bg: #f5f5f3;
     --gray-mid: #e0deda;
-    --gray-text: #888;
+    --gray-text: #666;
     --dark: #1a1a1a;
     --am-bg: #eef6ff;
     --am-color: #2563eb;
     --am-border: #bfdbfe;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Barlow', sans-serif; background: #f0f0ee; color: var(--dark); min-height: 100vh; }
+  body { font-family: 'Barlow', sans-serif; background: #f0f0ee; color: var(--dark); min-height: 100vh; font-size: 15px; }
 
+  /* HEADER */
   .header { background: #fff; border-bottom: 2px solid var(--green); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
-  .header-brand .top { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 600; color: var(--green-dark); letter-spacing: 0.08em; text-transform: uppercase; }
-  .header-brand .bottom { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; color: var(--gold); letter-spacing: 0.04em; text-transform: uppercase; line-height: 1; }
-  .header-notice { background: var(--green-light); border: 1px solid var(--green); border-radius: 8px; padding: 6px 12px; font-size: 12px; color: var(--green-dark); font-weight: 500; text-align: center; max-width: 220px; }
+  .header-brand .top { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 600; color: var(--green-dark); letter-spacing: 0.08em; text-transform: uppercase; }
+  .header-brand .bottom { font-family: 'Barlow Condensed', sans-serif; font-size: 24px; font-weight: 700; color: var(--gold); letter-spacing: 0.04em; text-transform: uppercase; line-height: 1; }
+  .header-notice { background: var(--green-light); border: 1px solid var(--green); border-radius: 8px; padding: 7px 13px; font-size: 13px; color: var(--green-dark); font-weight: 600; text-align: center; max-width: 220px; }
 
-  .notice-bar { background: #fff9e6; border-bottom: 1px solid #f5d87a; padding: 10px 20px; text-align: center; font-size: 13px; color: #7a5c00; }
+  /* NOTICE BAR */
+  .notice-bar { background: #fff9e6; border-bottom: 1px solid #f5d87a; padding: 11px 20px; text-align: center; font-size: 14px; color: #7a5c00; font-weight: 500; }
 
+  /* MAIN */
   .main { max-width: 700px; margin: 0 auto; padding: 20px 16px 40px; }
 
-  /* ATTENTION HOURS BOX */
-  .attention-box { background: #fff; border: 1px solid var(--gray-mid); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; font-size: 13px; color: #555; line-height: 1.6; }
-  .attention-box strong { color: var(--dark); font-weight: 600; }
+  /* ATTENTION BOX */
+  .attention-box { background: #fff; border: 1px solid var(--gray-mid); border-radius: 10px; padding: 14px 18px; margin-bottom: 16px; }
+  .attention-title { font-size: 16px; font-weight: 700; color: var(--dark); margin-bottom: 6px; }
+  .attention-hours { font-size: 14px; color: var(--dark); font-weight: 500; margin-bottom: 6px; }
+  .attention-note { font-size: 13px; color: #444; font-weight: 500; }
 
+  /* DATE NAV */
   .date-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; gap: 10px; flex-wrap: wrap; }
-  .date-nav-label { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 600; color: var(--dark); letter-spacing: 0.02em; }
-
+  .date-nav-label { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 600; color: var(--dark); letter-spacing: 0.02em; }
   .nav-buttons { display: flex; gap: 8px; }
-  .btn-nav { background: var(--green); color: #fff; border: none; border-radius: 8px; padding: 9px 16px; font-family: 'Barlow', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background 0.15s; white-space: nowrap; }
+  .btn-nav { background: var(--green); color: #fff; border: none; border-radius: 8px; padding: 10px 16px; font-family: 'Barlow', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background 0.15s; white-space: nowrap; }
   .btn-nav:hover { background: var(--green-dark); }
   .btn-nav:disabled { background: var(--gray-mid); color: var(--gray-text); cursor: default; pointer-events: none; }
   .btn-nav.secondary { background: #fff; color: var(--green-dark); border: 2px solid var(--green); }
   .btn-nav.secondary:hover { background: var(--green-light); }
 
-  .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
-  .tab { flex: 1; padding: 10px; border: 2px solid var(--gray-mid); border-radius: 10px; background: #fff; font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 600; color: var(--gray-text); cursor: pointer; text-align: center; transition: all 0.15s; letter-spacing: 0.02em; }
-  .tab.active { border-color: var(--green); background: var(--green-light); color: var(--green-dark); }
+  /* LEGEND */
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+  .leg { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--gray-text); }
+  .leg-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
 
-  .day-block { background: #fff; border-radius: 12px; border: 1px solid var(--gray-mid); margin-bottom: 12px; overflow: hidden; }
-  .day-header { padding: 10px 16px; background: var(--gray-bg); border-bottom: 1px solid var(--gray-mid); display: flex; align-items: center; gap: 8px; }
-  .day-header .day-name { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--dark); }
-  .day-header .day-date { font-size: 13px; color: var(--gray-text); }
-  .today-badge { background: var(--gold); color: #fff; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.05em; text-transform: uppercase; }
+  /* DAY BLOCK */
+  .day-block { background: #fff; border-radius: 12px; border: 1px solid var(--gray-mid); margin-bottom: 14px; overflow: hidden; }
+  .day-header { padding: 11px 16px; background: var(--gray-bg); border-bottom: 1px solid var(--gray-mid); display: flex; align-items: center; gap: 8px; }
+  .day-name { font-family: 'Barlow Condensed', sans-serif; font-size: 17px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--dark); }
+  .day-date { font-size: 15px; font-weight: 600; color: #333; }
+  .today-badge { background: var(--gold); color: #fff; font-size: 12px; font-weight: 700; padding: 2px 10px; border-radius: 20px; font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.05em; text-transform: uppercase; }
 
-  .slot-row { display: grid; grid-template-columns: 70px 1fr 90px; align-items: center; padding: 8px 16px; border-bottom: 1px solid #f0f0ee; gap: 8px; }
+  /* SLOT TABLE */
+  .slot-table { width: 100%; border-collapse: collapse; }
+  .slot-table th { font-size: 12px; font-weight: 600; color: var(--gray-text); padding: 6px 10px; background: #fafaf8; border-bottom: 1px solid #eee; text-align: left; }
+  .slot-table th.right { text-align: right; }
+  .slot-table th.center { text-align: center; }
+
+  /* SLOT ROW */
+  .slot-row { border-bottom: 1px solid #f0f0ee; }
   .slot-row:last-child { border-bottom: none; }
   .slot-row.is-am { background: #f5f9ff; }
-  .slot-hour { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 600; color: var(--dark); }
-  .slot-badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; margin-left: 4px; vertical-align: middle; font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.05em; }
-  .badge-am { background: var(--am-bg); color: var(--am-color); border: 1px solid var(--am-border); }
-  .slot-status { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 500; }
+  .slot-row td { padding: 9px 10px; vertical-align: middle; }
+
+  .slot-hour { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 600; color: var(--dark); white-space: nowrap; }
+  .badge-am { display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 4px; margin-left: 4px; vertical-align: middle; font-family: 'Barlow Condensed', sans-serif; background: var(--am-bg); color: var(--am-color); border: 1px solid var(--am-border); }
+
+  /* STATUS CELL */
+  .status-cell { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 500; }
   .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .status-libre .status-dot { background: var(--green); }
-  .status-libre .status-text { color: var(--green-dark); }
-  .status-ocupado .status-dot { background: var(--red); }
-  .status-ocupado .status-text { color: var(--red); }
-  .slot-price { text-align: right; font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 600; color: var(--dark); }
+  .libre .status-dot { background: var(--green); }
+  .libre .status-text { color: var(--green-dark); }
+  .ocupado .status-dot { background: var(--red); }
+  .ocupado .status-text { color: var(--red); }
+
+  /* WA LINK IN SLOT */
+  .wa-slot-link { display: inline-flex; align-items: center; gap: 5px; background: #e8faf3; color: var(--green-dark); border: 1px solid var(--green); border-radius: 6px; padding: 4px 10px; font-size: 13px; font-weight: 600; text-decoration: none; white-space: nowrap; transition: background 0.15s; }
+  .wa-slot-link:hover { background: #c8f0e0; }
+  .wa-slot-link svg { width: 14px; height: 14px; fill: var(--green-dark); flex-shrink: 0; }
+
+  /* PRICE */
+  .slot-price { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 600; text-align: right; white-space: nowrap; }
   .tier-alto .slot-price { color: #c0392b; }
   .tier-regular .slot-price { color: #7a5c00; }
   .tier-bajo .slot-price, .tier-am .slot-price { color: var(--green-dark); }
 
-  .legend { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
-  .leg { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--gray-text); }
-  .leg-dot { width: 10px; height: 10px; border-radius: 50%; }
+  /* CANCHA HEADERS */
+  .col-hora { width: 60px; }
+  .col-c1, .col-c2 { width: calc(40% - 30px); }
+  .col-price { width: 80px; }
 
+  /* WA SECTION */
   .wa-section { margin-top: 24px; }
-  .wa-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 16px; background: #25d366; color: #fff; border: none; border-radius: 12px; font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; letter-spacing: 0.03em; cursor: pointer; text-decoration: none; transition: background 0.15s; }
+  .wa-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 16px; background: #25d366; color: #fff; border: none; border-radius: 12px; font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; letter-spacing: 0.03em; cursor: pointer; text-decoration: none; transition: background 0.15s; }
   .wa-btn:hover { background: #1ebe5c; }
-  .wa-btn svg { width: 26px; height: 26px; fill: #fff; flex-shrink: 0; }
-  .wa-sub { text-align: center; font-size: 12px; color: var(--gray-text); margin-top: 8px; line-height: 1.6; }
+  .wa-btn svg { width: 28px; height: 28px; fill: #fff; flex-shrink: 0; }
+  .wa-sub { text-align: center; font-size: 13px; color: var(--gray-text); margin-top: 10px; line-height: 1.8; }
+  .wa-order { font-size: 14px; font-weight: 700; color: var(--green-dark); }
+  .wa-warning { font-size: 13px; font-weight: 600; color: #c0392b; margin-top: 4px; }
 
-  .state-msg { text-align: center; padding: 40px 20px; color: var(--gray-text); font-size: 15px; }
+  .state-msg { text-align: center; padding: 40px 20px; color: var(--gray-text); font-size: 15px; line-height: 1.6; }
 
   @media (max-width: 480px) {
     .header-notice { display: none; }
-    .slot-row { grid-template-columns: 62px 1fr 76px; padding: 8px 12px; }
-    .btn-nav { font-size: 12px; padding: 8px 12px; }
+    .slot-table th, .slot-row td { padding: 7px 7px; }
+    .slot-hour { font-size: 14px; }
+    .wa-slot-link { padding: 4px 7px; font-size: 12px; }
+    .slot-price { font-size: 14px; }
+    .col-price { width: 70px; }
   }
 </style>
 </head>
@@ -111,20 +140,18 @@
 <div class="main">
 
   <div class="attention-box">
-    🕐 <strong>Atendemos por orden de llegada de mensajes.</strong><br>
-    Horario de atención: <strong>Lunes a viernes 11:00–23:00</strong> · <strong>Sábado, domingo y feriados 12:00–22:00</strong><br>
-    <span style="font-size:12px;color:var(--gray-text)">Los mensajes recibidos fuera de horario serán atendidos al día siguiente a partir de las 11:00.</span>
+    <div class="attention-title">🕐 Atendemos por orden de llegada de mensajes</div>
+    <div class="attention-hours">
+      <strong>Lunes a viernes:</strong> 11:00–23:00 &nbsp;·&nbsp; <strong>Sábado, domingo y feriados:</strong> 12:00–22:00
+    </div>
+    <div class="attention-note">⚠️ Los mensajes recibidos fuera de horario se atienden al día siguiente a partir de las 11:00.</div>
   </div>
 
   <div class="date-nav">
     <div class="date-nav-label" id="week-label">Cargando...</div>
     <div class="nav-buttons">
-      <button class="btn-nav secondary" id="btn-prev" onclick="prevWeek()" style="display:none">
-        ← Semana actual
-      </button>
-      <button class="btn-nav" id="btn-next" onclick="nextWeek()">
-        Ver siguientes 7 días →
-      </button>
+      <button class="btn-nav secondary" id="btn-prev" onclick="prevWeek()" style="display:none">← Semana actual</button>
+      <button class="btn-nav" id="btn-next" onclick="nextWeek()">Ver siguientes 7 días →</button>
     </div>
   </div>
 
@@ -132,11 +159,6 @@
     <div class="leg"><div class="leg-dot" style="background:var(--green)"></div> Disponible</div>
     <div class="leg"><div class="leg-dot" style="background:var(--red)"></div> Reservado</div>
     <div class="leg"><div class="leg-dot" style="background:var(--am-color)"></div> Horario AM</div>
-  </div>
-
-  <div class="tabs">
-    <button class="tab active" id="tab1" onclick="setCancha(1, this)">⚽ Cancha 1 <span style="font-size:12px;font-weight:400">(Muro)</span></button>
-    <button class="tab" id="tab2" onclick="setCancha(2, this)">⚽ Cancha 2 <span style="font-size:12px;font-weight:400">(Estacionam.)</span></button>
   </div>
 
   <div id="calendar-container">
@@ -148,23 +170,23 @@
       <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
       Reservar por WhatsApp
     </a>
-    <p class="wa-sub">
+    <div class="wa-sub">
       Te responderemos a la brevedad · +56 9 7793 7858<br>
-      <strong>Atendemos por orden de llegada de mensajes</strong>
-    </p>
+      <span class="wa-order">✅ Atendemos por orden de llegada de mensajes</span><br>
+      <span class="wa-warning">⚠️ Para no perder tu lugar, escribe solo una vez. Tu reserva se concreta por orden de llegada del primer mensaje.</span>
+    </div>
   </div>
 
 </div>
 
 <script>
-// ── CONFIGURACIÓN ──────────────────────────────────────────────
-const SHEET_ID   = '1jT_rjAZFt237Lq9iuE5mygTIcPc80N8PsVRQSbYZoF0';
-const SHEET_NAME = 'disponibilidad';
+// ── CONFIGURACIÓN ─────────────────────────────────────────────
+const SHEET_ID = '1jT_rjAZFt237Lq9iuE5mygTIcPc80N8PsVRQSbYZoF0';
+const WA_NUMBER = '56977937858';
 
 // ── ESTADO ────────────────────────────────────────────────────
 let allData = [];
 let currentWeekOffset = 0;
-let currentCancha = 1;
 
 // ── CONSTANTES ────────────────────────────────────────────────
 const DIAS  = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
@@ -173,9 +195,9 @@ const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto'
 // ── PRECIOS ───────────────────────────────────────────────────
 function getPrice(hora) {
   const h = parseInt(hora);
-  if (h < 13)  return { label: '$18.000', tier: 'am' };
-  if (h <= 19) return { label: '$18.000', tier: 'bajo' };
-  if (h <= 22) return { label: '$22.000', tier: 'alto' };
+  if (h < 13)   return { label: '$18.000', tier: 'am' };
+  if (h <= 19)  return { label: '$18.000', tier: 'bajo' };
+  if (h <= 22)  return { label: '$22.000', tier: 'alto' };
   if (h === 23) return { label: '$20.000', tier: 'regular' };
   return { label: '', tier: '' };
 }
@@ -184,10 +206,7 @@ function isAM(hora) { return parseInt(hora) < 13; }
 
 // ── FECHAS ────────────────────────────────────────────────────
 function dateKey(d) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth()+1).padStart(2,'0');
-  const day = String(d.getDate()).padStart(2,'0');
-  return `${y}-${m}-${day}`;
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
 function getToday() {
@@ -200,10 +219,8 @@ function getWindowDates() {
   const today = getToday();
   const maxDate = new Date(today);
   maxDate.setDate(today.getDate() + 13);
-
   const start = new Date(today);
   start.setDate(today.getDate() + currentWeekOffset * 7);
-
   const dates = [];
   for (let i = 0; i < 7; i++) {
     const d = new Date(start);
@@ -211,6 +228,14 @@ function getWindowDates() {
     if (d <= maxDate) dates.push(d);
   }
   return { dates, today };
+}
+
+// ── WA LINK ───────────────────────────────────────────────────
+function waLink(fecha, hora, cancha) {
+  const d = new Date(fecha + 'T00:00:00');
+  const label = `${DIAS[d.getDay()]} ${d.getDate()} de ${MESES[d.getMonth()]}`;
+  const msg = `Hola, quiero reservar ${cancha} para el ${label} a las ${hora}. Mi nombre es: `;
+  return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`;
 }
 
 // ── CSV PARSER ────────────────────────────────────────────────
@@ -239,7 +264,6 @@ function parseCSV(text) {
   }
   if (headerRow === -1) return rows;
 
-  // Auto-detect column positions from header row
   const headerCols = parseCSVLine(lines[headerRow]).map(c => c.replace(/"/g,'').trim().toLowerCase());
   const fechaIdx   = headerCols.findIndex(c => c === 'fecha');
   const horaIdx    = headerCols.findIndex(c => c === 'hora');
@@ -253,7 +277,6 @@ function parseCSV(text) {
     const hora  = (cols[horaIdx]  || '').replace(/"/g,'').trim();
     const c1    = c1Idx >= 0 ? (cols[c1Idx] || '').replace(/"/g,'').trim() : '';
     const c2    = c2Idx >= 0 ? (cols[c2Idx] || '').replace(/"/g,'').trim() : '';
-    // Only accept rows with valid date format YYYY-MM-DD
     if (fecha && hora && /^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
       rows.push({ fecha, hora, cancha1: c1, cancha2: c2 });
     }
@@ -280,7 +303,6 @@ async function loadSheet() {
 function render() {
   const { dates, today } = getWindowDates();
   const todayKey = dateKey(today);
-  const container = document.getElementById('calendar-container');
 
   // Week label
   const first = dates[0], last = dates[dates.length - 1];
@@ -290,11 +312,9 @@ function render() {
   // Nav buttons
   const btnNext = document.getElementById('btn-next');
   const btnPrev = document.getElementById('btn-prev');
-
   if (currentWeekOffset === 0) {
     btnNext.style.display = 'flex';
     btnPrev.style.display = 'none';
-    // Check if there's actually a next week within 14 days
     const nextStart = new Date(today);
     nextStart.setDate(today.getDate() + 7);
     const maxDate = new Date(today);
@@ -305,14 +325,21 @@ function render() {
     btnPrev.style.display = 'flex';
   }
 
-  // Build slots
   let html = '';
   dates.forEach(d => {
     const dk = dateKey(d);
     const isToday = dk === todayKey;
+
+    // Get slots for this day, AM first then PM, sorted by hour
     const daySlots = allData
       .filter(r => r.fecha === dk)
-      .sort((a, b) => a.hora.localeCompare(b.hora));
+      .sort((a, b) => {
+        const ha = parseInt(a.hora), hb = parseInt(b.hora);
+        const amA = ha < 13, amB = hb < 13;
+        if (amA && !amB) return -1;
+        if (!amA && amB) return 1;
+        return ha - hb;
+      });
 
     if (daySlots.length === 0) return;
 
@@ -321,54 +348,57 @@ function render() {
         <span class="day-name">${DIAS[d.getDay()]}</span>
         <span class="day-date">${d.getDate()} de ${MESES[d.getMonth()]}</span>
         ${isToday ? '<span class="today-badge">HOY</span>' : ''}
-      </div>`;
+      </div>
+      <table class="slot-table">
+        <thead>
+          <tr>
+            <th class="col-hora">Hora</th>
+            <th class="col-c1">⚽ Cancha 1 (Muro)</th>
+            <th class="col-c2">⚽ Cancha 2 (Estacionam.)</th>
+            <th class="col-price right">Precio</th>
+          </tr>
+        </thead>
+        <tbody>`;
 
     daySlots.forEach(slot => {
-      const val   = currentCancha === 1 ? slot.cancha1 : slot.cancha2;
-      const ocp   = val && val.trim() !== '';
       const am    = isAM(slot.hora);
       const price = getPrice(slot.hora);
       const hora  = slot.hora.includes(':') ? slot.hora : slot.hora + ':00';
+      const ocp1  = slot.cancha1 && slot.cancha1.trim() !== '';
+      const ocp2  = slot.cancha2 && slot.cancha2.trim() !== '';
 
-      html += `<div class="slot-row${am ? ' is-am' : ''} tier-${price.tier}">
-        <div class="slot-hour">
-          ${hora}${am ? ' <span class="slot-badge badge-am">AM</span>' : ''}
-        </div>
-        <div class="slot-status ${ocp ? 'status-ocupado' : 'status-libre'}">
-          <div class="status-dot"></div>
-          <span class="status-text">${ocp ? 'Reservado' : 'Disponible'}</span>
-        </div>
-        <div class="slot-price">${price.label}</div>
-      </div>`;
+      const statusCell = (ocupado, fecha, hora, cancha) => {
+        if (ocupado) {
+          return `<div class="status-cell ocupado"><div class="status-dot"></div><span class="status-text">Reservado</span></div>`;
+        } else {
+          return `<a class="wa-slot-link" href="${waLink(fecha, hora, cancha)}" target="_blank">
+            <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            Reservar
+          </a>`;
+        }
+      };
+
+      html += `<tr class="slot-row${am ? ' is-am' : ''} tier-${price.tier}">
+        <td><span class="slot-hour">${hora}${am ? ' <span class="badge-am">AM</span>' : ''}</span></td>
+        <td>${statusCell(ocp1, slot.fecha, hora, 'Cancha 1 (Muro)')}</td>
+        <td>${statusCell(ocp2, slot.fecha, hora, 'Cancha 2 (Estacionam.)')}</td>
+        <td class="slot-price">${price.label}</td>
+      </tr>`;
     });
 
-    html += `</div>`;
+    html += `</tbody></table></div>`;
   });
 
   if (html === '') {
     html = '<div class="state-msg">No hay horarios cargados para este período.<br>Escríbenos por WhatsApp para consultar.</div>';
   }
 
-  container.innerHTML = html;
+  document.getElementById('calendar-container').innerHTML = html;
 }
 
 // ── NAVEGACIÓN ────────────────────────────────────────────────
-function nextWeek() {
-  currentWeekOffset = 1;
-  render();
-}
-
-function prevWeek() {
-  currentWeekOffset = 0;
-  render();
-}
-
-function setCancha(n, el) {
-  currentCancha = n;
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  render();
-}
+function nextWeek() { currentWeekOffset = 1; render(); }
+function prevWeek() { currentWeekOffset = 0; render(); }
 
 // ── INIT ──────────────────────────────────────────────────────
 loadSheet();
