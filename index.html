@@ -235,7 +235,7 @@ function getWindowDates() {
 function waLink(fecha, hora, cancha) {
   const d = new Date(fecha + 'T00:00:00');
   const label = `${DIAS[d.getDay()]} ${d.getDate()} de ${MESES[d.getMonth()]}`;
-  const msg = `Hola! Quiero pedir la ${cancha} para el ${label} a las ${hora}. Mi nombre y apellido es: `;
+  const msg = `Hola! Quiero pedir la ${cancha} para el ${label} a las *${hora}*. Mi nombre y apellido es: `;
   return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`;
 }
 
