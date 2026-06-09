@@ -23,25 +23,20 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Barlow', sans-serif; background: #f0f0ee; color: var(--dark); min-height: 100vh; font-size: 15px; }
 
-  /* HEADER */
   .header { background: #fff; border-bottom: 2px solid var(--green); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
   .header-brand .top { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 600; color: var(--green-dark); letter-spacing: 0.08em; text-transform: uppercase; }
   .header-brand .bottom { font-family: 'Barlow Condensed', sans-serif; font-size: 24px; font-weight: 700; color: var(--gold); letter-spacing: 0.04em; text-transform: uppercase; line-height: 1; }
   .header-notice { background: var(--green-light); border: 1px solid var(--green); border-radius: 8px; padding: 7px 13px; font-size: 13px; color: var(--green-dark); font-weight: 600; text-align: center; max-width: 220px; }
 
-  /* NOTICE BAR */
   .notice-bar { background: #fff9e6; border-bottom: 1px solid #f5d87a; padding: 11px 20px; text-align: center; font-size: 14px; color: #7a5c00; font-weight: 500; }
 
-  /* MAIN */
   .main { max-width: 700px; margin: 0 auto; padding: 20px 16px 40px; }
 
-  /* ATTENTION BOX */
   .attention-box { background: #fff; border: 1px solid var(--gray-mid); border-radius: 10px; padding: 14px 18px; margin-bottom: 16px; }
   .attention-title { font-size: 16px; font-weight: 700; color: var(--dark); margin-bottom: 6px; }
   .attention-hours { font-size: 14px; color: var(--dark); font-weight: 500; margin-bottom: 6px; }
   .attention-note { font-size: 13px; color: #444; font-weight: 500; }
 
-  /* DATE NAV */
   .date-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; gap: 10px; flex-wrap: wrap; }
   .date-nav-label { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 600; color: var(--dark); letter-spacing: 0.02em; }
   .nav-buttons { display: flex; gap: 8px; }
@@ -51,25 +46,21 @@
   .btn-nav.secondary { background: #fff; color: var(--green-dark); border: 2px solid var(--green); }
   .btn-nav.secondary:hover { background: var(--green-light); }
 
-  /* LEGEND */
   .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
   .leg { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--gray-text); }
   .leg-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
 
-  /* DAY BLOCK */
   .day-block { background: #fff; border-radius: 12px; border: 1px solid var(--gray-mid); margin-bottom: 14px; overflow: hidden; }
-  .day-header { padding: 11px 16px; background: var(--gray-bg); border-bottom: 1px solid var(--gray-mid); display: flex; align-items: center; gap: 8px; }
+  .day-header { padding: 11px 16px; background: var(--gray-bg); border-bottom: 1px solid var(--gray-mid); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .day-name { font-family: 'Barlow Condensed', sans-serif; font-size: 17px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--dark); }
   .day-date { font-size: 15px; font-weight: 600; color: #333; }
   .today-badge { background: var(--gold); color: #fff; font-size: 12px; font-weight: 700; padding: 2px 10px; border-radius: 20px; font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.05em; text-transform: uppercase; }
+  .rain-badge { display: flex; align-items: center; gap: 4px; font-size: 13px; color: var(--gray-text); margin-left: 4px; }
 
-  /* SLOT TABLE */
   .slot-table { width: 100%; border-collapse: collapse; }
   .slot-table th { font-size: 12px; font-weight: 600; color: var(--gray-text); padding: 6px 10px; background: #fafaf8; border-bottom: 1px solid #eee; text-align: left; }
   .slot-table th.right { text-align: right; }
-  .slot-table th.center { text-align: center; }
 
-  /* SLOT ROW */
   .slot-row { border-bottom: 1px solid #f0f0ee; }
   .slot-row:last-child { border-bottom: none; }
   .slot-row.is-am { background: #f5f9ff; }
@@ -78,7 +69,6 @@
   .slot-hour { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 600; color: var(--dark); white-space: nowrap; }
   .badge-am { display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 4px; margin-left: 4px; vertical-align: middle; font-family: 'Barlow Condensed', sans-serif; background: var(--am-bg); color: var(--am-color); border: 1px solid var(--am-border); }
 
-  /* STATUS CELL */
   .status-cell { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 500; }
   .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
   .libre .status-dot { background: var(--green); }
@@ -86,23 +76,19 @@
   .ocupado .status-dot { background: var(--red); }
   .ocupado .status-text { color: var(--red); }
 
-  /* WA LINK IN SLOT */
   .wa-slot-link { display: inline-flex; align-items: center; gap: 5px; background: #e8faf3; color: var(--green-dark); border: 1px solid var(--green); border-radius: 6px; padding: 4px 10px; font-size: 13px; font-weight: 600; text-decoration: none; white-space: nowrap; transition: background 0.15s; }
   .wa-slot-link:hover { background: #c8f0e0; }
   .wa-slot-link svg { width: 14px; height: 14px; fill: var(--green-dark); flex-shrink: 0; }
 
-  /* PRICE */
   .slot-price { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 600; text-align: right; white-space: nowrap; }
   .tier-alto .slot-price { color: #c0392b; }
   .tier-regular .slot-price { color: #7a5c00; }
   .tier-bajo .slot-price, .tier-am .slot-price { color: var(--green-dark); }
 
-  /* CANCHA HEADERS */
   .col-hora { width: 60px; }
   .col-c1, .col-c2 { width: calc(40% - 30px); }
   .col-price { width: 80px; }
 
-  /* WA SECTION */
   .wa-section { margin-top: 24px; }
   .wa-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 16px; background: #25d366; color: #fff; border: none; border-radius: 12px; font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; letter-spacing: 0.03em; cursor: pointer; text-decoration: none; transition: background 0.15s; }
   .wa-btn:hover { background: #1ebe5c; }
@@ -182,11 +168,18 @@
 
 <script>
 // ── CONFIGURACIÓN ─────────────────────────────────────────────
-const SHEET_ID = '1jT_rjAZFt237Lq9iuE5mygTIcPc80N8PsVRQSbYZoF0';
+const SHEET_ID  = '1jT_rjAZFt237Lq9iuE5mygTIcPc80N8PsVRQSbYZoF0';
 const WA_NUMBER = '56977937858';
+// Villa Alemana coordenadas
+const LAT = -33.0428;
+const LON = -71.3736;
+// Umbrales de lluvia
+const RAIN_PROB_MIN  = 60;  // % probabilidad mínima
+const RAIN_MM_MIN    = 5;   // mm acumulados mínimos
 
 // ── ESTADO ────────────────────────────────────────────────────
-let allData = [];
+let allData      = [];
+let weatherData  = {};  // { "2026-06-09": { prob: 80, mm: 7.2 }, ... }
 let currentWeekOffset = 0;
 
 // ── CONSTANTES ────────────────────────────────────────────────
@@ -235,7 +228,7 @@ function getWindowDates() {
 function waLink(fecha, hora, cancha) {
   const d = new Date(fecha + 'T00:00:00');
   const label = `${DIAS[d.getDay()]} ${d.getDate()} de ${MESES[d.getMonth()]}`;
-  const msg = `Hola! Quiero pedir la ${cancha} para el ${label} a las *${hora}*. Mi nombre y apellido es: `;
+  const msg = `Hola, quiero reservar ${cancha} para el ${label} a las *${hora}*. Mi nombre y apellido es: `;
   return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`;
 }
 
@@ -285,7 +278,7 @@ function parseCSV(text) {
   return rows;
 }
 
-// ── FETCH ─────────────────────────────────────────────────────
+// ── FETCH SHEET ───────────────────────────────────────────────
 async function loadSheet() {
   const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
   try {
@@ -293,11 +286,33 @@ async function loadSheet() {
     if (!res.ok) throw new Error('Error ' + res.status);
     const text = await res.text();
     allData = parseCSV(text);
-    render();
   } catch(e) {
-    document.getElementById('calendar-container').innerHTML =
-      `<div class="state-msg">⚠️ No se pudo cargar la disponibilidad.<br>Por favor escríbenos por WhatsApp al +56 9 7793 7858.</div>`;
+    allData = [];
   }
+}
+
+// ── FETCH WEATHER ─────────────────────────────────────────────
+async function loadWeather() {
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&daily=precipitation_sum,precipitation_probability_max&timezone=America%2FSantiago&forecast_days=14`;
+    const res  = await fetch(url);
+    const json = await res.json();
+    weatherData = {};
+    const dates = json.daily.time;
+    const probs = json.daily.precipitation_probability_max;
+    const mms   = json.daily.precipitation_sum;
+    dates.forEach((date, i) => {
+      weatherData[date] = { prob: probs[i] || 0, mm: mms[i] || 0 };
+    });
+  } catch(e) {
+    weatherData = {};
+  }
+}
+
+function hasRain(dateStr) {
+  const w = weatherData[dateStr];
+  if (!w) return false;
+  return w.prob >= RAIN_PROB_MIN && w.mm >= RAIN_MM_MIN;
 }
 
 // ── RENDER ────────────────────────────────────────────────────
@@ -305,12 +320,10 @@ function render() {
   const { dates, today } = getWindowDates();
   const todayKey = dateKey(today);
 
-  // Week label
   const first = dates[0], last = dates[dates.length - 1];
   document.getElementById('week-label').innerHTML =
     `${first.getDate()} de ${MESES[first.getMonth()]} &ndash; ${last.getDate()} de ${MESES[last.getMonth()]}`;
 
-  // Nav buttons
   const btnNext = document.getElementById('btn-next');
   const btnPrev = document.getElementById('btn-prev');
   if (currentWeekOffset === 0) {
@@ -328,10 +341,10 @@ function render() {
 
   let html = '';
   dates.forEach(d => {
-    const dk = dateKey(d);
+    const dk      = dateKey(d);
     const isToday = dk === todayKey;
+    const rain    = hasRain(dk);
 
-    // Get slots for this day, AM first then PM, sorted by hour
     const daySlots = allData
       .filter(r => r.fecha === dk)
       .sort((a, b) => {
@@ -349,6 +362,7 @@ function render() {
         <span class="day-name">${DIAS[d.getDay()]}</span>
         <span class="day-date">${d.getDate()} de ${MESES[d.getMonth()]}</span>
         ${isToday ? '<span class="today-badge">HOY</span>' : ''}
+        ${rain ? '<span class="rain-badge">🌧️ <span>Pronóstico de lluvia</span></span>' : ''}
       </div>
       <table class="slot-table">
         <thead>
@@ -361,6 +375,8 @@ function render() {
         </thead>
         <tbody>`;
 
+    const waIconSVG = `<svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>`;
+
     daySlots.forEach(slot => {
       const am    = isAM(slot.hora);
       const price = getPrice(slot.hora);
@@ -371,12 +387,8 @@ function render() {
       const statusCell = (ocupado, fecha, hora, cancha) => {
         if (ocupado) {
           return `<div class="status-cell ocupado"><div class="status-dot"></div><span class="status-text">Reservado</span></div>`;
-        } else {
-          return `<a class="wa-slot-link" href="${waLink(fecha, hora, cancha)}" target="_blank">
-            <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-            Solicitar
-          </a>`;
         }
+        return `<a class="wa-slot-link" href="${waLink(fecha, hora, cancha)}" target="_blank">${waIconSVG} Solicitar</a>`;
       };
 
       html += `<tr class="slot-row${am ? ' is-am' : ''} tier-${price.tier}">
@@ -402,7 +414,12 @@ function nextWeek() { currentWeekOffset = 1; render(); }
 function prevWeek() { currentWeekOffset = 0; render(); }
 
 // ── INIT ──────────────────────────────────────────────────────
-loadSheet();
+async function init() {
+  await Promise.all([loadSheet(), loadWeather()]);
+  render();
+}
+
+init();
 </script>
 </body>
 </html>
