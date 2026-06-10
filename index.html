@@ -50,12 +50,17 @@
   .leg { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--gray-text); }
   .leg-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
 
+  .last-updated { font-size: 12px; color: var(--gray-text); margin-bottom: 14px; }
+
   .day-block { background: #fff; border-radius: 12px; border: 1px solid var(--gray-mid); margin-bottom: 14px; overflow: hidden; }
   .day-header { padding: 11px 16px; background: var(--gray-bg); border-bottom: 1px solid var(--gray-mid); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .day-name { font-family: 'Barlow Condensed', sans-serif; font-size: 17px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--dark); }
   .day-date { font-size: 15px; font-weight: 600; color: #333; }
   .today-badge { background: var(--gold); color: #fff; font-size: 12px; font-weight: 700; padding: 2px 10px; border-radius: 20px; font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.05em; text-transform: uppercase; }
   .rain-badge { display: flex; align-items: center; gap: 4px; font-size: 13px; color: var(--gray-text); margin-left: 4px; }
+
+  .feriado-block { padding: 16px; text-align: center; font-size: 15px; color: #888; font-weight: 500; }
+  .feriado-block span { font-size: 22px; display: block; margin-bottom: 4px; }
 
   .slot-table { width: 100%; border-collapse: collapse; }
   .slot-table th { font-size: 12px; font-weight: 600; color: var(--gray-text); padding: 6px 10px; background: #fafaf8; border-bottom: 1px solid #eee; text-align: left; }
@@ -89,13 +94,34 @@
   .col-c1, .col-c2 { width: calc(40% - 30px); }
   .col-price { width: 80px; }
 
-  .wa-section { margin-top: 24px; }
+  /* BOTTOM SECTION */
+  .bottom-section { margin-top: 24px; display: flex; flex-direction: column; gap: 12px; }
+
   .wa-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 16px; background: #25d366; color: #fff; border: none; border-radius: 12px; font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; letter-spacing: 0.03em; cursor: pointer; text-decoration: none; transition: background 0.15s; }
   .wa-btn:hover { background: #1ebe5c; }
   .wa-btn svg { width: 28px; height: 28px; fill: #fff; flex-shrink: 0; }
+
+  .group-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .group-btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 13px 10px; background: #fff; border: 2px solid #25d366; border-radius: 12px; font-family: 'Barlow', sans-serif; font-size: 14px; font-weight: 600; color: #1a8a5a; text-decoration: none; transition: background 0.15s; text-align: center; }
+  .group-btn:hover { background: var(--green-light); }
+  .group-btn svg { width: 20px; height: 20px; fill: #25d366; flex-shrink: 0; }
+  .group-btn-label { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+  .group-btn-sub { font-size: 11px; font-weight: 400; color: var(--gray-text); }
+
+  .install-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 13px; background: #fff; border: 2px solid var(--gray-mid); border-radius: 12px; font-family: 'Barlow', sans-serif; font-size: 15px; font-weight: 600; color: var(--dark); cursor: pointer; transition: background 0.15s; }
+  .install-btn:hover { background: var(--gray-bg); }
+
+  .install-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: flex-end; justify-content: center; }
+  .install-modal.open { display: flex; }
+  .install-box { background: #fff; border-radius: 16px 16px 0 0; padding: 24px 20px 32px; max-width: 500px; width: 100%; }
+  .install-box h3 { font-size: 17px; font-weight: 700; margin-bottom: 16px; }
+  .install-steps { font-size: 14px; color: #444; line-height: 2; }
+  .install-steps strong { color: var(--dark); }
+  .install-close { width: 100%; margin-top: 20px; padding: 12px; background: var(--gray-bg); border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; color: var(--dark); }
+
   .wa-sub { text-align: center; font-size: 13px; color: var(--gray-text); margin-top: 10px; line-height: 1.8; }
   .wa-order { font-size: 14px; font-weight: 700; color: var(--green-dark); }
-  .wa-warning { font-size: 13px; font-weight: 600; color: #c0392b; margin-top: 4px; }
+  .wa-warning { font-size: 13px; font-weight: 600; color: #c0392b; }
 
   .state-msg { text-align: center; padding: 40px 20px; color: var(--gray-text); font-size: 15px; line-height: 1.6; }
 
@@ -147,42 +173,74 @@
     <div class="leg"><div class="leg-dot" style="background:var(--am-color)"></div> Horario AM</div>
   </div>
 
+  <div class="last-updated" id="last-updated"></div>
+
   <div id="calendar-container">
     <div class="state-msg">⏳ Cargando disponibilidad...</div>
   </div>
 
-  <div class="wa-section">
+  <div class="bottom-section">
+
     <a class="wa-btn" href="https://wa.me/56977937858" target="_blank">
       <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
       Reservar por WhatsApp
     </a>
+
     <div class="wa-sub">
       Te responderemos a la brevedad · +56 9 7793 7858<br>
       <span class="wa-order">✅ Atendemos por orden de llegada de mensajes</span><br>
       <span class="wa-warning">⚠️ Para no perder tu lugar, escribe solo una vez. Atendemos los mensajes del más temprano al más reciente.</span><br>
       <span style="font-size:13px;color:var(--gray-text)">Para consultar por otros horarios escríbenos por WhatsApp.</span>
     </div>
-  </div>
 
+    <div class="group-btns">
+      <a class="group-btn" href="https://chat.whatsapp.com/G50KspZ8Vp0CkQvakLiatU" target="_blank">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        <div class="group-btn-label">
+          CDV Difusión
+          <span class="group-btn-sub">Únete al canal</span>
+        </div>
+      </a>
+      <a class="group-btn" href="https://chat.whatsapp.com/CsIeJwnO0yC0fO0lOKRvS5" target="_blank">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        <div class="group-btn-label">
+          CDV FEM
+          <span class="group-btn-sub">Únete al chat</span>
+        </div>
+      </a>
+    </div>
+
+    <button class="install-btn" onclick="showInstall()">
+      📲 Guardar en tu celular
+    </button>
+
+  </div>
+</div>
+
+<!-- INSTALL MODAL -->
+<div class="install-modal" id="install-modal" onclick="hideInstall(event)">
+  <div class="install-box" id="install-box">
+    <h3>📲 Guardar en tu celular</h3>
+    <div class="install-steps" id="install-steps"></div>
+    <button class="install-close" onclick="hideInstall()">Cerrar</button>
+  </div>
 </div>
 
 <script>
 // ── CONFIGURACIÓN ─────────────────────────────────────────────
 const SHEET_ID  = '1jT_rjAZFt237Lq9iuE5mygTIcPc80N8PsVRQSbYZoF0';
 const WA_NUMBER = '56977937858';
-// Villa Alemana coordenadas
 const LAT = -33.0428;
 const LON = -71.3736;
-// Umbrales de lluvia
-const RAIN_PROB_MIN  = 60;  // % probabilidad mínima
-const RAIN_MM_MIN    = 5;   // mm acumulados mínimos
+const RAIN_PROB_MIN = 60;
+const RAIN_MM_MIN   = 5;
+const METEORED_URL  = 'https://www.meteored.cl/tiempo-en_Villa+Alemana-America+Sur-Chile-Valparaiso--1-18534.html';
 
 // ── ESTADO ────────────────────────────────────────────────────
-let allData      = [];
-let weatherData  = {};  // { "2026-06-09": { prob: 80, mm: 7.2 }, ... }
+let allData           = [];
+let weatherData       = {};
 let currentWeekOffset = 0;
 
-// ── CONSTANTES ────────────────────────────────────────────────
 const DIAS  = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 
@@ -198,27 +256,21 @@ function getPrice(hora) {
 
 function isAM(hora) { return parseInt(hora) < 13; }
 
-// ── FECHAS ────────────────────────────────────────────────────
 function dateKey(d) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
 function getToday() {
-  const t = new Date();
-  t.setHours(0,0,0,0);
-  return t;
+  const t = new Date(); t.setHours(0,0,0,0); return t;
 }
 
 function getWindowDates() {
   const today = getToday();
-  const maxDate = new Date(today);
-  maxDate.setDate(today.getDate() + 13);
-  const start = new Date(today);
-  start.setDate(today.getDate() + currentWeekOffset * 7);
+  const maxDate = new Date(today); maxDate.setDate(today.getDate() + 13);
+  const start = new Date(today); start.setDate(today.getDate() + currentWeekOffset * 7);
   const dates = [];
   for (let i = 0; i < 7; i++) {
-    const d = new Date(start);
-    d.setDate(start.getDate() + i);
+    const d = new Date(start); d.setDate(start.getDate() + i);
     if (d <= maxDate) dates.push(d);
   }
   return { dates, today };
@@ -241,8 +293,7 @@ function parseCSVLine(line) {
     else if (ch === ',' && !inQ) { result.push(cur); cur = ''; }
     else { cur += ch; }
   }
-  result.push(cur);
-  return result;
+  result.push(cur); return result;
 }
 
 function parseCSV(text) {
@@ -251,20 +302,15 @@ function parseCSV(text) {
   let headerRow = -1;
   for (let i = 0; i < lines.length; i++) {
     const lower = lines[i].toLowerCase();
-    if (lower.includes('fecha') && lower.includes('hora') && lower.includes('cancha')) {
-      headerRow = i;
-      break;
-    }
+    if (lower.includes('fecha') && lower.includes('hora') && lower.includes('cancha')) { headerRow = i; break; }
   }
   if (headerRow === -1) return rows;
-
   const headerCols = parseCSVLine(lines[headerRow]).map(c => c.replace(/"/g,'').trim().toLowerCase());
   const fechaIdx   = headerCols.findIndex(c => c === 'fecha');
   const horaIdx    = headerCols.findIndex(c => c === 'hora');
   const c1Idx      = headerCols.findIndex(c => c === 'cancha1');
   const c2Idx      = headerCols.findIndex(c => c === 'cancha2');
   if (fechaIdx === -1 || horaIdx === -1) return rows;
-
   for (let i = headerRow + 1; i < lines.length; i++) {
     const cols  = parseCSVLine(lines[i]);
     const fecha = (cols[fechaIdx] || '').replace(/"/g,'').trim();
@@ -286,6 +332,9 @@ async function loadSheet() {
     if (!res.ok) throw new Error('Error ' + res.status);
     const text = await res.text();
     allData = parseCSV(text);
+    const now = new Date();
+    const h = now.getHours(), m = String(now.getMinutes()).padStart(2,'0');
+    document.getElementById('last-updated').textContent = `Actualizado hoy a las ${h}:${m}`;
   } catch(e) {
     allData = [];
   }
@@ -298,21 +347,26 @@ async function loadWeather() {
     const res  = await fetch(url);
     const json = await res.json();
     weatherData = {};
-    const dates = json.daily.time;
-    const probs = json.daily.precipitation_probability_max;
-    const mms   = json.daily.precipitation_sum;
-    dates.forEach((date, i) => {
-      weatherData[date] = { prob: probs[i] || 0, mm: mms[i] || 0 };
+    json.daily.time.forEach((date, i) => {
+      weatherData[date] = {
+        prob: json.daily.precipitation_probability_max[i] || 0,
+        mm:   json.daily.precipitation_sum[i] || 0
+      };
     });
-  } catch(e) {
-    weatherData = {};
-  }
+  } catch(e) { weatherData = {}; }
 }
 
 function hasRain(dateStr) {
   const w = weatherData[dateStr];
-  if (!w) return false;
-  return w.prob >= RAIN_PROB_MIN && w.mm >= RAIN_MM_MIN;
+  return w && w.prob >= RAIN_PROB_MIN && w.mm >= RAIN_MM_MIN;
+}
+
+// ── FERIADO CHECK ─────────────────────────────────────────────
+function isFeriado(slots) {
+  return slots.some(s =>
+    (s.cancha1 && s.cancha1.toLowerCase().includes('feriado irrenunciable')) ||
+    (s.cancha2 && s.cancha2.toLowerCase().includes('feriado irrenunciable'))
+  );
 }
 
 // ── RENDER ────────────────────────────────────────────────────
@@ -327,17 +381,15 @@ function render() {
   const btnNext = document.getElementById('btn-next');
   const btnPrev = document.getElementById('btn-prev');
   if (currentWeekOffset === 0) {
-    btnNext.style.display = 'flex';
-    btnPrev.style.display = 'none';
-    const nextStart = new Date(today);
-    nextStart.setDate(today.getDate() + 7);
-    const maxDate = new Date(today);
-    maxDate.setDate(today.getDate() + 13);
+    btnNext.style.display = 'flex'; btnPrev.style.display = 'none';
+    const nextStart = new Date(today); nextStart.setDate(today.getDate() + 7);
+    const maxDate = new Date(today); maxDate.setDate(today.getDate() + 13);
     btnNext.disabled = nextStart > maxDate;
   } else {
-    btnNext.style.display = 'none';
-    btnPrev.style.display = 'flex';
+    btnNext.style.display = 'none'; btnPrev.style.display = 'flex';
   }
+
+  const waIconSVG = `<svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>`;
 
   let html = '';
   dates.forEach(d => {
@@ -357,49 +409,50 @@ function render() {
 
     if (daySlots.length === 0) return;
 
+    const feriadoDay = isFeriado(daySlots);
+
     html += `<div class="day-block">
       <div class="day-header">
         <span class="day-name">${DIAS[d.getDay()]}</span>
         <span class="day-date">${d.getDate()} de ${MESES[d.getMonth()]}</span>
         ${isToday ? '<span class="today-badge">HOY</span>' : ''}
-        ${rain ? '<span class="rain-badge">🌧️ <a href="https://www.meteored.cl/tiempo-en_Villa+Alemana-America+Sur-Chile-Valparaiso--1-18534.html" target="_blank" style="color:var(--gray-text);text-decoration:underline;text-underline-offset:2px;">Pronóstico de lluvia</a></span>' : ''}
-      </div>
-      <table class="slot-table">
-        <thead>
-          <tr>
-            <th class="col-hora">Hora</th>
-            <th class="col-c1">⚽ Cancha 1 (Muro)</th>
-            <th class="col-c2">⚽ Cancha 2 (Estacionam.)</th>
-            <th class="col-price right">Precio</th>
-          </tr>
-        </thead>
-        <tbody>`;
+        ${rain ? `<span class="rain-badge">🌧️ <a href="${METEORED_URL}" target="_blank" style="color:var(--gray-text);text-decoration:underline;text-underline-offset:2px;">Pronóstico de lluvia</a></span>` : ''}
+      </div>`;
 
-    const waIconSVG = `<svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>`;
+    if (feriadoDay) {
+      html += `<div class="feriado-block"><span>🚫</span>Cerrado — Feriado irrenunciable</div>`;
+    } else {
+      html += `<table class="slot-table">
+        <thead><tr>
+          <th class="col-hora">Hora</th>
+          <th class="col-c1">⚽ Cancha 1 (Muro)</th>
+          <th class="col-c2">⚽ Cancha 2 (Estacionam.)</th>
+          <th class="col-price right">Precio</th>
+        </tr></thead><tbody>`;
 
-    daySlots.forEach(slot => {
-      const am    = isAM(slot.hora);
-      const price = getPrice(slot.hora);
-      const hora  = slot.hora.includes(':') ? slot.hora : slot.hora + ':00';
-      const ocp1  = slot.cancha1 && slot.cancha1.trim() !== '';
-      const ocp2  = slot.cancha2 && slot.cancha2.trim() !== '';
+      daySlots.forEach(slot => {
+        const am    = isAM(slot.hora);
+        const price = getPrice(slot.hora);
+        const hora  = slot.hora.includes(':') ? slot.hora : slot.hora + ':00';
+        const ocp1  = slot.cancha1 && slot.cancha1.trim() !== '';
+        const ocp2  = slot.cancha2 && slot.cancha2.trim() !== '';
 
-      const statusCell = (ocupado, fecha, hora, cancha) => {
-        if (ocupado) {
-          return `<div class="status-cell ocupado"><div class="status-dot"></div><span class="status-text">Reservado</span></div>`;
-        }
-        return `<a class="wa-slot-link" href="${waLink(fecha, hora, cancha)}" target="_blank">${waIconSVG} Solicitar</a>`;
-      };
+        const statusCell = (ocupado, fecha, hora, cancha) => ocupado
+          ? `<div class="status-cell ocupado"><div class="status-dot"></div><span class="status-text">Reservado</span></div>`
+          : `<a class="wa-slot-link" href="${waLink(fecha, hora, cancha)}" target="_blank">${waIconSVG} Solicitar</a>`;
 
-      html += `<tr class="slot-row${am ? ' is-am' : ''} tier-${price.tier}">
-        <td><span class="slot-hour">${hora}${am ? ' <span class="badge-am">AM</span>' : ''}</span></td>
-        <td>${statusCell(ocp1, slot.fecha, hora, 'Cancha 1 (Muro)')}</td>
-        <td>${statusCell(ocp2, slot.fecha, hora, 'Cancha 2 (Estacionam.)')}</td>
-        <td class="slot-price">${price.label}</td>
-      </tr>`;
-    });
+        html += `<tr class="slot-row${am ? ' is-am' : ''} tier-${price.tier}">
+          <td><span class="slot-hour">${hora}${am ? ' <span class="badge-am">AM</span>' : ''}</span></td>
+          <td>${statusCell(ocp1, slot.fecha, hora, 'Cancha 1 (Muro)')}</td>
+          <td>${statusCell(ocp2, slot.fecha, hora, 'Cancha 2 (Estacionam.)')}</td>
+          <td class="slot-price">${price.label}</td>
+        </tr>`;
+      });
 
-    html += `</tbody></table></div>`;
+      html += `</tbody></table>`;
+    }
+
+    html += `</div>`;
   });
 
   if (html === '') {
@@ -412,6 +465,32 @@ function render() {
 // ── NAVEGACIÓN ────────────────────────────────────────────────
 function nextWeek() { currentWeekOffset = 1; render(); }
 function prevWeek() { currentWeekOffset = 0; render(); }
+
+// ── INSTALL MODAL ─────────────────────────────────────────────
+function showInstall() {
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const stepsEl = document.getElementById('install-steps');
+  if (isIOS) {
+    stepsEl.innerHTML = `<strong>En iPhone:</strong><br>
+      1. Presiona el botón <strong>Compartir</strong> (el cuadrado con la flecha ↑) en Safari<br>
+      2. Baja y toca <strong>"Agregar a pantalla de inicio"</strong><br>
+      3. Presiona <strong>"Agregar"</strong> arriba a la derecha<br><br>
+      ¡Listo! La página quedará guardada como una app en tu celular.`;
+  } else {
+    stepsEl.innerHTML = `<strong>En Android:</strong><br>
+      1. Toca el menú <strong>⋮</strong> (tres puntos) arriba a la derecha<br>
+      2. Toca <strong>"Agregar a pantalla de inicio"</strong><br>
+      3. Confirma tocando <strong>"Agregar"</strong><br><br>
+      ¡Listo! La página quedará guardada como una app en tu celular.`;
+  }
+  document.getElementById('install-modal').classList.add('open');
+}
+
+function hideInstall(e) {
+  if (!e || e.target === document.getElementById('install-modal') || e.target.classList.contains('install-close')) {
+    document.getElementById('install-modal').classList.remove('open');
+  }
+}
 
 // ── INIT ──────────────────────────────────────────────────────
 async function init() {
