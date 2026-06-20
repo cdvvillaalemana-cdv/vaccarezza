@@ -587,59 +587,69 @@ async function loadMundial() {
   try {
     const today = new Date();
     const todayStr = dateKey(today);
+    const yesterday = new Date(today); yesterday.setDate(today.getDate()-1);
+    const yesterdayStr = dateKey(yesterday);
+    const tomorrow = new Date(today); tomorrow.setDate(today.getDate()+1);
+    const tomorrowStr = dateKey(tomorrow);
+
     const url = `https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json`;
     const res = await fetch(url);
     const json = await res.json();
 
-    // Flatten all matches
-    const allMatches = [];
-    (json.rounds || []).forEach(round => {
-      (round.matches || []).forEach(m => {
-        allMatches.push({ ...m, round: round.name });
-      });
-    });
+    // Structure: json.matches is a flat array
+    const allMatches = json.matches || [];
 
-    // Filter today's and yesterday's matches
-    const todayMatches = allMatches.filter(m => m.date === todayStr);
-    const yesterday = new Date(today); yesterday.setDate(today.getDate()-1);
-    const yesterdayStr = dateKey(yesterday);
+    const todayMatches     = allMatches.filter(m => m.date === todayStr);
     const yesterdayMatches = allMatches.filter(m => m.date === yesterdayStr);
+    const tomorrowMatches  = allMatches.filter(m => m.date === tomorrowStr);
 
-    const shown = todayMatches.length > 0 ? todayMatches : yesterdayMatches;
-    const label = todayMatches.length > 0 ? 'Hoy' : 'Ayer';
+    let shown, label;
+    if (todayMatches.length > 0) {
+      shown = todayMatches; label = 'Hoy';
+    } else if (yesterdayMatches.length > 0) {
+      shown = yesterdayMatches; label = 'Ayer';
+    } else if (tomorrowMatches.length > 0) {
+      shown = tomorrowMatches; label = 'Mañana';
+    } else {
+      shown = []; label = '';
+    }
 
     if (shown.length === 0) {
-      contentEl.innerHTML = '<div class="mundial-error">No hay partidos programados para hoy.</div>';
+      contentEl.innerHTML = '<div class="mundial-error">No hay partidos para mostrar hoy.</div>';
       mundialLoaded = true;
       return;
     }
 
-    let html = `<div class="mundial-panel-title" style="margin-bottom:8px">${label} · ${shown.length} partido${shown.length>1?'s':''}</div>`;
+    let html = `<div class="mundial-panel-title" style="margin-bottom:8px;color:#aaa">${label} · ${shown.length} partido${shown.length>1?'s':''}</div>`;
+
     shown.forEach(m => {
-      const h1 = m.score1 !== null && m.score1 !== undefined ? m.score1 : '';
-      const h2 = m.score2 !== null && m.score2 !== undefined ? m.score2 : '';
-      const hasScore = h1 !== '' && h2 !== '';
-      const scoreStr = hasScore ? `${h1} — ${h2}` : 'vs';
+      // score is { ft: [g1, g2] }
+      const ft = m.score && m.score.ft;
+      const hasScore = Array.isArray(ft);
+      const scoreStr = hasScore ? `${ft[0]} — ${ft[1]}` : 'vs';
       const statusHtml = hasScore
         ? '<span class="match-status status-ft">FT</span>'
-        : '<span class="match-status status-upcoming">Por jugar</span>';
+        : `<span class="match-status status-upcoming">${(m.time||'').replace('UTC-6','').trim()}</span>`;
+
+      const t1 = m.team1 || '';
+      const t2 = m.team2 || '';
 
       html += `<div class="match-card">
         <div class="match-teams">
           <div class="match-team">
-            <span class="match-flag">${getFlag(m.team1?.name || '')}</span>
-            <span class="match-team-name">${m.team1?.name || ''}</span>
+            <span class="match-flag">${getFlag(t1)}</span>
+            <span class="match-team-name">${t1}</span>
           </div>
           <div class="match-score">
             <span class="match-score-num">${scoreStr}</span>
             ${statusHtml}
           </div>
           <div class="match-team">
-            <span class="match-flag">${getFlag(m.team2?.name || '')}</span>
-            <span class="match-team-name">${m.team2?.name || ''}</span>
+            <span class="match-flag">${getFlag(t2)}</span>
+            <span class="match-team-name">${t2}</span>
           </div>
         </div>
-        <div class="match-group">${m.round || ''}</div>
+        <div class="match-group" style="font-size:10px;color:#666;min-width:55px;text-align:right">${(m.group||m.round||'').replace('Group ','Grupo ')}</div>
       </div>`;
     });
 
