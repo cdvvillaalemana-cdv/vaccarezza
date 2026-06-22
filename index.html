@@ -627,15 +627,21 @@ async function loadMundial() {
       const ft = m.score && m.score.ft;
       const hasScore = Array.isArray(ft);
       const scoreStr = hasScore ? `${ft[0]} — ${ft[1]}` : 'vs';
-      // Convert UTC-6 to Chile time (UTC-4, +2 hours)
+      // Convert match time to Chile time (UTC-4)
+      // Format: "12:00 UTC-5" or "20:00 UTC-6"
       let timeChile = '';
       if (m.time) {
-        const timePart = (m.time||'').replace(/UTC.*/,'').trim();
-        const [hh, mm] = timePart.split(':').map(Number);
-        if (!isNaN(hh)) {
-          const totalMin = hh * 60 + (mm||0) + 120; // +2 hours
-          const ch = Math.floor(totalMin / 60) % 24;
-          const cm = totalMin % 60;
+        const timeStr = m.time || '';
+        const timeMatch = timeStr.match(/(\d{1,2}):(\d{2})\s*UTC([+-]\d+)/);
+        if (timeMatch) {
+          const hh = parseInt(timeMatch[1]);
+          const mm = parseInt(timeMatch[2]);
+          const utcOffset = parseInt(timeMatch[3]); // e.g. -5, -6, -4
+          // Convert to UTC first, then to Chile (UTC-4)
+          const totalMinUTC = hh * 60 + mm - (utcOffset * 60);
+          const totalMinChile = totalMinUTC + (-4 * 60); // Chile is UTC-4
+          const ch = ((Math.floor(totalMinChile / 60) % 24) + 24) % 24;
+          const cm = ((totalMinChile % 60) + 60) % 60;
           timeChile = `${String(ch).padStart(2,'0')}:${String(cm).padStart(2,'0')} hrs`;
         }
       }
