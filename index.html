@@ -627,9 +627,21 @@ async function loadMundial() {
       const ft = m.score && m.score.ft;
       const hasScore = Array.isArray(ft);
       const scoreStr = hasScore ? `${ft[0]} — ${ft[1]}` : 'vs';
+      // Convert UTC-6 to Chile time (UTC-4, +2 hours)
+      let timeChile = '';
+      if (m.time) {
+        const timePart = (m.time||'').replace(/UTC.*/,'').trim();
+        const [hh, mm] = timePart.split(':').map(Number);
+        if (!isNaN(hh)) {
+          const totalMin = hh * 60 + (mm||0) + 120; // +2 hours
+          const ch = Math.floor(totalMin / 60) % 24;
+          const cm = totalMin % 60;
+          timeChile = `${String(ch).padStart(2,'0')}:${String(cm).padStart(2,'0')} hrs`;
+        }
+      }
       const statusHtml = hasScore
         ? '<span class="match-status status-ft">FT</span>'
-        : `<span class="match-status status-upcoming">${(m.time||'').replace('UTC-6','').trim()}</span>`;
+        : `<span class="match-status status-upcoming">${timeChile}</span>`;
 
       const t1 = m.team1 || '';
       const t2 = m.team2 || '';
