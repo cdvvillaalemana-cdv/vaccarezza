@@ -132,9 +132,8 @@
   /* TOOLTIPS */
   .info-icon { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; background: rgba(255,255,255,0.15); color: #fff; font-size: 10px; font-weight: 700; cursor: pointer; margin-left: 4px; position: relative; vertical-align: middle; border: 1px solid rgba(255,255,255,0.3); flex-shrink: 0; }
   .info-icon-dark { background: rgba(0,0,0,0.08); color: #666; border: 1px solid #ccc; }
-  .tooltip-box { display: none; position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(100% + 8px); background: #1a1a1a; color: #fff; font-size: 12px; line-height: 1.5; padding: 10px 12px; border-radius: 8px; width: 220px; z-index: 300; font-family: 'Barlow', sans-serif; font-weight: 400; box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
-  .tooltip-box::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 6px solid transparent; border-top-color: #1a1a1a; }
-  .info-icon:hover .tooltip-box, .info-icon:focus .tooltip-box, .info-icon.active .tooltip-box { display: block; }
+  .tooltip-box { display: none; position: fixed; background: #1a1a1a; color: #fff; font-size: 12px; line-height: 1.5; padding: 10px 12px; border-radius: 8px; width: 220px; z-index: 9999; font-family: 'Barlow', sans-serif; font-weight: 400; box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+  .info-icon.active .tooltip-box { display: block; }
 
   /* CLIMA AVISO DIA */
   .day-clima-warning { background: #fff3cd; border-top: 1px solid #f5d87a; padding: 8px 16px; font-size: 13px; color: #7a5c00; font-weight: 500; }
@@ -515,8 +514,10 @@ function render() {
         const am    = isAM(slot.hora);
         const price = getPrice(slot.hora);
         const hora  = slot.hora.includes(':') ? slot.hora : slot.hora + ':00';
-        const ocp1  = slot.cancha1 && slot.cancha1.trim() !== '';
-        const ocp2  = slot.cancha2 && slot.cancha2.trim() !== '';
+        const KEYWORDS = ['lluvia intensa', 'sujeto a condiciones', 'feriado irrenunciable'];
+      const isKeyword = (v) => KEYWORDS.some(k => (v||'').toLowerCase().includes(k));
+      const ocp1  = slot.cancha1 && slot.cancha1.trim() !== '' && !isKeyword(slot.cancha1);
+        const ocp2  = slot.cancha2 && slot.cancha2.trim() !== '' && !isKeyword(slot.cancha2);
 
         const statusCell = (ocupado, fecha, hora, cancha) => ocupado
           ? `<div class="status-cell ocupado"><div class="status-dot"></div><span class="status-text">Reservado</span></div>`
@@ -729,6 +730,33 @@ async function loadMundial() {
     contentEl.innerHTML = '<div class="mundial-error">No se pudo cargar los partidos.<br>Intenta más tarde.</div>';
   }
 }
+
+// ── TOOLTIP POSITIONING ──────────────────────────────────────
+document.addEventListener('click', function(e) {
+  const icon = e.target.closest('.info-icon');
+  if (icon) {
+    e.stopPropagation();
+    const box = icon.querySelector('.tooltip-box');
+    if (!box) return;
+    // Toggle active
+    const isActive = icon.classList.contains('active');
+    document.querySelectorAll('.info-icon.active').forEach(i => i.classList.remove('active'));
+    if (!isActive) {
+      icon.classList.add('active');
+      // Position tooltip
+      const rect = icon.getBoundingClientRect();
+      box.style.display = 'block';
+      const bw = box.offsetWidth;
+      let left = rect.left + rect.width/2 - bw/2;
+      if (left < 8) left = 8;
+      if (left + bw > window.innerWidth - 8) left = window.innerWidth - bw - 8;
+      box.style.left = left + 'px';
+      box.style.top = (rect.bottom + 8) + 'px';
+    }
+  } else {
+    document.querySelectorAll('.info-icon.active').forEach(i => i.classList.remove('active'));
+  }
+});
 
 // ── INIT ──────────────────────────────────────────────────────
 async function init() {
