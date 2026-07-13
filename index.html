@@ -129,6 +129,18 @@
   .wa-warning { font-size: 13px; font-weight: 600; color: #c0392b; }
 
   .state-msg { text-align: center; padding: 40px 20px; color: var(--gray-text); font-size: 15px; line-height: 1.6; }
+  /* TOOLTIPS */
+  .info-icon { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; background: rgba(255,255,255,0.15); color: #fff; font-size: 10px; font-weight: 700; cursor: pointer; margin-left: 4px; position: relative; vertical-align: middle; border: 1px solid rgba(255,255,255,0.3); flex-shrink: 0; }
+  .info-icon-dark { background: rgba(0,0,0,0.08); color: #666; border: 1px solid #ccc; }
+  .tooltip-box { display: none; position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(100% + 8px); background: #1a1a1a; color: #fff; font-size: 12px; line-height: 1.5; padding: 10px 12px; border-radius: 8px; width: 220px; z-index: 300; font-family: 'Barlow', sans-serif; font-weight: 400; box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+  .tooltip-box::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 6px solid transparent; border-top-color: #1a1a1a; }
+  .info-icon:hover .tooltip-box, .info-icon:focus .tooltip-box, .info-icon.active .tooltip-box { display: block; }
+
+  /* CLIMA AVISO DIA */
+  .day-clima-warning { background: #fff3cd; border-top: 1px solid #f5d87a; padding: 8px 16px; font-size: 13px; color: #7a5c00; font-weight: 500; }
+  .cerrado-clima { padding: 16px; text-align: center; font-size: 15px; color: #888; font-weight: 500; }
+  .cerrado-clima span { font-size: 22px; display: block; margin-bottom: 4px; }
+
 
   /* MUNDIAL */
   .mundial-btn { display: flex; align-items: center; gap: 8px; background: #1a1a2e; color: #fff; border: none; border-radius: 10px; padding: 10px 16px; font-family: 'Barlow', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; transition: background 0.15s; white-space: nowrap; }
@@ -213,6 +225,12 @@
 
   <div id="calendar-container">
     <div class="state-msg">⏳ Cargando disponibilidad...</div>
+  </div>
+
+  <div id="btn-next-bottom-wrap" style="margin-bottom:16px;display:none;">
+    <button class="btn-nav" id="btn-next-bottom" onclick="nextWeek()" style="width:100%;justify-content:center;">
+      Ver siguientes 7 días →
+    </button>
   </div>
 
   <div class="bottom-section">
@@ -316,7 +334,7 @@ function getWindowDates() {
 function waLink(fecha, hora, cancha) {
   const d = new Date(fecha + 'T00:00:00');
   const label = `${DIAS[d.getDay()]} ${d.getDate()} de ${MESES[d.getMonth()]}`;
-  const msg = `Hola! Me gustaría reservar la ${cancha} para el ${label} a las *${hora}*. Mi nombre y apellido es:_ `;
+  const msg = `Hola, quiero reservar ${cancha} para el ${label} a las *${hora}*. Mi nombre y apellido es: `;
   return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`;
 }
 
@@ -412,6 +430,20 @@ function isFeriado(slots) {
   );
 }
 
+function isLluviaIntensa(slots) {
+  return slots.some(s =>
+    (s.cancha1 && s.cancha1.toLowerCase().includes('lluvia intensa')) ||
+    (s.cancha2 && s.cancha2.toLowerCase().includes('lluvia intensa'))
+  );
+}
+
+function isSujetoClima(slots) {
+  return slots.some(s =>
+    (s.cancha1 && s.cancha1.toLowerCase().includes('sujeto a condiciones')) ||
+    (s.cancha2 && s.cancha2.toLowerCase().includes('sujeto a condiciones'))
+  );
+}
+
 // ── RENDER ────────────────────────────────────────────────────
 function render() {
   const { dates, today } = getWindowDates();
@@ -453,18 +485,23 @@ function render() {
     if (daySlots.length === 0) return;
 
     const feriadoDay = isFeriado(daySlots);
+    const lluviaIntensaDay = !feriadoDay && isLluviaIntensa(daySlots);
+    const sujetoClimaDay = !feriadoDay && !lluviaIntensaDay && isSujetoClima(daySlots);
 
     html += `<div class="day-block">
       <div class="day-header">
         <span class="day-name">${DIAS[d.getDay()]}</span>
         <span class="day-date">${d.getDate()} de ${MESES[d.getMonth()]}</span>
         ${isToday ? '<span class="today-badge">HOY</span>' : ''}
-        ${rain ? `<span class="rain-badge">🌧️ <a href="${METEORED_URL}" target="_blank" style="color:var(--gray-text);text-decoration:underline;text-underline-offset:2px;">Pronóstico de lluvia</a></span>` : ''}
+        ${rain ? `<span class="rain-badge">🌧️ <a href="${METEORED_URL}" target="_blank" style="color:var(--gray-text);text-decoration:underline;text-underline-offset:2px;">Probabilidad de lluvia</a><span class="info-icon info-icon-dark" onclick="this.classList.toggle('active')">i<div class="tooltip-box">Ante pronóstico de lluvia significativa, solicitamos abono el día anterior para confirmar tu reserva. El estado de las canchas puede verse afectado. Si se inundan, avisaremos con anticipación.</div></span></span>` : ''}
+        ${!rain && hasLightRain(dk) ? `<span class="rain-light-badge">🌦️ Lluvia leve prevista — las canchas estarán en buenas condiciones<span class="info-icon" style="background:rgba(37,99,235,0.15);color:#2563eb;border-color:#93c5fd;" onclick="this.classList.toggle('active')">i<div class="tooltip-box">Se esperan lluvias leves que no afectarán el estado de las canchas. Los partidos se juegan con normalidad.</div></span></span>` : ''}
         ${!rain && hasLightRain(dk) ? `<span class="rain-light-badge">🌦️ Lluvia leve prevista — las canchas estarán en buenas condiciones</span>` : ''}
       </div>`;
 
     if (feriadoDay) {
       html += `<div class="feriado-block"><span>🚫</span>Cerrado — Feriado irrenunciable</div>`;
+    } else if (lluviaIntensaDay) {
+      html += `<div class="cerrado-clima"><span>⛈️</span>Cerrado por condiciones climáticas<br><span style="font-size:13px;display:block;margin-top:4px">Las canchas se encuentran inhabilitadas. Te contactaremos para reagendar o devolver tu abono.</span></div>`;
     } else {
       html += `<table class="slot-table">
         <thead><tr>
@@ -494,6 +531,9 @@ function render() {
       });
 
       html += `</tbody></table>`;
+      if (sujetoClimaDay) {
+        html += `<div class="day-clima-warning">⚠️ Disponibilidad sujeta a condiciones climáticas. <a href="https://wa.me/56977937858" target="_blank" style="color:#7a5c00;font-weight:700;">Consultar por WhatsApp</a></div>`;
+      }
     }
 
     html += `</div>`;
@@ -504,6 +544,18 @@ function render() {
   }
 
   document.getElementById('calendar-container').innerHTML = html;
+
+  // Show/hide bottom next button
+  const bottomWrap = document.getElementById('btn-next-bottom-wrap');
+  const bottomBtn  = document.getElementById('btn-next-bottom');
+  if (bottomWrap && bottomBtn) {
+    if (currentWeekOffset === 0 && !btnNext.disabled) {
+      bottomWrap.style.display = 'block';
+      bottomBtn.disabled = false;
+    } else {
+      bottomWrap.style.display = 'none';
+    }
+  }
 }
 
 // ── NAVEGACIÓN ────────────────────────────────────────────────
