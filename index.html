@@ -143,28 +143,32 @@
   .cerrado-clima span { font-size: 22px; display: block; margin-bottom: 4px; }
 
 
-  /* MUNDIAL */
+  /* MUNDIAL VOTACION */
   .mundial-btn { display: flex; align-items: center; gap: 8px; background: #1a1a2e; color: #fff; border: none; border-radius: 10px; padding: 10px 16px; font-family: 'Barlow', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; transition: background 0.15s; white-space: nowrap; }
   .mundial-btn:hover { background: #16213e; }
   .mundial-badge { background: #e8c840; color: #1a1a2e; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 20px; font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.05em; }
-  .mundial-panel { display: none; background: #1a1a2e; border-radius: 12px; padding: 14px; margin-top: 8px; }
+  .mundial-panel { display: none; background: #1a1a2e; border-radius: 12px; padding: 16px; margin-top: 8px; }
   .mundial-panel.open { display: block; }
-  .mundial-panel-title { font-size: 12px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
-  .match-card { background: #16213e; border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-  .match-card:last-child { margin-bottom: 0; }
-  .match-teams { display: flex; align-items: center; gap: 8px; flex: 1; justify-content: center; }
-  .match-team { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 60px; }
-  .match-flag { font-size: 22px; line-height: 1; }
-  .match-team-name { font-size: 11px; color: #aaa; text-align: center; }
-  .match-score { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 60px; }
-  .match-score-num { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; color: #fff; letter-spacing: 0.05em; }
-  .match-status { font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 10px; }
-  .status-live { background: #dc2626; color: #fff; }
-  .status-ft { background: #374151; color: #9ca3af; }
-  .status-upcoming { background: #1d4ed8; color: #fff; }
-  .match-group { font-size: 11px; color: #666; text-align: right; min-width: 50px; }
+  .mundial-panel-title { font-size: 13px; font-weight: 700; color: #e8c840; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px; text-align: center; }
+  .vote-section { margin-bottom: 16px; }
+  .vote-section:last-child { margin-bottom: 0; }
+  .vote-label { font-size: 12px; color: #aaa; text-align: center; margin-bottom: 10px; font-weight: 500; }
+  .vote-teams { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .vote-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; background: #16213e; border: 2px solid #2a3a5e; border-radius: 10px; padding: 12px 8px; cursor: pointer; transition: all 0.15s; color: #fff; font-family: 'Barlow', sans-serif; }
+  .vote-btn:hover { border-color: #e8c840; background: #1e2d4e; }
+  .vote-btn.voted { border-color: #e8c840; background: #1e2d4e; }
+  .vote-btn.disabled { cursor: default; opacity: 0.7; }
+  .vote-flag { font-size: 28px; line-height: 1; }
+  .vote-name { font-size: 13px; font-weight: 600; color: #fff; }
+  .vote-count { font-size: 11px; color: #aaa; }
+  .vote-bar-wrap { margin-top: 8px; height: 6px; background: #0d1117; border-radius: 3px; overflow: hidden; }
+  .vote-bar { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+  .vote-bar-1 { background: #e8c840; }
+  .vote-bar-2 { background: #4a90d9; }
+  .vote-pct { font-size: 11px; font-weight: 700; margin-top: 3px; }
+  .vote-divider { text-align: center; color: #555; font-size: 12px; margin: 4px 0 12px; border-top: 1px solid #2a3a5e; padding-top: 12px; }
+  .vote-remaining { text-align: center; font-size: 11px; color: #666; margin-top: 10px; }
   .mundial-loading { text-align: center; color: #888; font-size: 13px; padding: 16px; }
-  .mundial-error { text-align: center; color: #e05555; font-size: 13px; padding: 12px; }
 
   @media (max-width: 480px) {
     .header-notice { display: none; }
@@ -190,8 +194,8 @@
 </div>
 
 <div class="mundial-panel" id="mundial-panel">
-  <div class="mundial-panel-title">🏆 FIFA World Cup 2026 — Partidos del día</div>
-  <div id="mundial-content"><div class="mundial-loading">Cargando partidos...</div></div>
+  <div class="mundial-panel-title">🏆 FIFA World Cup 2026 — ¿Quién ganará?</div>
+  <div id="mundial-content"><div class="mundial-loading">Cargando...</div></div>
 </div>
 
 <div class="notice-bar">
@@ -592,145 +596,141 @@ function hideInstall(e) {
 }
 
 
-// ── MUNDIAL ───────────────────────────────────────────────────
+// ── MUNDIAL VOTACION ─────────────────────────────────────────
 let mundialLoaded = false;
+
+const VOTE_KEY = 'cdv_mundial_votes';
+const MAX_VOTES_PER_DAY = 3;
+
+const MATCHES = [
+  {
+    id: 'tercero',
+    label: '🥉 Tercer y cuarto lugar — Sábado',
+    teams: [
+      { id: 'fra', name: 'Francia', flag: '🇫🇷' },
+      { id: 'eng', name: 'Inglaterra', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿' }
+    ]
+  },
+  {
+    id: 'final',
+    label: '🥇 Final — Domingo',
+    teams: [
+      { id: 'arg', name: 'Argentina', flag: '🇦🇷' },
+      { id: 'esp', name: 'España', flag: '🇪🇸' }
+    ]
+  }
+];
+
+function getVoteState() {
+  try {
+    const raw = localStorage.getItem(VOTE_KEY);
+    if (!raw) return { votes: {}, counts: {}, date: '' };
+    return JSON.parse(raw);
+  } catch(e) { return { votes: {}, counts: {}, date: '' }; }
+}
+
+function saveVoteState(state) {
+  try { localStorage.setItem(VOTE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+
+function getSharedCounts() {
+  // Use sessionStorage to simulate shared counts (resets on new session)
+  // In production this would be a backend, but for now we show local votes
+  try {
+    const raw = sessionStorage.getItem('cdv_shared_counts');
+    if (!raw) return {};
+    return JSON.parse(raw);
+  } catch(e) { return {}; }
+}
 
 function toggleMundial() {
   const panel = document.getElementById('mundial-panel');
   panel.classList.toggle('open');
   if (panel.classList.contains('open') && !mundialLoaded) {
-    loadMundial();
+    renderVoting();
+    mundialLoaded = true;
   }
 }
 
-const FLAG_MAP = {
-  'Argentina': '🇦🇷', 'Brazil': '🇧🇷', 'Chile': '🇨🇱', 'Uruguay': '🇺🇾',
-  'Colombia': '🇨🇴', 'Peru': '🇵🇪', 'Ecuador': '🇪🇨', 'Bolivia': '🇧🇴',
-  'Venezuela': '🇻🇪', 'Paraguay': '🇵🇾', 'Mexico': '🇲🇽', 'USA': '🇺🇸',
-  'United States': '🇺🇸', 'Canada': '🇨🇦', 'France': '🇫🇷', 'Germany': '🇩🇪',
-  'Spain': '🇪🇸', 'Portugal': '🇵🇹', 'England': '🏴󠁧󠁢󠁥󠁮󠁧󠁿', 'Italy': '🇮🇹',
-  'Netherlands': '🇳🇱', 'Belgium': '🇧🇪', 'Croatia': '🇭🇷', 'Denmark': '🇩🇰',
-  'Poland': '🇵🇱', 'Switzerland': '🇨🇭', 'Austria': '🇦🇹', 'Sweden': '🇸🇪',
-  'Norway': '🇳🇴', 'Czech Republic': '🇨🇿', 'Serbia': '🇷🇸', 'Slovakia': '🇸🇰',
-  'Hungary': '🇭🇺', 'Romania': '🇷🇴', 'Ukraine': '🇺🇦', 'Turkey': '🇹🇷',
-  'Greece': '🇬🇷', 'Japan': '🇯🇵', 'South Korea': '🇰🇷', 'Australia': '🇦🇺',
-  'Saudi Arabia': '🇸🇦', 'Iran': '🇮🇷', 'Qatar': '🇶🇦', 'Morocco': '🇲🇦',
-  'Senegal': '🇸🇳', 'Nigeria': '🇳🇬', 'Cameroon': '🇨🇲', 'Ghana': '🇬🇭',
-  'Egypt': '🇪🇬', 'Tunisia': '🇹🇳', 'Algeria': '🇩🇿', 'South Africa': '🇿🇦',
-  'New Zealand': '🇳🇿', 'Scotland': '🏴󠁧󠁢󠁳󠁣󠁴󠁿', 'Wales': '🏴󠁧󠁢󠁷󠁬󠁳󠁿', 'Haiti': '🇭🇹',
-  'Panama': '🇵🇦', 'Costa Rica': '🇨🇷', 'Honduras': '🇭🇳', 'Jamaica': '🇯🇲',
-  'Trinidad and Tobago': '🇹🇹', 'Guatemala': '🇬🇹', 'El Salvador': '🇸🇻',
-  'Indonesia': '🇮🇩', 'Thailand': '🇹🇭', 'Vietnam': '🇻🇳', 'China': '🇨🇳',
-  'Iraq': '🇮🇶', 'Jordan': '🇯🇴', 'Oman': '🇴🇲', 'Uzbekistan': '🇺🇿',
-  'Algeria': '🇩🇿', 'DR Congo': '🇨🇩', 'Mali': '🇲🇱', 'Ivory Coast': '🇨🇮',
-  'Tanzania': '🇹🇿', 'Zambia': '🇿🇲', 'Angola': '🇦🇴', 'Benin': '🇧🇯',
-};
+function vote(matchId, teamId) {
+  const state = getVoteState();
+  const today = todayStr();
 
-function getFlag(name) {
-  return FLAG_MAP[name] || '🏳️';
+  // Reset daily count if new day
+  if (state.date !== today) {
+    state.date = today;
+    state.dailyCount = 0;
+  }
+
+  if ((state.dailyCount || 0) >= MAX_VOTES_PER_DAY) return;
+
+  // Register vote
+  if (!state.counts) state.counts = {};
+  state.counts[matchId] = state.counts[matchId] || {};
+  state.counts[matchId][teamId] = (state.counts[matchId][teamId] || 0) + 1;
+  state.votes = state.votes || {};
+  state.votes[matchId] = teamId;
+  state.dailyCount = (state.dailyCount || 0) + 1;
+
+  saveVoteState(state);
+  renderVoting();
 }
 
-function formatKickoff(utcStr) {
-  const d = new Date(utcStr);
-  const h = String(d.getHours()).padStart(2,'0');
-  const m = String(d.getMinutes()).padStart(2,'0');
-  return `${h}:${m} hrs`;
-}
+function renderVoting() {
+  const state = getVoteState();
+  const today = todayStr();
+  if (state.date !== today) { state.dailyCount = 0; }
+  const remaining = MAX_VOTES_PER_DAY - (state.dailyCount || 0);
+  const counts = state.counts || {};
 
-async function loadMundial() {
-  const contentEl = document.getElementById('mundial-content');
-  try {
-    const today = new Date();
-    const todayStr = dateKey(today);
-    const yesterday = new Date(today); yesterday.setDate(today.getDate()-1);
-    const yesterdayStr = dateKey(yesterday);
-    const tomorrow = new Date(today); tomorrow.setDate(today.getDate()+1);
-    const tomorrowStr = dateKey(tomorrow);
+  let html = '';
+  MATCHES.forEach((match, mi) => {
+    const mc = counts[match.id] || {};
+    const v1 = mc[match.teams[0].id] || 0;
+    const v2 = mc[match.teams[1].id] || 0;
+    const total = v1 + v2;
+    const pct1 = total > 0 ? Math.round(v1/total*100) : 50;
+    const pct2 = total > 0 ? Math.round(v2/total*100) : 50;
+    const voted = state.votes && state.votes[match.id];
+    const canVote = remaining > 0;
 
-    const url = `https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json`;
-    const res = await fetch(url);
-    const json = await res.json();
+    if (mi > 0) html += `<div class="vote-divider"></div>`;
 
-    // Structure: json.matches is a flat array
-    const allMatches = json.matches || [];
+    html += `<div class="vote-section">
+      <div class="vote-label">${match.label}</div>
+      <div class="vote-teams">`;
 
-    const todayMatches     = allMatches.filter(m => m.date === todayStr);
-    const yesterdayMatches = allMatches.filter(m => m.date === yesterdayStr);
-    const tomorrowMatches  = allMatches.filter(m => m.date === tomorrowStr);
-
-    let shown, label;
-    if (todayMatches.length > 0) {
-      shown = todayMatches; label = 'Hoy';
-    } else if (yesterdayMatches.length > 0) {
-      shown = yesterdayMatches; label = 'Ayer';
-    } else if (tomorrowMatches.length > 0) {
-      shown = tomorrowMatches; label = 'Mañana';
-    } else {
-      shown = []; label = '';
-    }
-
-    if (shown.length === 0) {
-      contentEl.innerHTML = '<div class="mundial-error">No hay partidos para mostrar hoy.</div>';
-      mundialLoaded = true;
-      return;
-    }
-
-    let html = `<div class="mundial-panel-title" style="margin-bottom:8px;color:#aaa">${label} · ${shown.length} partido${shown.length>1?'s':''}</div>`;
-
-    shown.forEach(m => {
-      // score is { ft: [g1, g2] }
-      const ft = m.score && m.score.ft;
-      const hasScore = Array.isArray(ft);
-      const scoreStr = hasScore ? `${ft[0]} — ${ft[1]}` : 'vs';
-      // Convert match time to Chile time (UTC-4)
-      // Format: "12:00 UTC-5" or "20:00 UTC-6"
-      let timeChile = '';
-      if (m.time) {
-        const timeStr = m.time || '';
-        const timeMatch = timeStr.match(/(\d{1,2}):(\d{2})\s*UTC([+-]\d+)/);
-        if (timeMatch) {
-          const hh = parseInt(timeMatch[1]);
-          const mm = parseInt(timeMatch[2]);
-          const utcOffset = parseInt(timeMatch[3]); // e.g. -5, -6, -4
-          // Convert to UTC first, then to Chile (UTC-4)
-          const totalMinUTC = hh * 60 + mm - (utcOffset * 60);
-          const totalMinChile = totalMinUTC + (-4 * 60); // Chile is UTC-4
-          const ch = ((Math.floor(totalMinChile / 60) % 24) + 24) % 24;
-          const cm = ((totalMinChile % 60) + 60) % 60;
-          timeChile = `${String(ch).padStart(2,'0')}:${String(cm).padStart(2,'0')} hrs`;
-        }
-      }
-      const statusHtml = hasScore
-        ? '<span class="match-status status-ft">FT</span>'
-        : `<span class="match-status status-upcoming">${timeChile}</span>`;
-
-      const t1 = m.team1 || '';
-      const t2 = m.team2 || '';
-
-      html += `<div class="match-card">
-        <div class="match-teams">
-          <div class="match-team">
-            <span class="match-flag">${getFlag(t1)}</span>
-            <span class="match-team-name">${t1}</span>
-          </div>
-          <div class="match-score">
-            <span class="match-score-num">${scoreStr}</span>
-            ${statusHtml}
-          </div>
-          <div class="match-team">
-            <span class="match-flag">${getFlag(t2)}</span>
-            <span class="match-team-name">${t2}</span>
-          </div>
+    match.teams.forEach((team, ti) => {
+      const myVote = voted === team.id;
+      const vcount = ti === 0 ? v1 : v2;
+      const pct = ti === 0 ? pct1 : pct2;
+      const disabled = !canVote ? 'disabled' : '';
+      html += `<div>
+        <button class="vote-btn${myVote ? ' voted' : ''}${!canVote ? ' disabled' : ''}"
+          onclick="${canVote ? `vote('${match.id}','${team.id}')` : ''}"
+          ${disabled}>
+          <span class="vote-flag">${team.flag}</span>
+          <span class="vote-name">${team.name}</span>
+          <span class="vote-count">${vcount} voto${vcount !== 1 ? 's' : ''}</span>
+        </button>
+        <div class="vote-bar-wrap">
+          <div class="vote-bar vote-bar-${ti+1}" style="width:${pct}%"></div>
         </div>
-        <div class="match-group" style="font-size:10px;color:#666;min-width:55px;text-align:right">${(m.group||m.round||'').replace('Group ','Grupo ')}</div>
+        <div class="vote-pct" style="color:${ti===0?'#e8c840':'#4a90d9'};text-align:center">${pct}%</div>
       </div>`;
     });
 
-    contentEl.innerHTML = html;
-    mundialLoaded = true;
-  } catch(e) {
-    contentEl.innerHTML = '<div class="mundial-error">No se pudo cargar los partidos.<br>Intenta más tarde.</div>';
-  }
+    html += `</div></div>`;
+  });
+
+  html += `<div class="vote-remaining">${remaining > 0 ? `Te quedan ${remaining} voto${remaining!==1?'s':''} hoy` : 'Ya usaste tus 3 votos de hoy. Vuelve mañana.'}</div>`;
+
+  document.getElementById('mundial-content').innerHTML = html;
 }
 
 // ── TOOLTIP POSITIONING ──────────────────────────────────────
