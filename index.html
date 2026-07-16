@@ -130,9 +130,11 @@
 
   .state-msg { text-align: center; padding: 40px 20px; color: var(--gray-text); font-size: 15px; line-height: 1.6; }
   /* TOOLTIPS */
-  .info-icon { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; background: rgba(255,255,255,0.15); color: #fff; font-size: 10px; font-weight: 700; cursor: pointer; margin-left: 4px; position: relative; vertical-align: middle; border: 1px solid rgba(255,255,255,0.3); flex-shrink: 0; }
+  .info-icon { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; background: rgba(0,0,0,0.08); color: #666; font-size: 10px; font-weight: 700; cursor: pointer; margin-left: 4px; position: relative; vertical-align: middle; border: 1px solid #ccc; flex-shrink: 0; user-select: none; }
   .info-icon-dark { background: rgba(0,0,0,0.08); color: #666; border: 1px solid #ccc; }
-  .tooltip-box { display: none; position: fixed; background: #1a1a1a; color: #fff; font-size: 12px; line-height: 1.5; padding: 10px 12px; border-radius: 8px; width: 220px; z-index: 9999; font-family: 'Barlow', sans-serif; font-weight: 400; box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+  .tooltip-box { display: none; position: absolute; left: 50%; transform: translateX(-50%); top: calc(100% + 8px); background: #1a1a1a; color: #fff; font-size: 12px; line-height: 1.6; padding: 10px 12px; border-radius: 8px; width: 240px; z-index: 9999; font-family: 'Barlow', sans-serif; font-weight: 400; box-shadow: 0 4px 16px rgba(0,0,0,0.3); pointer-events: none; }
+  .tooltip-box::before { content: ''; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); border: 6px solid transparent; border-bottom-color: #1a1a1a; }
+  @media (hover: hover) { .info-icon:hover .tooltip-box { display: block; } }
   .info-icon.active .tooltip-box { display: block; }
 
   /* CLIMA AVISO DIA */
@@ -492,7 +494,7 @@ function render() {
         <span class="day-name">${DIAS[d.getDay()]}</span>
         <span class="day-date">${d.getDate()} de ${MESES[d.getMonth()]}</span>
         ${isToday ? '<span class="today-badge">HOY</span>' : ''}
-        ${rain ? `<span class="rain-badge">🌧️ <a href="${METEORED_URL}" target="_blank" style="color:var(--gray-text);text-decoration:underline;text-underline-offset:2px;">Probabilidad de lluvia</a><span class="info-icon info-icon-dark" >i<div class="tooltip-box">Ante pronóstico de lluvia significativa, solicitamos abono el día anterior para confirmar tu reserva. El estado de las canchas puede verse afectado. Si se inundan, avisaremos con anticipación.</div></span></span>` : ''}
+        ${rain ? `<span class="rain-badge">🌧️ <a href="${METEORED_URL}" target="_blank" style="color:var(--gray-text);text-decoration:underline;text-underline-offset:2px;">Probabilidad de lluvia</a><span class="info-icon info-icon-dark" >i<div class="tooltip-box">Ante pronóstico de lluvia, solicitamos abono el día anterior para confirmar tu reserva. El estado de las canchas puede verse afectado si la lluvia es muy abundante. Si se inundan, nos comunicaremos contigo.</div></span></span>` : ''}
         ${!rain && hasLightRain(dk) ? `<span class="rain-light-badge">🌦️ Lluvia leve prevista — las canchas estarán en buenas condiciones<span class="info-icon" style="background:rgba(37,99,235,0.15);color:#2563eb;border-color:#93c5fd;" >i<div class="tooltip-box">Se esperan lluvias leves que no afectarán el estado de las canchas. Los partidos se juegan con normalidad.</div></span></span>` : ''}
         ${!rain && hasLightRain(dk) ? `<span class="rain-light-badge">🌦️ Lluvia leve prevista — las canchas estarán en buenas condiciones</span>` : ''}
       </div>`;
@@ -732,27 +734,17 @@ async function loadMundial() {
 }
 
 // ── TOOLTIP POSITIONING ──────────────────────────────────────
+// On mobile (no hover), toggle on click
 document.addEventListener('click', function(e) {
   const icon = e.target.closest('.info-icon');
   if (icon) {
     e.stopPropagation();
-    const box = icon.querySelector('.tooltip-box');
-    if (!box) return;
-    // Toggle active
+    // Only use click toggle on touch devices
+    const isTouch = window.matchMedia('(hover: none)').matches;
+    if (!isTouch) return;
     const isActive = icon.classList.contains('active');
     document.querySelectorAll('.info-icon.active').forEach(i => i.classList.remove('active'));
-    if (!isActive) {
-      icon.classList.add('active');
-      // Position tooltip
-      const rect = icon.getBoundingClientRect();
-      box.style.display = 'block';
-      const bw = box.offsetWidth;
-      let left = rect.left + rect.width/2 - bw/2;
-      if (left < 8) left = 8;
-      if (left + bw > window.innerWidth - 8) left = window.innerWidth - bw - 8;
-      box.style.left = left + 'px';
-      box.style.top = (rect.bottom + 8) + 'px';
-    }
+    if (!isActive) icon.classList.add('active');
   } else {
     document.querySelectorAll('.info-icon.active').forEach(i => i.classList.remove('active'));
   }
