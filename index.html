@@ -600,8 +600,9 @@ function hideInstall(e) {
 // ── MUNDIAL VOTACION ─────────────────────────────────────────
 let mundialLoaded = false;
 
-const VOTE_KEY = 'cdv_mundial_votes';
+const FIREBASE_URL = 'https://cdv-vaccarezza-default-rtdb.firebaseio.com';
 const MAX_VOTES_PER_DAY = 3;
+const LOCAL_KEY = 'cdv_vote_local';
 
 const MATCHES = [
   {
@@ -622,83 +623,93 @@ const MATCHES = [
   }
 ];
 
-function getVoteState() {
-  try {
-    const raw = localStorage.getItem(VOTE_KEY);
-    if (!raw) return { votes: {}, counts: {}, date: '' };
-    return JSON.parse(raw);
-  } catch(e) { return { votes: {}, counts: {}, date: '' }; }
-}
-
-function saveVoteState(state) {
-  try { localStorage.setItem(VOTE_KEY, JSON.stringify(state)); } catch(e) {}
-}
-
 function todayStr() {
   const d = new Date();
-  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
 }
 
-function getSharedCounts() {
-  // Use sessionStorage to simulate shared counts (resets on new session)
-  // In production this would be a backend, but for now we show local votes
+function getLocalState() {
   try {
-    const raw = sessionStorage.getItem('cdv_shared_counts');
-    if (!raw) return {};
-    return JSON.parse(raw);
+    const raw = localStorage.getItem(LOCAL_KEY);
+    if (!raw) return { date: '', dailyCount: 0, votes: {} };
+    const s = JSON.parse(raw);
+    if (s.date !== todayStr()) { s.dailyCount = 0; s.votes = {}; s.date = todayStr(); }
+    return s;
+  } catch(e) { return { date: todayStr(), dailyCount: 0, votes: {} }; }
+}
+
+function saveLocalState(s) {
+  try { localStorage.setItem(LOCAL_KEY, JSON.stringify(s)); } catch(e) {}
+}
+
+async function fetchCounts() {
+  try {
+    const res = await fetch(`${FIREBASE_URL}/votes.json`);
+    const data = await res.json();
+    return data || {};
   } catch(e) { return {}; }
+}
+
+async function incrementVote(matchId, teamId) {
+  try {
+    // Read current value
+    const res = await fetch(`${FIREBASE_URL}/votes/${matchId}/${teamId}.json`);
+    const current = await res.json();
+    const newVal = (current || 0) + 1;
+    // Write new value
+    await fetch(`${FIREBASE_URL}/votes/${matchId}/${teamId}.json`, {
+      method: 'PUT',
+      body: JSON.stringify(newVal)
+    });
+    return true;
+  } catch(e) { return false; }
 }
 
 function toggleMundial() {
   const panel = document.getElementById('mundial-panel');
   panel.classList.toggle('open');
   if (panel.classList.contains('open') && !mundialLoaded) {
-    renderVoting();
     mundialLoaded = true;
+    renderVoting();
+  } else if (panel.classList.contains('open')) {
+    renderVoting();
   }
 }
 
-function vote(matchId, teamId) {
-  const state = getVoteState();
-  const today = todayStr();
+async function vote(matchId, teamId) {
+  const state = getLocalState();
+  if (state.dailyCount >= MAX_VOTES_PER_DAY) return;
 
-  // Reset daily count if new day
-  if (state.date !== today) {
-    state.date = today;
-    state.dailyCount = 0;
-  }
-
-  if ((state.dailyCount || 0) >= MAX_VOTES_PER_DAY) return;
-
-  // Register vote
-  if (!state.counts) state.counts = {};
-  state.counts[matchId] = state.counts[matchId] || {};
-  state.counts[matchId][teamId] = (state.counts[matchId][teamId] || 0) + 1;
-  state.votes = state.votes || {};
   state.votes[matchId] = teamId;
-  state.dailyCount = (state.dailyCount || 0) + 1;
+  state.dailyCount++;
+  state.date = todayStr();
+  saveLocalState(state);
 
-  saveVoteState(state);
+  // Show optimistic update
+  renderVoting();
+
+  // Send to Firebase
+  await incrementVote(matchId, teamId);
+
+  // Re-render with real counts
   renderVoting();
 }
 
-function renderVoting() {
-  const state = getVoteState();
-  const today = todayStr();
-  if (state.date !== today) { state.dailyCount = 0; }
+async function renderVoting() {
+  const state = getLocalState();
   const remaining = MAX_VOTES_PER_DAY - (state.dailyCount || 0);
-  const counts = state.counts || {};
+  const counts = await fetchCounts();
 
   let html = '';
   MATCHES.forEach((match, mi) => {
-    const mc = counts[match.id] || {};
+    const mc = (counts[match.id]) || {};
     const v1 = mc[match.teams[0].id] || 0;
     const v2 = mc[match.teams[1].id] || 0;
     const total = v1 + v2;
     const pct1 = total > 0 ? Math.round(v1/total*100) : 50;
-    const pct2 = total > 0 ? Math.round(v2/total*100) : 50;
+    const pct2 = 100 - pct1;
     const voted = state.votes && state.votes[match.id];
-    const canVote = remaining > 0;
+    const canVote = remaining > 0 && !voted;
 
     if (mi > 0) html += `<div class="vote-divider"></div>`;
 
@@ -710,11 +721,9 @@ function renderVoting() {
       const myVote = voted === team.id;
       const vcount = ti === 0 ? v1 : v2;
       const pct = ti === 0 ? pct1 : pct2;
-      const disabled = !canVote ? 'disabled' : '';
       html += `<div>
         <button class="vote-btn${myVote ? ' voted' : ''}${!canVote ? ' disabled' : ''}"
-          onclick="${canVote ? `vote('${match.id}','${team.id}')` : ''}"
-          ${disabled}>
+          ${canVote ? `onclick="vote('${match.id}','${team.id}')"` : ''}>
           <span class="vote-flag">${team.flag}</span>
           <span class="vote-name">${team.name}</span>
           <span class="vote-count">${vcount} voto${vcount !== 1 ? 's' : ''}</span>
@@ -729,7 +738,9 @@ function renderVoting() {
     html += `</div></div>`;
   });
 
-  html += `<div class="vote-remaining">${remaining > 0 ? `Te quedan ${remaining} voto${remaining!==1?'s':''} hoy` : 'Ya usaste tus 3 votos de hoy. Vuelve mañana.'}</div>`;
+  html += `<div class="vote-remaining">${remaining > 0
+    ? `Te quedan ${remaining} voto${remaining!==1?'s':''} hoy`
+    : 'Ya usaste tus 3 votos de hoy. Vuelve mañana.'}</div>`;
 
   document.getElementById('mundial-content').innerHTML = html;
 }
