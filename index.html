@@ -170,6 +170,41 @@
   .vote-divider { text-align: center; color: #555; font-size: 12px; margin: 4px 0 12px; border-top: 1px solid #2a3a5e; padding-top: 12px; }
   .vote-remaining { text-align: center; font-size: 11px; color: #666; margin-top: 10px; }
   .mundial-loading { text-align: center; color: #888; font-size: 13px; padding: 16px; }
+  /* RIVAL FINDER */
+  .rival-notice { background: #fff9e6; border: 1px solid #f5d87a; border-radius: 8px; padding: 10px 12px; font-size: 12px; color: #7a5c00; margin-bottom: 14px; line-height: 1.6; }
+  .rival-form { background: #16213e; border-radius: 10px; padding: 14px; margin-bottom: 14px; }
+  .rival-form-title { font-size: 13px; font-weight: 700; color: #e8c840; margin-bottom: 12px; }
+  .rival-field { margin-bottom: 10px; }
+  .rival-field label { display: block; font-size: 11px; color: #aaa; margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .rival-field input, .rival-field select { width: 100%; padding: 8px 10px; background: #0d1117; border: 1px solid #2a3a5e; border-radius: 6px; color: #fff; font-size: 13px; font-family: 'Barlow', sans-serif; outline: none; }
+  .rival-field input:focus, .rival-field select:focus { border-color: #e8c840; }
+  .rival-field select option { background: #1a1a2e; }
+  .rival-fields-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .rival-submit { width: 100%; padding: 10px; background: #2dbe82; color: #fff; border: none; border-radius: 8px; font-family: 'Barlow', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 4px; transition: background 0.15s; }
+  .rival-submit:hover { background: #1a8a5a; }
+  .rival-submit:disabled { background: #444; cursor: default; }
+  .rival-list-title { font-size: 12px; color: #aaa; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; font-weight: 600; }
+  .rival-card { background: #16213e; border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; border: 1px solid #2a3a5e; }
+  .rival-card:last-child { margin-bottom: 0; }
+  .rival-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .rival-team { font-size: 15px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
+  .rival-color-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.2); }
+  .rival-level { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+  .level-amateur { background: #1d4ed8; color: #fff; }
+  .level-intermedio { background: #d97706; color: #fff; }
+  .level-avanzado { background: #dc2626; color: #fff; }
+  .rival-datetime { font-size: 13px; color: #e8c840; font-weight: 600; margin-bottom: 6px; }
+  .rival-wa-btn { display: inline-flex; align-items: center; gap: 6px; background: #25d366; color: #fff; border: none; border-radius: 6px; padding: 7px 12px; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; margin-top: 4px; }
+  .rival-wa-btn svg { width: 14px; height: 14px; fill: #fff; }
+  .rival-empty { text-align: center; color: #666; font-size: 13px; padding: 20px 0; }
+  .rival-error { color: #e05555; font-size: 12px; margin-top: 6px; }
+  .nivel-options { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+  .nivel-opt { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #ddd; cursor: pointer; }
+  .nivel-opt input[type=checkbox] { width: 15px; height: 15px; cursor: pointer; accent-color: #2dbe82; flex-shrink: 0; }
+  .nivel-desc { font-size: 11px; color: #888; }
+  .nivel-otro-wrap { flex-wrap: wrap; }
+  .rival-success { color: #2dbe82; font-size: 12px; margin-top: 6px; font-weight: 600; }
+
 
   @media (max-width: 480px) {
     .header-notice { display: none; }
@@ -188,14 +223,11 @@
     <div class="top">Complejo Deportivo</div>
     <div class="bottom">Vaccarezza</div>
   </div>
-  <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-    <div class="header-notice">📋 Solo para ver disponibilidad.<br>Para reservar, usa WhatsApp.</div>
-    <button class="mundial-btn" onclick="toggleMundial()">⚽ Mundial 2026 <span class="mundial-badge">🗳️ VOTA AQUÍ</span></button>
-  </div>
+  <button class="mundial-btn" onclick="toggleRival()">⚽ Buscar Rival <span class="mundial-badge">¡NUEVO!</span></button>
 </div>
 
 <div class="mundial-panel" id="mundial-panel">
-  <div class="mundial-panel-title">🏆 FIFA World Cup 2026 — ¿Quién ganará?</div>
+  <div class="mundial-panel-title">⚽ Buscar Rival — CDV Vaccarezza</div>
   <div id="mundial-content"><div class="mundial-loading">Cargando...</div></div>
 </div>
 
@@ -597,150 +629,224 @@ function hideInstall(e) {
 }
 
 
-// ── MUNDIAL VOTACION ─────────────────────────────────────────
-let mundialLoaded = false;
+// ── RIVAL FINDER ─────────────────────────────────────────────
+const RIVAL_DB = 'https://cdv-vaccarezza-default-rtdb.firebaseio.com/rivales';
+const RIVAL_LOCAL_KEY = 'cdv_rival_local';
+const MAX_RIVAL_PER_DAY = 3;
 
-const FIREBASE_URL = 'https://cdv-vaccarezza-default-rtdb.firebaseio.com';
-const MAX_VOTES_PER_DAY = 2;
-const LOCAL_KEY = 'cdv_vote_local';
-
-const MATCHES = [
-  {
-    id: 'tercero',
-    label: '🥉 Tercer y cuarto lugar — Sábado',
-    teams: [
-      { id: 'fra', name: 'Francia', flag: '🇫🇷' },
-      { id: 'eng', name: 'Inglaterra', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿' }
-    ]
-  },
-  {
-    id: 'final',
-    label: '🥇 Final — Domingo',
-    teams: [
-      { id: 'arg', name: 'Argentina', flag: '🇦🇷' },
-      { id: 'esp', name: 'España', flag: '🇪🇸' }
-    ]
-  }
-];
+const COLORS_MAP = {
+  'Blanco': '#ffffff', 'Negro': '#1a1a1a', 'Rojo': '#dc2626',
+  'Azul': '#2563eb', 'Verde': '#16a34a', 'Amarillo': '#eab308',
+  'Naranja': '#f97316', 'Morado': '#9333ea', 'Celeste': '#0ea5e9',
+  'Gris': '#6b7280', 'Café': '#92400e', 'Rosa': '#ec4899'
+};
 
 function todayStr() {
   const d = new Date();
-  return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
-function getLocalState() {
+function tomorrowStr() {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function getRivalLocal() {
   try {
-    const raw = localStorage.getItem(LOCAL_KEY);
-    if (!raw) return { date: '', dailyCount: 0, votes: {} };
+    const raw = localStorage.getItem(RIVAL_LOCAL_KEY);
+    if (!raw) return { date: todayStr(), count: 0 };
     const s = JSON.parse(raw);
-    if (s.date !== todayStr()) { s.dailyCount = 0; s.votes = {}; s.date = todayStr(); }
+    if (s.date !== todayStr()) return { date: todayStr(), count: 0 };
     return s;
-  } catch(e) { return { date: todayStr(), dailyCount: 0, votes: {} }; }
+  } catch(e) { return { date: todayStr(), count: 0 }; }
 }
 
-function saveLocalState(s) {
-  try { localStorage.setItem(LOCAL_KEY, JSON.stringify(s)); } catch(e) {}
+function saveRivalLocal(s) {
+  try { localStorage.setItem(RIVAL_LOCAL_KEY, JSON.stringify(s)); } catch(e) {}
 }
 
-async function fetchCounts() {
-  try {
-    const res = await fetch(`${FIREBASE_URL}/votes.json`);
-    const data = await res.json();
-    return data || {};
-  } catch(e) { return {}; }
+function handleNivelCheck(cb) {
+  const checked = document.querySelectorAll('input[name=nivel]:checked');
+  const errEl = document.getElementById('nivel-error');
+  if (checked.length > 2) {
+    cb.checked = false;
+    errEl.style.display = 'block';
+    setTimeout(() => errEl.style.display = 'none', 2000);
+    return;
+  }
+  // Show/hide otro text
+  const otroCheck = document.getElementById('nivel-otro-check');
+  const otroText  = document.getElementById('nivel-otro-text');
+  if (otroText) otroText.style.display = otroCheck && otroCheck.checked ? 'inline-block' : 'none';
 }
 
-async function incrementVote(matchId, teamId) {
-  try {
-    // Read current value
-    const res = await fetch(`${FIREBASE_URL}/votes/${matchId}/${teamId}.json`);
-    const current = await res.json();
-    const newVal = (current || 0) + 1;
-    // Write new value
-    await fetch(`${FIREBASE_URL}/votes/${matchId}/${teamId}.json`, {
-      method: 'PUT',
-      body: JSON.stringify(newVal)
-    });
-    return true;
-  } catch(e) { return false; }
-}
-
-function toggleMundial() {
+function toggleRival() {
   const panel = document.getElementById('mundial-panel');
   panel.classList.toggle('open');
-  if (panel.classList.contains('open') && !mundialLoaded) {
-    mundialLoaded = true;
-    renderVoting();
-  } else if (panel.classList.contains('open')) {
-    renderVoting();
+  if (panel.classList.contains('open')) renderRival();
+}
+
+async function fetchRivales() {
+  try {
+    const res = await fetch(`${RIVAL_DB}.json`);
+    const data = await res.json();
+    if (!data) return [];
+    // Convert to array and filter only today and tomorrow
+    const valid = [todayStr(), tomorrowStr()];
+    return Object.entries(data)
+      .map(([id, v]) => ({ id, ...v }))
+      .filter(r => valid.includes(r.fecha))
+      .sort((a, b) => a.fecha.localeCompare(b.fecha) || a.hora.localeCompare(b.hora));
+  } catch(e) { return []; }
+}
+
+async function publishRival() {
+  const local = getRivalLocal();
+  if (local.count >= MAX_RIVAL_PER_DAY) {
+    document.getElementById('rival-msg').innerHTML = '<span class="rival-error">Ya publicaste 3 avisos hoy.</span>';
+    return;
   }
+
+  const nombre = document.getElementById('r-nombre').value.trim();
+  const color  = document.getElementById('r-color').value.trim();
+  const fecha  = document.getElementById('r-fecha').value;
+  const hora   = document.getElementById('r-hora').value;
+  const wa     = document.getElementById('r-wa').value.trim().replace(/\D/g,'');
+
+  // Get checked niveles (max 2)
+  const checkedNiveles = Array.from(document.querySelectorAll('input[name=nivel]:checked'));
+  let nivelArr = checkedNiveles.map(cb => {
+    if (cb.value === 'Otro') {
+      const txt = document.getElementById('nivel-otro-text').value.trim();
+      return txt || 'Otro';
+    }
+    return cb.value;
+  });
+  const nivel = nivelArr.join(' / ');
+
+  if (!nombre || !color || !fecha || !hora || !nivel || !wa) {
+    document.getElementById('rival-msg').innerHTML = '<span class="rival-error">Por favor completa todos los campos.</span>';
+    return;
+  }
+  if (wa.length < 8) {
+    document.getElementById('rival-msg').innerHTML = '<span class="rival-error">Ingresa un número de WhatsApp válido.</span>';
+    return;
+  }
+
+  const btn = document.getElementById('rival-btn');
+  btn.disabled = true;
+  btn.textContent = 'Publicando...';
+
+  try {
+    await fetch(`${RIVAL_DB}.json`, {
+      method: 'POST',
+      body: JSON.stringify({ nombre, color, fecha, hora, nivel, wa, ts: Date.now() })
+    });
+    local.count++;
+    saveRivalLocal(local);
+    document.getElementById('rival-msg').innerHTML = '<span class="rival-success">✅ ¡Publicado! Ya apareces en la lista.</span>';
+    document.getElementById('r-nombre').value = '';
+    document.getElementById('r-wa').value = '';
+    renderRival();
+  } catch(e) {
+    document.getElementById('rival-msg').innerHTML = '<span class="rival-error">Error al publicar. Intenta de nuevo.</span>';
+  }
+  btn.disabled = false;
+  btn.textContent = 'Publicar aviso';
 }
 
-async function vote(matchId, teamId) {
-  const state = getLocalState();
-  if (state.dailyCount >= MAX_VOTES_PER_DAY) return;
-
-  state.votes[matchId] = teamId;
-  state.dailyCount++;
-  state.date = todayStr();
-  saveLocalState(state);
-
-  // Show optimistic update
-  renderVoting();
-
-  // Send to Firebase
-  await incrementVote(matchId, teamId);
-
-  // Re-render with real counts
-  renderVoting();
+function waRivalMsg(r) {
+  const d = new Date(r.fecha + 'T00:00:00');
+  const dias = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+  const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const label = `${dias[d.getDay()]} ${d.getDate()} de ${meses[d.getMonth()]}`;
+  const msg = `Hola, vimos que buscan rival para el ${label} a las ${r.hora}. Nos interesa jugar.\n\nMi nombre es: `;
+  return `https://wa.me/56${r.wa}?text=${encodeURIComponent(msg)}`;
 }
 
-async function renderVoting() {
-  const state = getLocalState();
-  const remaining = MAX_VOTES_PER_DAY - (state.dailyCount || 0);
-  const counts = await fetchCounts();
+async function renderRival() {
+  const local = getRivalLocal();
+  const remaining = MAX_RIVAL_PER_DAY - local.count;
+  const todayD = todayStr();
+  const tmrwD  = tomorrowStr();
 
-  let html = '';
-  MATCHES.forEach((match, mi) => {
-    const mc = (counts[match.id]) || {};
-    const v1 = mc[match.teams[0].id] || 0;
-    const v2 = mc[match.teams[1].id] || 0;
-    const total = v1 + v2;
-    const pct1 = total > 0 ? Math.round(v1/total*100) : 50;
-    const pct2 = 100 - pct1;
-    const voted = state.votes && state.votes[match.id];
-    const canVote = remaining > 0 && !voted;
+  // Date options
+  const d0 = new Date(todayD + 'T00:00:00');
+  const d1 = new Date(tmrwD + 'T00:00:00');
+  const dias = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 
-    if (mi > 0) html += `<div class="vote-divider"></div>`;
+  const colorOpts = Object.keys(COLORS_MAP).map(c => `<option value="${c}">${c}</option>`).join('');
+  const fechaOpts = [
+    `<option value="${todayD}">Hoy — ${dias[d0.getDay()]} ${d0.getDate()} ${meses[d0.getMonth()]}</option>`,
+    `<option value="${tmrwD}">Mañana — ${dias[d1.getDay()]} ${d1.getDate()} ${meses[d1.getMonth()]}</option>`
+  ].join('');
 
-    html += `<div class="vote-section">
-      <div class="vote-label">${match.label}</div>
-      <div class="vote-teams">`;
+  const horaOpts = [18,19,20,21,22,23].map(h => `<option value="${h}:00">${h}:00</option>`).join('');
 
-    match.teams.forEach((team, ti) => {
-      const myVote = voted === team.id;
-      const vcount = ti === 0 ? v1 : v2;
-      const pct = ti === 0 ? pct1 : pct2;
-      html += `<div>
-        <button class="vote-btn${myVote ? ' voted' : ''}${!canVote ? ' disabled' : ''}"
-          ${canVote ? `onclick="vote('${match.id}','${team.id}')"` : ''}>
-          <span class="vote-flag">${team.flag}</span>
-          <span class="vote-name">${team.name}</span>
-          <span class="vote-count">${vcount} voto${vcount !== 1 ? 's' : ''}</span>
-        </button>
-        <div class="vote-bar-wrap">
-          <div class="vote-bar vote-bar-${ti+1}" style="width:${pct}%"></div>
+  let html = `
+  <div class="rival-notice">
+    📌 Después de coordinar con el rival, <strong>uno de los dos equipos debe escribirnos para reservar la cancha.</strong>
+  </div>
+  <div class="rival-form">
+    <div class="rival-form-title">📢 Publicar aviso (${remaining} disponible${remaining!==1?'s':''} hoy)</div>
+    <div class="rival-field"><label>Tu nombre</label><input id="r-nombre" type="text" placeholder="Ej: Juan Pérez"></div>
+    <div class="rival-fields-row">
+      <div class="rival-field"><label>Color del equipo</label><input id="r-color" type="text" placeholder="Ej: Azul, Rojo y blanco..."></div>
+    <div class="rival-field">
+      <label>Nivel (máximo 2 opciones)</label>
+      <div class="nivel-options">
+        <label class="nivel-opt"><input type="checkbox" name="nivel" value="Amateur" onchange="handleNivelCheck(this)"> Amateur <span class="nivel-desc">juego recreativo</span></label>
+        <label class="nivel-opt"><input type="checkbox" name="nivel" value="Intermedio" onchange="handleNivelCheck(this)"> Intermedio <span class="nivel-desc">juegan regularmente, algo de experiencia</span></label>
+        <label class="nivel-opt"><input type="checkbox" name="nivel" value="Competitivo" onchange="handleNivelCheck(this)"> Competitivo <span class="nivel-desc">juegan todas las semanas, mucha experiencia</span></label>
+        <label class="nivel-opt"><input type="checkbox" name="nivel" value="Sub-23" onchange="handleNivelCheck(this)"> Sub-23 <span class="nivel-desc">máximo 23 años</span></label>
+        <label class="nivel-opt"><input type="checkbox" name="nivel" value="+30" onchange="handleNivelCheck(this)"> +30 <span class="nivel-desc">mayores de 30 años</span></label>
+        <label class="nivel-opt"><input type="checkbox" name="nivel" value="+40" onchange="handleNivelCheck(this)"> +40 <span class="nivel-desc">mayores de 40 años</span></label>
+        <label class="nivel-opt"><input type="checkbox" name="nivel" value="Mixto" onchange="handleNivelCheck(this)"> Mixto <span class="nivel-desc">hombres y mujeres</span></label>
+        <label class="nivel-opt"><input type="checkbox" name="nivel" value="Femenino" onchange="handleNivelCheck(this)"> Femenino <span class="nivel-desc">solo mujeres</span></label>
+        <label class="nivel-opt nivel-otro-wrap"><input type="checkbox" name="nivel" value="Otro" id="nivel-otro-check" onchange="handleNivelCheck(this)"> Otro: <input type="text" id="nivel-otro-text" placeholder="Escribe aquí..." style="display:none;margin-left:6px;background:#0d1117;border:1px solid #2a3a5e;border-radius:4px;color:#fff;padding:2px 6px;font-size:12px;width:120px"></label>
+      </div>
+      <div id="nivel-error" style="font-size:11px;color:#e05555;margin-top:4px;display:none">Máximo 2 opciones</div>
+    </div
+    </div>
+    <div class="rival-fields-row">
+      <div class="rival-field"><label>Fecha</label><select id="r-fecha">${fechaOpts}</select></div>
+      <div class="rival-field"><label>Hora</label><select id="r-hora">${horaOpts}</select></div>
+    </div>
+    <div class="rival-field"><label>Tu WhatsApp (solo números, sin +56)</label><input id="r-wa" type="tel" placeholder="Ej: 912345678"></div>
+    <button class="rival-submit" id="rival-btn" onclick="publishRival()"${remaining<=0?' disabled':''}>Publicar aviso</button>
+    <div id="rival-msg"></div>
+  </div>`;
+
+  // List
+  const rivales = await fetchRivales();
+  if (rivales.length === 0) {
+    html += `<div class="rival-empty">No hay avisos publicados aún.<br>¡Sé el primero!</div>`;
+  } else {
+    html += `<div class="rival-list-title">Equipos buscando rival</div>`;
+    rivales.forEach(r => {
+      const dotColor = COLORS_MAP[r.color] || '#888';
+      const levelClass = 'level-intermedio';
+      const d = new Date(r.fecha + 'T00:00:00');
+      const esDia = r.fecha === todayD ? 'Hoy' : 'Mañana';
+      const dateLabel = `${esDia} — ${dias[d.getDay()]} ${d.getDate()} de ${meses[d.getMonth()]} a las ${r.hora}`;
+      html += `<div class="rival-card">
+        <div class="rival-card-header">
+          <div class="rival-team">
+            <div class="rival-color-dot" style="background:${dotColor}"></div>
+            ${r.nombre}
+          </div>
+          <span class="rival-level ${levelClass}">${r.nivel}</span>
         </div>
-        <div class="vote-pct" style="color:${ti===0?'#e8c840':'#4a90d9'};text-align:center">${pct}%</div>
+        <div class="rival-datetime">📅 ${dateLabel}</div>
+        <a class="rival-wa-btn" href="${waRivalMsg(r)}" target="_blank">
+          <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Me interesa jugar
+        </a>
       </div>`;
     });
-
-    html += `</div></div>`;
-  });
-
-  html += `<div class="vote-remaining">${remaining > 0
-    ? `Te quedan ${remaining} voto${remaining!==1?'s':''} hoy`
-    : 'Ya usaste tus 2 votos de hoy. Vuelve mañana.'}</div>`;
+  }
 
   document.getElementById('mundial-content').innerHTML = html;
 }
