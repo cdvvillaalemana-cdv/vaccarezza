@@ -198,7 +198,8 @@ let state = {
   activeMonth: null,
   editing: null,         // {schoolId, date, blocks, isExtra}
   formBloques: [],       // bloques being edited in the escuela modal
-  editingSchoolId: null  // null = adding new
+  editingSchoolId: null, // null = adding new
+  loadError: null        // mensaje de error si falló la carga desde Firebase
 };
 
 // ── UTILIDADES ────────────────────────────────────────────────
@@ -273,7 +274,10 @@ function checkPin() {
 // ── FIREBASE I/O ──────────────────────────────────────────────
 async function fetchJSON(url) {
   const res = await fetch(url);
-  if (!res.ok) throw new Error('Error de red');
+  if (!res.ok) {
+    const body = await res.text().catch(()=> '');
+    throw new Error(`HTTP ${res.status} ${res.statusText}${body ? ' — ' + body : ''}`);
+  }
   return res.json();
 }
 
@@ -282,10 +286,12 @@ async function loadConfig() {
     const data = await fetchJSON(`${DB_BASE}/escuelas/config.json`);
     if (!data) {
       await seedInitialData();
-      return await fetchJSON(`${DB_BASE}/escuelas/config.json`) || {};
+      const seeded = await fetchJSON(`${DB_BASE}/escuelas/config.json`);
+      if (!seeded) throw new Error('La base de datos no guardó la configuración inicial. Probablemente las reglas de Firebase no permiten escribir en /escuelas.');
+      return seeded;
     }
     return data;
-  } catch(e) { showToast('⚠️ Error cargando escuelas'); return {}; }
+  } catch(e) { state.loadError = e.message; return {}; }
 }
 
 async function loadFact(monthKey) {
@@ -418,6 +424,7 @@ function renderMonthTabs() {
 function switchMonth(mk) { state.activeMonth = mk; state.editing = null; render(); }
 
 function renderTotals() {
+  if (state.loadError) { $('totals-banner').innerHTML = ''; return; }
   const activeIds = Object.keys(state.schools).filter(id => state.schools[id].activa);
   const total = activeIds.reduce((sum, id) => sum + schoolTotal(id, state.activeMonth), 0);
   $('totals-banner').innerHTML = `
@@ -429,6 +436,15 @@ function renderTotals() {
 
 function renderSchools() {
   const wrap = $('schools-list');
+  if (state.loadError) {
+    wrap.innerHTML = `<div style="background:#fdecea;border:1px solid var(--red);border-radius:10px;padding:16px;color:#8a1f1f;font-size:13.5px;line-height:1.6">
+      <strong>No se pudieron cargar las escuelas.</strong><br>
+      Detalle técnico: ${state.loadError}<br><br>
+      Esto casi siempre pasa porque las reglas de Firebase (Realtime Database → pestaña Rules) no dejan leer o escribir en la ruta <code>/escuelas</code>, aunque sí dejen en <code>/rivales</code>.
+      <div style="margin-top:12px"><button class="btn-small primary" onclick="reintentarCarga()">Reintentar</button></div>
+    </div>`;
+    return;
+  }
   const ids = Object.keys(state.schools).sort((a,b) => (state.schools[a].nombre||'').localeCompare(state.schools[b].nombre||''));
   if (ids.length === 0) { wrap.innerHTML = '<div class="empty-msg">No hay escuelas cargadas todavía.</div>'; return; }
 
@@ -744,6 +760,7 @@ function copiarResumenTodas() {
 
 // ── INIT ──────────────────────────────────────────────────────
 async function initApp() {
+  state.loadError = null;
   const hoy = new Date();
   const currentKey = monthKeyOf(hoy);
   const prevKey = monthKeyOf(shiftMonth(hoy, -1));
@@ -757,6 +774,8 @@ async function initApp() {
 
   render();
 }
+
+function reintentarCarga() { initApp(); }
 
 if (sessionStorage.getItem('cdv_escuelas_unlocked') === '1') {
   $('pin-screen').style.display = 'none';
