@@ -87,7 +87,7 @@
   .wa-slot-link svg { width: 14px; height: 14px; fill: var(--green-dark); flex-shrink: 0; }
 
   .slot-price { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 600; text-align: right; white-space: nowrap; }
-  .pago-previo { display: block; font-size: 10px; font-weight: 600; color: #9333ea; background: #f3e8ff; border: 1px solid #d8b4fe; border-radius: 4px; padding: 1px 5px; margin-top: 3px; white-space: nowrap; }
+  .pago-previo { display: block; font-size: 10px; font-weight: 600; color: #9333ea; margin-top: 2px; white-space: nowrap; }
   .tier-alto .slot-price { color: #c0392b; }
   .tier-regular .slot-price { color: #7a5c00; }
   .tier-bajo .slot-price { color: var(--green-dark); }
@@ -566,7 +566,7 @@ function render() {
           <td><span class="slot-hour">${am ? '🌅 ' : ''}${hora}${am ? ' <span class="badge-am">AM</span>' : ''}</span></td>
           <td>${statusCell(ocp1, slot.fecha, hora, 'Cancha 1 (Muro)')}</td>
           <td>${statusCell(ocp2, slot.fecha, hora, 'Cancha 2 (Estacionam.)')}</td>
-          <td class="slot-price">${price.label}${parseInt(hora) === 23 ? '<span class="pago-previo">💳 Pago previo</span>' : ''}</td>
+          <td class="slot-price">${price.label}${parseInt(hora) === 23 ? '<span class="pago-previo">23 hrs: solo con pago previo</span>' : ''}</td>
         </tr>`;
       });
 
@@ -852,6 +852,10 @@ async function renderRival() {
 }
 
 // ── TOOLTIP POSITIONING ──────────────────────────────────────
+function closeTooltips() {
+  document.querySelectorAll('.info-icon.active').forEach(i => i.classList.remove('active'));
+}
+
 document.addEventListener('click', function(e) {
   const icon = e.target.closest('.info-icon');
   if (icon) {
@@ -861,10 +865,9 @@ document.addEventListener('click', function(e) {
     const box = icon.querySelector('.tooltip-box');
     if (!box) return;
     const isActive = icon.classList.contains('active');
-    document.querySelectorAll('.info-icon.active').forEach(i => i.classList.remove('active'));
+    closeTooltips();
     if (!isActive) {
       icon.classList.add('active');
-      // Position tooltip to avoid overflow
       const rect = icon.getBoundingClientRect();
       const bw = Math.min(240, window.innerWidth - 24);
       let left = rect.left + rect.width/2 - bw/2;
@@ -875,9 +878,12 @@ document.addEventListener('click', function(e) {
       box.style.top = (rect.bottom + 8) + 'px';
     }
   } else {
-    document.querySelectorAll('.info-icon.active').forEach(i => i.classList.remove('active'));
+    closeTooltips();
   }
 });
+
+// Close tooltip on scroll
+window.addEventListener('scroll', closeTooltips, { passive: true });
 
 // ── INIT ──────────────────────────────────────────────────────
 async function init() {
