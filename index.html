@@ -87,6 +87,7 @@
   .wa-slot-link svg { width: 14px; height: 14px; fill: var(--green-dark); flex-shrink: 0; }
 
   .slot-price { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 600; text-align: right; white-space: nowrap; }
+  .pago-previo { display: block; font-size: 10px; font-weight: 600; color: #9333ea; background: #f3e8ff; border: 1px solid #d8b4fe; border-radius: 4px; padding: 1px 5px; margin-top: 3px; white-space: nowrap; }
   .tier-alto .slot-price { color: #c0392b; }
   .tier-regular .slot-price { color: #7a5c00; }
   .tier-bajo .slot-price { color: var(--green-dark); }
@@ -132,7 +133,7 @@
   /* TOOLTIPS */
   .info-icon { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; background: rgba(0,0,0,0.08); color: #666; font-size: 10px; font-weight: 700; cursor: pointer; margin-left: 4px; position: relative; vertical-align: middle; border: 1px solid #ccc; flex-shrink: 0; user-select: none; }
   .info-icon-dark { background: rgba(0,0,0,0.08); color: #666; border: 1px solid #ccc; }
-  .tooltip-box { display: none; position: absolute; left: 50%; transform: translateX(-50%); top: calc(100% + 8px); background: #1a1a1a; color: #fff; font-size: 12px; line-height: 1.6; padding: 10px 12px; border-radius: 8px; width: 240px; z-index: 9999; font-family: 'Barlow', sans-serif; font-weight: 400; box-shadow: 0 4px 16px rgba(0,0,0,0.3); pointer-events: none; }
+  .tooltip-box { display: none; position: fixed; background: #1a1a1a; color: #fff; font-size: 12px; line-height: 1.6; padding: 10px 12px; border-radius: 8px; width: min(240px, calc(100vw - 24px)); z-index: 9999; font-family: 'Barlow', sans-serif; font-weight: 400; box-shadow: 0 4px 16px rgba(0,0,0,0.3); pointer-events: none; }
   .tooltip-box::before { content: ''; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); border: 6px solid transparent; border-bottom-color: #1a1a1a; }
   @media (hover: hover) { .info-icon:hover .tooltip-box { display: block; } }
   .info-icon.active .tooltip-box { display: block; }
@@ -219,10 +220,7 @@
 <body>
 
 <div class="header">
-  <div class="header-brand">
-    <div class="top">Complejo Deportivo</div>
-    <div class="bottom">Vaccarezza</div>
-  </div>
+  <img src="https://cdvvillaalemana-cdv.github.io/vaccarezza/Logo_horizontal.png" alt="Complejo Deportivo Vaccarezza" style="height:48px;object-fit:contain;">
   <button class="mundial-btn" onclick="toggleRival()">⚽ Buscar Rival <span class="mundial-badge">¡NUEVO!</span></button>
 </div>
 
@@ -533,11 +531,13 @@ function render() {
         ${isToday ? '<span class="today-badge">HOY</span>' : ''}
         ${rain ? `<span class="rain-badge">🌧️ <a href="${METEORED_URL}" target="_blank" style="color:var(--gray-text);text-decoration:underline;text-underline-offset:2px;">Probabilidad de lluvia</a><span class="info-icon info-icon-dark" >i<div class="tooltip-box">Ante pronóstico de lluvia, solicitamos abono el día anterior para confirmar tu reserva. El estado de las canchas puede verse afectado si la lluvia es muy abundante. Si se inundan, nos comunicaremos contigo.</div></span></span>` : ''}
         ${!rain && hasLightRain(dk) ? `<span class="rain-light-badge">🌦️ Lluvia leve prevista — las canchas estarán en buenas condiciones<span class="info-icon" style="background:rgba(37,99,235,0.15);color:#2563eb;border-color:#93c5fd;" >i<div class="tooltip-box">Se esperan lluvias leves que no afectarán el estado de las canchas. Los partidos se juegan con normalidad.</div></span></span>` : ''}
-        ${!rain && hasLightRain(dk) ? `<span class="rain-light-badge">🌦️ Lluvia leve prevista — las canchas estarán en buenas condiciones</span>` : ''}
       </div>`;
 
     if (feriadoDay) {
-      html += `<div class="feriado-block"><span>🚫</span>Cerrado — Feriado irrenunciable</div>`;
+      let feriadoMsg = '';
+      if (dk === '2026-09-18') feriadoMsg = '🇨🇱 Tu familia te espera de vuelta. No manejes si bebes.';
+      else if (dk === '2026-09-19') feriadoMsg = '🇨🇱 Cuídate y cuida a los tuyos, pasa las llaves.';
+      html += `<div class="feriado-block"><span>🚫</span>Cerrado — Feriado irrenunciable${feriadoMsg ? `<br><span style="font-size:13px;display:block;margin-top:6px;color:#666">${feriadoMsg}</span>` : ''}</div>`;
     } else if (lluviaIntensaDay) {
       html += `<div class="cerrado-clima"><span>⛈️</span>Cerrado por condiciones climáticas<br><span style="font-size:13px;display:block;margin-top:4px">Las canchas se encuentran inhabilitadas. Te contactaremos para reagendar o devolver tu abono.</span></div>`;
     } else {
@@ -566,7 +566,7 @@ function render() {
           <td><span class="slot-hour">${am ? '🌅 ' : ''}${hora}${am ? ' <span class="badge-am">AM</span>' : ''}</span></td>
           <td>${statusCell(ocp1, slot.fecha, hora, 'Cancha 1 (Muro)')}</td>
           <td>${statusCell(ocp2, slot.fecha, hora, 'Cancha 2 (Estacionam.)')}</td>
-          <td class="slot-price">${price.label}</td>
+          <td class="slot-price">${price.label}${parseInt(hora) === 23 ? '<span class="pago-previo">💳 Pago previo</span>' : ''}</td>
         </tr>`;
       });
 
@@ -852,17 +852,28 @@ async function renderRival() {
 }
 
 // ── TOOLTIP POSITIONING ──────────────────────────────────────
-// On mobile (no hover), toggle on click
 document.addEventListener('click', function(e) {
   const icon = e.target.closest('.info-icon');
   if (icon) {
     e.stopPropagation();
-    // Only use click toggle on touch devices
     const isTouch = window.matchMedia('(hover: none)').matches;
     if (!isTouch) return;
+    const box = icon.querySelector('.tooltip-box');
+    if (!box) return;
     const isActive = icon.classList.contains('active');
     document.querySelectorAll('.info-icon.active').forEach(i => i.classList.remove('active'));
-    if (!isActive) icon.classList.add('active');
+    if (!isActive) {
+      icon.classList.add('active');
+      // Position tooltip to avoid overflow
+      const rect = icon.getBoundingClientRect();
+      const bw = Math.min(240, window.innerWidth - 24);
+      let left = rect.left + rect.width/2 - bw/2;
+      if (left < 12) left = 12;
+      if (left + bw > window.innerWidth - 12) left = window.innerWidth - bw - 12;
+      box.style.width = bw + 'px';
+      box.style.left = left + 'px';
+      box.style.top = (rect.bottom + 8) + 'px';
+    }
   } else {
     document.querySelectorAll('.info-icon.active').forEach(i => i.classList.remove('active'));
   }
