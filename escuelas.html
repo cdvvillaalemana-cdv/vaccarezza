@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Facturación Escuelas – CDV Vaccarezza</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #2dbe82;
+    --green-dark: #1a8a5a;
+    --green-light: #e8faf3;
+    --gold: #f5a623;
+    --red: #e05555;
+    --gray-bg: #f5f5f3;
+    --gray-mid: #e0deda;
+    --gray-text: #666;
+    --dark: #1a1a1a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Barlow', sans-serif; background: #f0f0ee; color: var(--dark); min-height: 100vh; font-size: 15px; }
+
+  /* ── PIN SCREEN ── */
+  .pin-screen { position: fixed; inset: 0; background: #101a14; display: flex; align-items: center; justify-content: center; z-index: 500; padding: 20px; }
+  .pin-box { background: #fff; border-radius: 16px; padding: 32px 28px; max-width: 320px; width: 100%; text-align: center; }
+  .pin-logo { width: 100px; height: auto; margin: 0 auto 16px; display: block; }
+  .pin-title { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; color: var(--dark); margin-bottom: 4px; }
+  .pin-sub { font-size: 13px; color: var(--gray-text); margin-bottom: 18px; }
+  .pin-input { width: 100%; padding: 12px; font-size: 22px; letter-spacing: 6px; text-align: center; border: 2px solid var(--gray-mid); border-radius: 10px; outline: none; margin-bottom: 12px; font-family: 'Barlow', sans-serif; }
+  .pin-input:focus { border-color: var(--green); }
+  .pin-btn { width: 100%; padding: 12px; background: var(--green); color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: 'Barlow', sans-serif; }
+  .pin-btn:hover { background: var(--green-dark); }
+  .pin-error { color: var(--red); font-size: 13px; margin-top: 10px; min-height: 16px; font-weight: 600; }
+
+  /* ── HEADER / LAYOUT ── */
+  .header { background: #fff; border-bottom: 2px solid var(--green); padding: 12px 20px; position: sticky; top: 0; z-index: 100; }
+  .header-logo { height: 44px; width: auto; display: block; }
+  .main { max-width: 760px; margin: 0 auto; padding: 20px 16px 60px; }
+  .page-title { font-family: 'Barlow Condensed', sans-serif; font-size: 24px; font-weight: 700; margin-bottom: 16px; }
+
+  /* ── MONTH TABS ── */
+  .month-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+  .month-tab { flex: 1; padding: 10px; text-align: center; background: #fff; border: 2px solid var(--gray-mid); border-radius: 10px; font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 600; color: var(--gray-text); cursor: pointer; text-transform: capitalize; }
+  .month-tab.active { border-color: var(--green); color: var(--green-dark); background: var(--green-light); }
+
+  /* ── TOTALS BANNER ── */
+  .totals-banner { background: var(--dark); color: #fff; border-radius: 12px; padding: 16px 18px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; }
+  .totals-label { font-size: 13px; color: #bbb; }
+  .totals-amount { font-family: 'Barlow Condensed', sans-serif; font-size: 26px; font-weight: 700; color: var(--gold); }
+
+  .copy-all-btn { width: 100%; padding: 11px; background: #fff; border: 2px solid var(--dark); border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; margin-bottom: 20px; font-family: 'Barlow', sans-serif; }
+  .copy-all-btn:hover { background: var(--gray-bg); }
+
+  /* ── SCHOOL CARD ── */
+  .school-card { background: #fff; border: 1px solid var(--gray-mid); border-radius: 12px; margin-bottom: 16px; overflow: hidden; }
+  .school-head { padding: 14px 16px; background: var(--gray-bg); border-bottom: 1px solid var(--gray-mid); display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .school-name { font-family: 'Barlow Condensed', sans-serif; font-size: 19px; font-weight: 700; }
+  .school-encargado { font-size: 12px; color: var(--gray-text); }
+  .school-actions { display: flex; gap: 8px; align-items: center; }
+  .icon-btn { background: none; border: none; cursor: pointer; font-size: 15px; padding: 4px 6px; color: var(--gray-text); }
+  .icon-btn:hover { color: var(--dark); }
+  .school-total { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; color: var(--green-dark); }
+  .school-body { padding: 4px 16px 14px; }
+
+  .date-row { padding: 10px 0; border-bottom: 1px solid #f0f0ee; }
+  .date-row:last-child { border-bottom: none; }
+  .date-row.excluded { opacity: 0.45; }
+  .date-row-top { display: flex; align-items: center; gap: 10px; }
+  .date-row-top input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--green); flex-shrink: 0; cursor: pointer; }
+  .date-info { flex: 1; min-width: 0; }
+  .date-label { font-size: 14px; font-weight: 600; text-transform: capitalize; }
+  .date-blocks { font-size: 12.5px; color: var(--gray-text); }
+  .date-subtotal { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 700; white-space: nowrap; }
+  .date-row-links { display: flex; gap: 12px; margin-top: 4px; margin-left: 28px; }
+  .date-link { font-size: 12px; color: var(--green-dark); background: none; border: none; cursor: pointer; font-weight: 600; padding: 0; text-decoration: underline; font-family: 'Barlow', sans-serif; }
+  .date-link.del { color: var(--red); }
+  .badge-mini { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; margin-left: 6px; background: #fff3cd; color: #856404; text-transform: none; }
+
+  .empty-msg { color: var(--gray-text); font-size: 13px; padding: 14px 0; text-align: center; }
+
+  /* ── EDIT PANEL (inline) ── */
+  .edit-panel { background: var(--gray-bg); border-radius: 10px; padding: 12px; margin-top: 8px; }
+  .edit-block-row { display: grid; grid-template-columns: 1fr 1fr 1fr 90px auto; gap: 6px; margin-bottom: 8px; align-items: center; }
+  .edit-block-row select, .edit-block-row input { padding: 7px 8px; border: 1px solid var(--gray-mid); border-radius: 6px; font-size: 13px; font-family: 'Barlow', sans-serif; width: 100%; }
+  .edit-block-remove { background: none; border: none; color: var(--red); font-size: 16px; cursor: pointer; }
+  .edit-panel-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .btn-small { padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; font-family: 'Barlow', sans-serif; }
+  .btn-small.primary { background: var(--green); color: #fff; }
+  .btn-small.primary:hover { background: var(--green-dark); }
+  .btn-small.ghost { background: #fff; border: 1px solid var(--gray-mid); color: var(--dark); }
+  .btn-small.link { background: none; color: var(--gray-text); text-decoration: underline; }
+  .edit-error { color: var(--red); font-size: 12px; margin-top: 4px; }
+  .add-block-link { font-size: 13px; color: var(--green-dark); background: none; border: none; cursor: pointer; font-weight: 600; text-decoration: underline; font-family: 'Barlow', sans-serif; }
+
+  .add-extra-wrap { margin-top: 10px; }
+
+  /* ── ADD ESCUELA BUTTON ── */
+  .add-escuela-btn { width: 100%; padding: 14px; background: #fff; border: 2px dashed var(--gray-mid); border-radius: 12px; font-size: 15px; font-weight: 600; color: var(--gray-text); cursor: pointer; font-family: 'Barlow', sans-serif; }
+  .add-escuela-btn:hover { border-color: var(--green); color: var(--green-dark); }
+
+  .toggle-activa { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 20px; cursor: pointer; border: none; font-family: 'Barlow', sans-serif; }
+  .toggle-activa.on { background: var(--green-light); color: var(--green-dark); }
+  .toggle-activa.off { background: #f0f0ee; color: var(--gray-text); }
+
+  /* ── MODAL ── */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 300; align-items: flex-start; justify-content: center; overflow-y: auto; padding: 30px 14px; }
+  .modal-overlay.open { display: flex; }
+  .modal-box { background: #fff; border-radius: 14px; padding: 22px; max-width: 480px; width: 100%; }
+  .modal-title { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 16px; }
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 12px; font-weight: 600; color: var(--gray-text); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+  .field input[type=text], .field input[type=number] { width: 100%; padding: 9px 10px; border: 1px solid var(--gray-mid); border-radius: 8px; font-size: 14px; font-family: 'Barlow', sans-serif; }
+  .field-check { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
+  .field-check input { width: 17px; height: 17px; accent-color: var(--green); }
+  .bloques-editor-title { font-size: 12px; font-weight: 600; color: var(--gray-text); text-transform: uppercase; letter-spacing: 0.04em; margin: 16px 0 8px; }
+  .modal-actions { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
+  .modal-error { color: var(--red); font-size: 13px; margin-top: 8px; }
+  .modal-delete { margin-top: 14px; text-align: center; }
+  .modal-delete button { background: none; border: none; color: var(--red); font-size: 13px; cursor: pointer; text-decoration: underline; font-family: 'Barlow', sans-serif; }
+
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--dark); color: #fff; padding: 10px 18px; border-radius: 30px; font-size: 13px; font-weight: 600; z-index: 999; box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+
+  @media (max-width: 480px) {
+    .edit-block-row { grid-template-columns: 1fr 1fr; }
+    .edit-block-row input[type=number] { grid-column: span 1; }
+    .edit-block-remove { grid-column: 2; justify-self: end; }
+  }
+</style>
+</head>
+<body>
+
+<div class="pin-screen" id="pin-screen">
+  <div class="pin-box">
+    <img src="Logo.png" alt="CDV Vaccarezza" class="pin-logo">
+    <div class="pin-title">Facturación Escuelas</div>
+    <div class="pin-sub">Ingresa el PIN para continuar</div>
+    <input class="pin-input" id="pin-input" type="password" inputmode="numeric" maxlength="8" placeholder="••••" onkeydown="if(event.key==='Enter')checkPin()">
+    <button class="pin-btn" onclick="checkPin()">Ingresar</button>
+    <div class="pin-error" id="pin-error"></div>
+  </div>
+</div>
+
+<div id="app" style="display:none">
+  <div class="header">
+    <img src="Logo_horizontal.png" alt="CDV Vaccarezza" class="header-logo">
+  </div>
+  <div class="main">
+    <div class="page-title">Facturación mensual de escuelas</div>
+    <div class="month-tabs" id="month-tabs"></div>
+    <div class="totals-banner" id="totals-banner"></div>
+    <button class="copy-all-btn" onclick="copiarResumenTodas()">📋 Copiar resumen de todas</button>
+    <div id="schools-list"></div>
+    <button class="add-escuela-btn" onclick="abrirModalEscuela(null)">+ Agregar escuela</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-escuela" onclick="if(event.target===this)cerrarModalEscuela()">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-title">Agregar escuela</div>
+    <div class="field">
+      <label>Nombre de la escuela</label>
+      <input type="text" id="f-nombre">
+    </div>
+    <div class="field">
+      <label>Encargado</label>
+      <input type="text" id="f-encargado">
+    </div>
+    <div class="field field-check">
+      <input type="checkbox" id="f-activa" checked>
+      <label style="margin:0;text-transform:none;font-size:14px">Escuela activa (aparece en el cálculo del mes)</label>
+    </div>
+    <div class="bloques-editor-title">Horario habitual</div>
+    <div id="f-bloques"></div>
+    <button class="add-block-link" onclick="addFormBloque()">+ Agregar bloque de horario</button>
+    <div class="modal-error" id="modal-error"></div>
+    <div class="modal-actions">
+      <button class="btn-small primary" onclick="guardarEscuela()">Guardar</button>
+      <button class="btn-small ghost" onclick="cerrarModalEscuela()">Cancelar</button>
+    </div>
+    <div class="modal-delete" id="modal-delete-wrap" style="display:none">
+      <button onclick="eliminarEscuela()">Eliminar esta escuela</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CONFIGURACIÓN ─────────────────────────────────────────────
+const DB_BASE = 'https://cdv-vaccarezza-default-rtdb.firebaseio.com';
+const PIN = '3011';
+const DIAS  = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+// ── ESTADO ────────────────────────────────────────────────────
+let state = {
+  schools: {},           // id -> {nombre, encargado, activa, bloques:[...]}
+  fact: {},              // monthKey -> schoolId -> {excluidas:[], ediciones:{}, extras:{}}
+  months: [],            // [currentKey, prevKey]
+  activeMonth: null,
+  editing: null,         // {schoolId, date, blocks, isExtra}
+  formBloques: [],       // bloques being edited in the escuela modal
+  editingSchoolId: null  // null = adding new
+};
+
+// ── UTILIDADES ────────────────────────────────────────────────
+function $(id) { return document.getElementById(id); }
+function pad(n) { return String(n).padStart(2, '0'); }
+function formatCLP(n) { return '$' + Math.round(n).toLocaleString('es-CL'); }
+
+function dateKey(d) { return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+function monthKeyOf(d) { return `${d.getFullYear()}-${pad(d.getMonth()+1)}`; }
+
+function shiftMonth(d, delta) {
+  return new Date(d.getFullYear(), d.getMonth() + delta, 1);
+}
+
+function monthLabel(monthKey) {
+  const [y, m] = monthKey.split('-').map(Number);
+  return `${MESES[m-1]} ${y}`;
+}
+
+function daysInMonth(monthKey) {
+  const [y, m] = monthKey.split('-').map(Number);
+  const last = new Date(y, m, 0).getDate();
+  const out = [];
+  for (let day = 1; day <= last; day++) out.push(new Date(y, m-1, day));
+  return out;
+}
+
+function parseTimeDecimal(t) {
+  const [h, m] = t.split(':').map(Number);
+  return h + (m||0)/60;
+}
+
+function blockSubtotal(b) {
+  const horas = parseTimeDecimal(b.horaFin) - parseTimeDecimal(b.horaInicio);
+  return Math.max(0, horas) * Number(b.tarifaHora || 0);
+}
+
+function blocksTotal(blocks) {
+  return (blocks||[]).reduce((sum, b) => sum + blockSubtotal(b), 0);
+}
+
+function blocksSummaryText(blocks) {
+  return (blocks||[]).map(b => `${b.cancha} ${b.horaInicio}–${b.horaFin}`).join(' + ');
+}
+
+function dateLabel(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  return `${DIAS[d.getDay()]} ${d.getDate()}`;
+}
+
+function showToast(msg) {
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1800);
+}
+
+// ── PIN ───────────────────────────────────────────────────────
+function checkPin() {
+  const val = $('pin-input').value.trim();
+  if (val === PIN) {
+    sessionStorage.setItem('cdv_escuelas_unlocked', '1');
+    $('pin-screen').style.display = 'none';
+    $('app').style.display = 'block';
+    initApp();
+  } else {
+    $('pin-error').textContent = 'PIN incorrecto';
+  }
+}
+
+// ── FIREBASE I/O ──────────────────────────────────────────────
+async function fetchJSON(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('Error de red');
+  return res.json();
+}
+
+async function loadConfig() {
+  try {
+    const data = await fetchJSON(`${DB_BASE}/escuelas/config.json`);
+    if (!data) {
+      await seedInitialData();
+      return await fetchJSON(`${DB_BASE}/escuelas/config.json`) || {};
+    }
+    return data;
+  } catch(e) { showToast('⚠️ Error cargando escuelas'); return {}; }
+}
+
+async function loadFact(monthKey) {
+  try {
+    const data = await fetchJSON(`${DB_BASE}/escuelas/facturacion/${monthKey}.json`);
+    return data || {};
+  } catch(e) { return {}; }
+}
+
+async function seedInitialData() {
+  const seed = {
+    'futuros-cracks': {
+      nombre: 'Futuros Cracks', encargado: 'Claudio Sánchez', activa: true,
+      bloques: [
+        {dia:3, cancha:'Cancha 2', horaInicio:'19:00', horaFin:'20:00', tarifaHora:15000},
+        {dia:3, cancha:'Cancha 2', horaInicio:'20:00', horaFin:'21:00', tarifaHora:18000},
+        {dia:5, cancha:'Cancha 2', horaInicio:'19:00', horaFin:'20:00', tarifaHora:15000},
+        {dia:5, cancha:'Cancha 2', horaInicio:'20:00', horaFin:'21:00', tarifaHora:18000},
+        {dia:5, cancha:'Cancha 1', horaInicio:'20:00', horaFin:'21:00', tarifaHora:20000}
+      ]
+    },
+    'deportivo-figuritas': {
+      nombre: 'Deportivo Figuritas', encargado: 'Humberto Cruz', activa: true,
+      bloques: [
+        {dia:6, cancha:'Cancha 1', horaInicio:'10:30', horaFin:'12:30', tarifaHora:16000}
+      ]
+    },
+    'academia-futcracks': {
+      nombre: 'Academia Futcracks', encargado: 'Felipe Vásquez', activa: true,
+      bloques: [
+        {dia:6, cancha:'Cancha 1', horaInicio:'09:00', horaFin:'10:30', tarifaHora:16000},
+        {dia:6, cancha:'Cancha 2', horaInicio:'09:30', horaFin:'12:30', tarifaHora:16000}
+      ]
+    },
+    'u-de-chile': {
+      nombre: 'Escuela U de Chile', encargado: 'David', activa: false,
+      bloques: [
+        {dia:2, cancha:'Cancha 2', horaInicio:'18:30', horaFin:'20:00', tarifaHora:16000},
+        {dia:0, cancha:'Cancha 2', horaInicio:'09:00', horaFin:'12:00', tarifaHora:16000}
+      ]
+    }
+  };
+  await fetch(`${DB_BASE}/escuelas/config.json`, { method: 'PUT', body: JSON.stringify(seed) });
+}
+
+async function saveExcluidas(monthKey, schoolId, arr) {
+  await fetch(`${DB_BASE}/escuelas/facturacion/${monthKey}/${schoolId}/excluidas.json`, { method: 'PUT', body: JSON.stringify(arr) });
+}
+async function saveEdicion(monthKey, schoolId, dateStr, blocks) {
+  await fetch(`${DB_BASE}/escuelas/facturacion/${monthKey}/${schoolId}/ediciones/${dateStr}.json`, { method: 'PUT', body: JSON.stringify(blocks) });
+}
+async function deleteEdicion(monthKey, schoolId, dateStr) {
+  await fetch(`${DB_BASE}/escuelas/facturacion/${monthKey}/${schoolId}/ediciones/${dateStr}.json`, { method: 'DELETE' });
+}
+async function saveExtra(monthKey, schoolId, dateStr, blocks) {
+  await fetch(`${DB_BASE}/escuelas/facturacion/${monthKey}/${schoolId}/extras/${dateStr}.json`, { method: 'PUT', body: JSON.stringify(blocks) });
+}
+async function deleteExtra(monthKey, schoolId, dateStr) {
+  await fetch(`${DB_BASE}/escuelas/facturacion/${monthKey}/${schoolId}/extras/${dateStr}.json`, { method: 'DELETE' });
+}
+async function saveEscuelaConfig(id, data) {
+  await fetch(`${DB_BASE}/escuelas/config/${id}.json`, { method: 'PUT', body: JSON.stringify(data) });
+}
+async function deleteEscuelaConfig(id) {
+  await fetch(`${DB_BASE}/escuelas/config/${id}.json`, { method: 'DELETE' });
+}
+async function toggleEscuelaActiva(id, activa) {
+  await fetch(`${DB_BASE}/escuelas/config/${id}.json`, { method: 'PATCH', body: JSON.stringify({activa}) });
+}
+async function pushNuevaEscuela(data) {
+  const res = await fetch(`${DB_BASE}/escuelas/config.json`, { method: 'POST', body: JSON.stringify(data) });
+  const j = await res.json();
+  return j.name;
+}
+
+// ── CONSTRUCCIÓN DE FILAS POR ESCUELA/MES ─────────────────────
+function rowsForSchool(schoolId, monthKey) {
+  const school = state.schools[schoolId];
+  const fact = (state.fact[monthKey] && state.fact[monthKey][schoolId]) || {};
+  const excluidas = fact.excluidas || [];
+  const ediciones = fact.ediciones || {};
+  const extras = fact.extras || {};
+
+  const templateByDow = {};
+  (school.bloques||[]).forEach(b => {
+    if (!templateByDow[b.dia]) templateByDow[b.dia] = [];
+    templateByDow[b.dia].push(b);
+  });
+
+  const rows = [];
+  daysInMonth(monthKey).forEach(d => {
+    const dow = d.getDay();
+    if (templateByDow[dow]) {
+      const ds = dateKey(d);
+      const excluded = excluidas.includes(ds);
+      const edited = ediciones[ds];
+      rows.push({ date: ds, blocks: edited || templateByDow[dow], excluded, isEdited: !!edited, isExtra: false });
+    }
+  });
+  Object.keys(extras).forEach(ds => {
+    if (ds.slice(0,7) === monthKey) {
+      rows.push({ date: ds, blocks: extras[ds], excluded: false, isEdited: false, isExtra: true });
+    }
+  });
+  rows.sort((a,b) => a.date.localeCompare(b.date));
+  return rows;
+}
+
+function schoolTotal(schoolId, monthKey) {
+  return rowsForSchool(schoolId, monthKey)
+    .filter(r => !r.excluded)
+    .reduce((sum, r) => sum + blocksTotal(r.blocks), 0);
+}
+
+// ── RENDER ────────────────────────────────────────────────────
+function render() {
+  renderMonthTabs();
+  renderTotals();
+  renderSchools();
+}
+
+function renderMonthTabs() {
+  const wrap = $('month-tabs');
+  wrap.innerHTML = state.months.map((mk, i) => `
+    <div class="month-tab ${mk===state.activeMonth?'active':''}" onclick="switchMonth('${mk}')">
+      ${i===0 ? 'Mes actual' : 'Mes anterior'}<br><span style="font-size:12px;font-weight:400">${monthLabel(mk)}</span>
+    </div>`).join('');
+}
+
+function switchMonth(mk) { state.activeMonth = mk; state.editing = null; render(); }
+
+function renderTotals() {
+  const activeIds = Object.keys(state.schools).filter(id => state.schools[id].activa);
+  const total = activeIds.reduce((sum, id) => sum + schoolTotal(id, state.activeMonth), 0);
+  $('totals-banner').innerHTML = `
+    <div>
+      <div class="totals-label">${activeIds.length} escuela${activeIds.length!==1?'s':''} activa${activeIds.length!==1?'s':''} · ${monthLabel(state.activeMonth)}</div>
+    </div>
+    <div class="totals-amount">${formatCLP(total)}</div>`;
+}
+
+function renderSchools() {
+  const wrap = $('schools-list');
+  const ids = Object.keys(state.schools).sort((a,b) => (state.schools[a].nombre||'').localeCompare(state.schools[b].nombre||''));
+  if (ids.length === 0) { wrap.innerHTML = '<div class="empty-msg">No hay escuelas cargadas todavía.</div>'; return; }
+
+  wrap.innerHTML = ids.map(id => {
+    const school = state.schools[id];
+    const rows = rowsForSchool(id, state.activeMonth);
+    const total = schoolTotal(id, state.activeMonth);
+
+    let rowsHtml;
+    if (!school.activa) {
+      rowsHtml = `<div class="empty-msg">Escuela inactiva — no se está calculando este mes.</div>`;
+    } else if (rows.length === 0) {
+      rowsHtml = `<div class="empty-msg">No hay fechas este mes para esta escuela.</div>`;
+    } else {
+      rowsHtml = rows.map(r => renderDateRow(id, r)).join('');
+    }
+
+    return `
+    <div class="school-card">
+      <div class="school-head">
+        <div>
+          <div class="school-name">${school.nombre}</div>
+          <div class="school-encargado">${school.encargado || 'Sin encargado'}</div>
+        </div>
+        <div class="school-actions">
+          <button class="toggle-activa ${school.activa?'on':'off'}" onclick="toggleActiva('${id}', ${!school.activa})">${school.activa?'Activa':'Inactiva'}</button>
+          <button class="icon-btn" onclick="abrirModalEscuela('${id}')" title="Editar">✏️</button>
+        </div>
+      </div>
+      <div class="school-body">
+        ${rowsHtml}
+        ${school.activa ? `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--gray-mid)">
+          <button class="btn-small ghost" onclick="copiarResumenEscuela('${id}')">📋 Copiar resumen</button>
+          <span class="school-total">${formatCLP(total)}</span>
+        </div>
+        <div class="add-extra-wrap">
+          ${(state.editing && state.editing.isNew && state.editing.schoolId===id) ? '<div id="new-extra-slot"></div>' : `<button class="date-link" onclick="agregarFechaExtra('${id}')">+ Agregar fecha puntual</button>`}
+        </div>
+        ` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  // Si hay una fila en edición, inyectar su panel
+  if (state.editing) renderEditPanel();
+}
+
+function renderDateRow(schoolId, r) {
+  const isEditingThis = state.editing && state.editing.schoolId === schoolId && state.editing.date === r.date;
+  const subtotal = r.excluded ? 0 : blocksTotal(r.blocks);
+  const badge = r.isExtra ? '<span class="badge-mini">fecha puntual</span>' : (r.isEdited ? '<span class="badge-mini">editado</span>' : '');
+  return `
+  <div class="date-row ${r.excluded?'excluded':''}" id="row-${schoolId}-${r.date}">
+    <div class="date-row-top">
+      ${r.isExtra ? '<span style="width:18px"></span>' : `<input type="checkbox" ${r.excluded?'':'checked'} onchange="toggleExcluir('${schoolId}','${r.date}')">`}
+      <div class="date-info">
+        <div class="date-label">${dateLabel(r.date)} ${badge}</div>
+        <div class="date-blocks">${blocksSummaryText(r.blocks)}</div>
+      </div>
+      <div class="date-subtotal">${formatCLP(subtotal)}</div>
+    </div>
+    <div class="date-row-links">
+      <button class="date-link" onclick="editarFecha('${schoolId}','${r.date}', ${r.isExtra})">✏️ Editar horario</button>
+      ${r.isEdited && !r.isExtra ? `<button class="date-link" onclick="restablecerFecha('${schoolId}','${r.date}')">↺ Restablecer</button>` : ''}
+      ${r.isExtra ? `<button class="date-link del" onclick="eliminarExtra('${schoolId}','${r.date}')">🗑 Eliminar</button>` : ''}
+    </div>
+    ${isEditingThis ? `<div id="edit-panel-slot"></div>` : ''}
+  </div>`;
+}
+
+function renderEditPanel() {
+  const e = state.editing;
+  const slot = document.getElementById(e.isNew ? 'new-extra-slot' : 'edit-panel-slot');
+  if (!slot) return;
+  const [my, mm] = state.activeMonth.split('-').map(Number);
+  const minDate = `${my}-${pad(mm)}-01`;
+  const maxDate = dateKey(new Date(my, mm, 0));
+  const dateFieldHtml = e.isNew ? `
+    <div class="field" style="margin-bottom:10px">
+      <label>Fecha</label>
+      <input type="date" value="${e.date}" min="${minDate}" max="${maxDate}" onchange="state.editing.date=this.value">
+    </div>` : '';
+  const rowsHtml = e.blocks.map((b, i) => `
+    <div class="edit-block-row">
+      <select onchange="editBlockField(${i},'cancha',this.value)">
+        <option value="Cancha 1" ${b.cancha==='Cancha 1'?'selected':''}>Cancha 1</option>
+        <option value="Cancha 2" ${b.cancha==='Cancha 2'?'selected':''}>Cancha 2</option>
+      </select>
+      <input type="time" value="${b.horaInicio}" onchange="editBlockField(${i},'horaInicio',this.value)">
+      <input type="time" value="${b.horaFin}" onchange="editBlockField(${i},'horaFin',this.value)">
+      <input type="number" value="${b.tarifaHora}" placeholder="$/hr" onchange="editBlockField(${i},'tarifaHora',this.value)">
+      <button class="edit-block-remove" onclick="removeEditBlock(${i})">✕</button>
+    </div>`).join('');
+  slot.innerHTML = `
+    <div class="edit-panel">
+      ${dateFieldHtml}
+      ${rowsHtml || '<div class="empty-msg">Sin bloques — agrega uno.</div>'}
+      <button class="add-block-link" onclick="addEditBlock()">+ Agregar bloque</button>
+      <div id="edit-error" class="edit-error"></div>
+      <div class="edit-panel-actions">
+        <button class="btn-small primary" onclick="guardarEdicionFecha()">Guardar</button>
+        <button class="btn-small ghost" onclick="cancelarEdicionFecha()">Cancelar</button>
+      </div>
+    </div>`;
+}
+
+// ── ACCIONES: EXCLUIR / EDITAR FECHA ───────────────────────────
+async function toggleExcluir(schoolId, dateStr) {
+  const fact = state.fact[state.activeMonth][schoolId] || (state.fact[state.activeMonth][schoolId] = {});
+  const arr = fact.excluidas || (fact.excluidas = []);
+  const idx = arr.indexOf(dateStr);
+  if (idx === -1) arr.push(dateStr); else arr.splice(idx, 1);
+  render();
+  await saveExcluidas(state.activeMonth, schoolId, arr);
+}
+
+function editarFecha(schoolId, dateStr, isExtra) {
+  const rows = rowsForSchool(schoolId, state.activeMonth);
+  const row = rows.find(r => r.date === dateStr);
+  state.editing = { schoolId, date: dateStr, isExtra, blocks: JSON.parse(JSON.stringify(row.blocks)) };
+  renderSchools();
+}
+
+function cancelarEdicionFecha() { state.editing = null; renderSchools(); }
+
+function editBlockField(i, field, value) {
+  state.editing.blocks[i][field] = (field === 'tarifaHora') ? Number(value) : value;
+}
+function addEditBlock() {
+  state.editing.blocks.push({ cancha: 'Cancha 1', horaInicio: '10:00', horaFin: '11:00', tarifaHora: 16000 });
+  renderEditPanel();
+}
+function removeEditBlock(i) {
+  state.editing.blocks.splice(i, 1);
+  renderEditPanel();
+}
+
+async function guardarEdicionFecha() {
+  const e = state.editing;
+  if (e.blocks.length === 0) { $('edit-error').textContent = 'Agrega al menos un bloque, o elimina la fecha.'; return; }
+  for (const b of e.blocks) {
+    if (parseTimeDecimal(b.horaFin) <= parseTimeDecimal(b.horaInicio)) {
+      $('edit-error').textContent = 'La hora de fin debe ser posterior a la de inicio.'; return;
+    }
+  }
+  if (e.isNew && e.date.slice(0,7) !== state.activeMonth) {
+    $('edit-error').textContent = 'La fecha debe estar dentro del mes seleccionado.'; return;
+  }
+  const fact = state.fact[state.activeMonth][e.schoolId] || (state.fact[state.activeMonth][e.schoolId] = {});
+  if (e.isExtra) {
+    (fact.extras || (fact.extras = {}))[e.date] = e.blocks;
+    await saveExtra(state.activeMonth, e.schoolId, e.date, e.blocks);
+  } else {
+    (fact.ediciones || (fact.ediciones = {}))[e.date] = e.blocks;
+    await saveEdicion(state.activeMonth, e.schoolId, e.date, e.blocks);
+  }
+  state.editing = null;
+  render();
+  showToast('Guardado ✓');
+}
+
+async function restablecerFecha(schoolId, dateStr) {
+  const fact = state.fact[state.activeMonth][schoolId];
+  if (fact && fact.ediciones) delete fact.ediciones[dateStr];
+  render();
+  await deleteEdicion(state.activeMonth, schoolId, dateStr);
+}
+
+async function eliminarExtra(schoolId, dateStr) {
+  const fact = state.fact[state.activeMonth][schoolId];
+  if (fact && fact.extras) delete fact.extras[dateStr];
+  if (state.editing && state.editing.schoolId===schoolId && state.editing.date===dateStr) state.editing = null;
+  render();
+  await deleteExtra(state.activeMonth, schoolId, dateStr);
+}
+
+function agregarFechaExtra(schoolId) {
+  const hoy = new Date();
+  const [y,m] = state.activeMonth.split('-').map(Number);
+  const base = (y===hoy.getFullYear() && m===hoy.getMonth()+1) ? hoy : new Date(y, m-1, 1);
+  state.editing = { schoolId, date: dateKey(base), isExtra: true, isNew: true, blocks: [{ cancha:'Cancha 1', horaInicio:'10:00', horaFin:'11:00', tarifaHora:16000 }] };
+  renderSchools();
+}
+
+async function toggleActiva(id, activa) {
+  state.schools[id].activa = activa;
+  render();
+  await toggleEscuelaActiva(id, activa);
+}
+
+// ── MODAL AGREGAR / EDITAR ESCUELA ─────────────────────────────
+function abrirModalEscuela(id) {
+  state.editingSchoolId = id;
+  const school = id ? state.schools[id] : { nombre:'', encargado:'', activa:true, bloques:[] };
+  $('modal-title').textContent = id ? 'Editar escuela' : 'Agregar escuela';
+  $('f-nombre').value = school.nombre || '';
+  $('f-encargado').value = school.encargado || '';
+  $('f-activa').checked = !!school.activa;
+  state.formBloques = JSON.parse(JSON.stringify(school.bloques || []));
+  $('modal-delete-wrap').style.display = id ? 'block' : 'none';
+  $('modal-error').textContent = '';
+  renderFormBloques();
+  $('modal-escuela').classList.add('open');
+}
+
+function cerrarModalEscuela() { $('modal-escuela').classList.remove('open'); }
+
+function renderFormBloques() {
+  $('f-bloques').innerHTML = state.formBloques.map((b, i) => `
+    <div class="edit-block-row" style="grid-template-columns:1fr 1fr 1fr 1fr 90px auto">
+      <select onchange="editFormBloque(${i},'dia',this.value)">
+        ${DIAS.map((d,di) => `<option value="${di}" ${b.dia==di?'selected':''}>${d}</option>`).join('')}
+      </select>
+      <select onchange="editFormBloque(${i},'cancha',this.value)">
+        <option value="Cancha 1" ${b.cancha==='Cancha 1'?'selected':''}>Cancha 1</option>
+        <option value="Cancha 2" ${b.cancha==='Cancha 2'?'selected':''}>Cancha 2</option>
+      </select>
+      <input type="time" value="${b.horaInicio||'10:00'}" onchange="editFormBloque(${i},'horaInicio',this.value)">
+      <input type="time" value="${b.horaFin||'11:00'}" onchange="editFormBloque(${i},'horaFin',this.value)">
+      <input type="number" value="${b.tarifaHora||16000}" placeholder="$/hr" onchange="editFormBloque(${i},'tarifaHora',this.value)">
+      <button class="edit-block-remove" onclick="removeFormBloque(${i})">✕</button>
+    </div>`).join('');
+}
+
+function addFormBloque() {
+  state.formBloques.push({ dia: 6, cancha:'Cancha 1', horaInicio:'10:00', horaFin:'11:00', tarifaHora:16000 });
+  renderFormBloques();
+}
+function editFormBloque(i, field, value) {
+  state.formBloques[i][field] = (field==='dia'||field==='tarifaHora') ? Number(value) : value;
+}
+function removeFormBloque(i) { state.formBloques.splice(i,1); renderFormBloques(); }
+
+async function guardarEscuela() {
+  const nombre = $('f-nombre').value.trim();
+  const encargado = $('f-encargado').value.trim();
+  const activa = $('f-activa').checked;
+  if (!nombre) { $('modal-error').textContent = 'El nombre es obligatorio.'; return; }
+  if (state.formBloques.length === 0) { $('modal-error').textContent = 'Agrega al menos un bloque de horario.'; return; }
+  for (const b of state.formBloques) {
+    if (parseTimeDecimal(b.horaFin) <= parseTimeDecimal(b.horaInicio)) { $('modal-error').textContent = 'Hay un bloque con hora de fin antes que la de inicio.'; return; }
+  }
+  const data = { nombre, encargado, activa, bloques: state.formBloques };
+  if (state.editingSchoolId) {
+    state.schools[state.editingSchoolId] = data;
+    await saveEscuelaConfig(state.editingSchoolId, data);
+  } else {
+    const tempId = 'tmp-' + Date.now();
+    state.schools[tempId] = data;
+    render();
+    const realId = await pushNuevaEscuela(data);
+    delete state.schools[tempId];
+    state.schools[realId] = data;
+  }
+  cerrarModalEscuela();
+  render();
+  showToast('Escuela guardada ✓');
+}
+
+async function eliminarEscuela() {
+  if (!state.editingSchoolId) return;
+  if (!confirm('¿Eliminar esta escuela? Se perderá su configuración (el historial de facturación ya guardado no se borra).')) return;
+  const id = state.editingSchoolId;
+  delete state.schools[id];
+  cerrarModalEscuela();
+  render();
+  await deleteEscuelaConfig(id);
+}
+
+// ── COPIAR RESUMEN ──────────────────────────────────────────────
+function resumenEscuelaTexto(schoolId) {
+  const school = state.schools[schoolId];
+  const rows = rowsForSchool(schoolId, state.activeMonth).filter(r => !r.excluded);
+  const total = rows.reduce((s,r) => s + blocksTotal(r.blocks), 0);
+  let txt = `${school.nombre} (${school.encargado || 'sin encargado'})\n`;
+  if (rows.length === 0) {
+    txt += 'Sin fechas registradas este mes.\n';
+  } else {
+    rows.forEach(r => {
+      txt += `${dateLabel(r.date)} — ${blocksSummaryText(r.blocks)} — ${formatCLP(blocksTotal(r.blocks))}\n`;
+    });
+  }
+  txt += `Total: ${rows.length} día${rows.length!==1?'s':''} — ${formatCLP(total)}`;
+  return txt;
+}
+
+function copyToClipboard(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => showToast('Copiado ✓')).catch(() => fallbackCopy(text));
+  } else fallbackCopy(text);
+}
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text; document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); showToast('Copiado ✓'); } catch(e) { showToast('No se pudo copiar'); }
+  ta.remove();
+}
+
+function copiarResumenEscuela(schoolId) {
+  const header = `CDV Vaccarezza — Facturación ${monthLabel(state.activeMonth)}\n\n`;
+  copyToClipboard(header + resumenEscuelaTexto(schoolId));
+}
+
+function copiarResumenTodas() {
+  const activeIds = Object.keys(state.schools).filter(id => state.schools[id].activa)
+    .sort((a,b) => (state.schools[a].nombre||'').localeCompare(state.schools[b].nombre||''));
+  if (activeIds.length === 0) { showToast('No hay escuelas activas'); return; }
+  let txt = `CDV Vaccarezza — Facturación ${monthLabel(state.activeMonth)}\n\n`;
+  txt += activeIds.map(id => resumenEscuelaTexto(id)).join('\n\n');
+  copyToClipboard(txt);
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+async function initApp() {
+  const hoy = new Date();
+  const currentKey = monthKeyOf(hoy);
+  const prevKey = monthKeyOf(shiftMonth(hoy, -1));
+  state.months = [currentKey, prevKey];
+  state.activeMonth = currentKey;
+
+  state.schools = await loadConfig();
+  const [factCurrent, factPrev] = await Promise.all([loadFact(currentKey), loadFact(prevKey)]);
+  state.fact[currentKey] = factCurrent;
+  state.fact[prevKey] = factPrev;
+
+  render();
+}
+
+if (sessionStorage.getItem('cdv_escuelas_unlocked') === '1') {
+  $('pin-screen').style.display = 'none';
+  $('app').style.display = 'block';
+  initApp();
+}
+</script>
+</body>
+</html>
