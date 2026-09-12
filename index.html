@@ -175,7 +175,7 @@
   .rival-datetime { font-size: 13px; color: #e8c840; font-weight: 600; margin-bottom: 6px; }
   .rival-wa-btn { display: inline-flex; align-items: center; gap: 6px; background: #25d366; color: #fff; border: none; border-radius: 6px; padding: 7px 12px; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; margin-top: 4px; }
   .rival-wa-btn svg { width: 14px; height: 14px; fill: #fff; }
-  .rival-empty { text-align: center; color: #666; font-size: 13px; padding: 20px 0; }
+  .rival-empty { text-align: center; color: #aaa; font-size: 13px; padding: 20px 0; }
   .rival-error { color: #e05555; font-size: 12px; margin-top: 6px; }
   .nivel-options { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
   .nivel-opt { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #ddd; cursor: pointer; }
@@ -201,12 +201,15 @@
   <img src="https://cdvvillaalemana-cdv.github.io/vaccarezza/Logo_horizontal.png" alt="Complejo Deportivo Vaccarezza" style="height:48px;object-fit:contain;">
   <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
     <button class="rival-header-btn" onclick="toggleRival()">⚽️ Rival</button>
-    <a class="ranking-btn" href="https://cdvvillaalemana-cdv.github.io/vaccarezza/El_ranking_CDV" target="_blank">🏆 El Ranking CDV <span class="ranking-badge">¡NUEVO!</span></a>
+    <a class="ranking-btn" href="https://cdvvillaalemana-cdv.github.io/vaccarezza/El_ranking_CDV" target="_blank" style="background:linear-gradient(135deg,#1a5c0e 0%,#4aab20 50%,#7ed43a 100%);color:#fff;display:flex;align-items:center;gap:8px;border-radius:10px;padding:8px 14px;font-family:Barlow,sans-serif;font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,0.4);box-shadow:0 2px 8px rgba(74,171,32,0.5);">🏆 El Ranking CDV <span style="background:rgba(255,255,255,0.25);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;letter-spacing:0.05em;">¡NUEVO!</span></a>
   </div>
 </div>
 
 <div class="mundial-panel" id="mundial-panel">
-  <div class="mundial-panel-title">⚽ Buscar Rival — CDV Vaccarezza</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+    <div class="mundial-panel-title" style="margin-bottom:0">⚽ Buscar Rival — CDV Vaccarezza</div>
+    <button onclick="toggleRival()" style="background:none;border:none;color:#aaa;font-size:20px;cursor:pointer;padding:0 4px;line-height:1;">✕</button>
+  </div>
   <div id="mundial-content"><div class="mundial-loading">Cargando...</div></div>
 </div>
 
@@ -221,10 +224,9 @@
   <div class="attention-box">
     <div class="attention-title">🕐 Atendemos por orden de llegada de mensajes</div>
     <div class="attention-hours">
-      <strong>Lunes a viernes:</strong> 11:00–23:00 &nbsp;·&nbsp; <strong>Sábado, domingo y feriados:</strong> 12:00–22:00
+      <strong>Lunes a viernes:</strong> 11:00–23:00 &nbsp;·&nbsp; <strong>Sábado, domingo y feriados:</strong> 12:00–22:00 &nbsp;·&nbsp; <strong>Feriado irrenunciable:</strong> no se atiende
     </div>
     <div class="attention-note">⚠️ Los mensajes recibidos fuera de horario se atienden al día siguiente a partir de las 11:00.</div>
-    <div class="attention-note" style="margin-top:6px;">🚫 En feriados irrenunciables no se atiende el celular.</div>
   </div>
 
   <div class="date-nav">
@@ -264,7 +266,8 @@
       Te responderemos a la brevedad · +56 9 7793 7858<br>
       <span class="wa-order">✅ Atendemos por orden de llegada de mensajes</span><br>
       <span class="wa-warning">⚠️ Para no perder tu lugar, escribe solo una vez. Atendemos los mensajes del más temprano al más reciente.</span><br>
-      <span style="font-size:13px;color:var(--gray-text)">Para consultar por otros horarios escríbenos por WhatsApp.</span>
+      <span style="font-size:13px;color:var(--gray-text)">Para consultar por otros horarios escríbenos por WhatsApp.</span><br>
+      <span style="font-size:12px;color:var(--gray-text)">* Las reservas de las 23 hrs deben quedar pagadas antes de jugar, ya sea en el establecimiento o por transferencia (solicita los datos por WhatsApp).</span>
     </div>
 
     <div class="group-btns">
@@ -553,7 +556,7 @@ function render() {
           <td><span class="slot-hour">${am ? '🌅 ' : ''}${hora}${am ? ' <span class="badge-am">AM</span>' : ''}</span></td>
           <td>${statusCell(ocp1, slot.fecha, hora, 'Cancha 1 (Muro)')}</td>
           <td>${statusCell(ocp2, slot.fecha, hora, 'Cancha 2 (Estacionam.)')}</td>
-          <td class="slot-price">${price.label}${parseInt(hora) === 23 ? '<span class="pago-previo">23 hrs: solo con pago previo</span>' : ''}</td>
+          <td class="slot-price">${price.label}${parseInt(hora) === 23 ? '<span class="pago-previo">23 hrs: pago previo*</span>' : ''}</td>
         </tr>`;
       });
 
@@ -619,7 +622,7 @@ function hideInstall(e) {
 // ── RIVAL FINDER ─────────────────────────────────────────────
 const RIVAL_DB = 'https://cdv-vaccarezza-default-rtdb.firebaseio.com/rivales';
 const RIVAL_LOCAL_KEY = 'cdv_rival_local';
-const MAX_RIVAL_PER_DAY = 3;
+const MAX_RIVAL_PER_DAY = 1;
 
 const COLORS_MAP = {
   'Blanco': '#ffffff', 'Negro': '#1a1a1a', 'Rojo': '#dc2626',
