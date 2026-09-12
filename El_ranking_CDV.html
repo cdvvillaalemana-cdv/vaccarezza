@@ -474,10 +474,16 @@ async function crearEquipo(){
   btn.disabled=false; btn.textContent='Inscribir equipo';
 }
 
+function limpiarNumeroWa(v){
+  let n = (v||'').replace(/\D/g,'');
+  if(n.length>9 && n.startsWith('56')) n = n.slice(2);
+  return n;
+}
+
 function linkContacto(e){
   const msg = 'Hola, vi tu equipo en El Ranking CDV (Villa Alemana) y me gustaría coordinar un partido.';
   if(e.contactoTipo==='WhatsApp'){
-    const num = e.contactoValor.replace(/\D/g,'');
+    const num = limpiarNumeroWa(e.contactoValor);
     return `https://wa.me/56${num}?text=${encodeURIComponent(msg)}`;
   }
   if(e.contactoTipo==='Correo'){
