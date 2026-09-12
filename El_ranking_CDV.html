@@ -27,7 +27,8 @@
   .hero-title {
     font-family:'Barlow Condensed', sans-serif; font-weight:700;
     font-size: clamp(40px, 12vw, 64px);
-    line-height:1;
+    line-height:1.2;
+    padding-bottom:4px;
     letter-spacing:0.01em;
     background: linear-gradient(90deg, var(--gold), var(--green));
     -webkit-background-clip: text; background-clip:text; color:transparent;
@@ -166,6 +167,8 @@
   </div>
   <div class="tabla-nota">Resultados informados por los propios equipos y confirmados por ambas partes. No es una liga oficial.</div>
 
+  <div class="tabla-nota" style="margin-top:14px;">Este ranking es para equipos masculinos. Si buscas la Tabla Femenina, pide que se active arriba.</div>
+
   <div class="btn-grid">
     <button class="btn-main" id="btn-toggle-inscribir" onclick="togglePanel('inscribir')">+ Inscribir mi equipo</button>
     <button class="btn-main" id="btn-toggle-resultado" onclick="togglePanel('resultado')">Cargar resultado</button>
@@ -178,17 +181,23 @@
       <input type="text" id="f-nombre" placeholder="Ej: Los Halcones FC">
       <div class="field-error" id="err-nombre"></div>
     </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Categoría</label>
+        <input type="text" value="Masculina" disabled style="opacity:0.6">
+      </div>
+      <div class="field">
+        <label>Comuna</label>
+        <input type="text" value="Villa Alemana" disabled style="opacity:0.6">
+      </div>
+    </div>
     <div class="field">
-      <label>Categoría / nivel</label>
+      <label>Nivel</label>
       <select id="f-categoria">
         <option>Recreativo</option>
         <option>Semi-competitivo</option>
         <option>Competitivo</option>
       </select>
-    </div>
-    <div class="field">
-      <label>Comuna</label>
-      <input type="text" value="Villa Alemana" disabled style="opacity:0.6">
     </div>
     <div class="field">
       <label>Rango de edades (puedes marcar más de una)</label>
@@ -299,7 +308,7 @@ const DB = 'https://cdv-vaccarezza-default-rtdb.firebaseio.com';
 const COLOR_MAP = {
   'Rojo':'#dc2626','Azul':'#2563eb','Celeste':'#0ea5e9','Verde':'#16a34a','Amarillo':'#eab308',
   'Naranjo':'#f97316','Morado':'#9333ea','Rosado':'#ec4899','Negro':'#1a1a1a','Blanco':'#ffffff',
-  'Gris':'#6b7280','Burdeo':'#7f1d1d'
+  'Gris':'#9ca3af','Burdeo':'#7f1d1d'
 };
 const COLOR_NAMES = Object.keys(COLOR_MAP).concat(['Otro']);
 
@@ -443,7 +452,7 @@ async function crearEquipo(){
   btn.disabled = true; btn.textContent = 'Inscribiendo...';
 
   try{
-    await fetch(`${DB}/equipos.json`, {
+    const res = await fetch(`${DB}/equipos.json`, {
       method:'POST',
       body: JSON.stringify({
         nombre, categoria, zona:'Villa Alemana', edades, jugadores,
@@ -451,7 +460,8 @@ async function crearEquipo(){
         ts: Date.now()
       })
     });
-    msgEl.innerHTML = '<div class="msg-success">Equipo inscrito. Ya apareces en el directorio.</div>';
+    if(!res.ok) throw new Error('write-failed');
+    msgEl.innerHTML = '<div class="msg-success">Equipo inscrito. Ya apareces en este ranking.</div>';
     ['f-nombre','f-encnombre','f-encapellido','f-contactovalor','f-pin','f-color-otro'].forEach(id=>document.getElementById(id).value='');
     coloresSeleccionados = [];
     document.querySelectorAll('#f-colores .color-swatch').forEach(el=>el.classList.remove('selected'));
@@ -583,13 +593,14 @@ async function cargarResultado(){
   const btn = document.getElementById('btn-resultado');
   btn.disabled=true; btn.textContent='Cargando...';
   try{
-    await fetch(`${DB}/partidos.json`, {
+    const res = await fetch(`${DB}/partidos.json`, {
       method:'POST',
       body: JSON.stringify({
         equipoA_id: idA, equipoB_id: idB, golesA, golesB,
         confirmadoA:true, confirmadoB:false, ts: Date.now()
       })
     });
+    if(!res.ok) throw new Error('write-failed');
     msgEl.innerHTML = '<div class="msg-success">Resultado cargado. Falta que el rival lo confirme para sumar puntos.</div>';
     document.getElementById('r-golesA').value=''; document.getElementById('r-golesB').value=''; document.getElementById('r-pin').value='';
     await cargarTodo();
@@ -649,9 +660,14 @@ function pedirPinEliminar(id){
   abrirPinModal('Eliminar equipo', 'Ingresa el PIN de tu equipo para eliminarlo. Esta acción no se puede deshacer.', async (pin)=>{
     const equipo = EQUIPOS.find(e=>e.id===id);
     if(equipo.pin !== pin){ document.getElementById('pin-modal-error').textContent='PIN incorrecto.'; return; }
-    await fetch(`${DB}/equipos/${id}.json`, { method:'DELETE' });
-    cerrarPinModal();
-    await cargarTodo();
+    try{
+      const res = await fetch(`${DB}/equipos/${id}.json`, { method:'DELETE' });
+      if(!res.ok) throw new Error('write-failed');
+      cerrarPinModal();
+      await cargarTodo();
+    }catch(e){
+      document.getElementById('pin-modal-error').textContent='No se pudo eliminar. Intenta de nuevo.';
+    }
   });
 }
 function pedirPinConfirmar(matchId, lado){
@@ -660,9 +676,14 @@ function pedirPinConfirmar(matchId, lado){
   abrirPinModal('Confirmar resultado', `Ingresa el PIN de ${equipo?equipo.nombre:'tu equipo'} para confirmar.`, async (pin)=>{
     if(!equipo || equipo.pin !== pin){ document.getElementById('pin-modal-error').textContent='PIN incorrecto.'; return; }
     const campo = lado==='A' ? 'confirmadoA' : 'confirmadoB';
-    await fetch(`${DB}/partidos/${matchId}.json`, { method:'PATCH', body: JSON.stringify({[campo]:true}) });
-    cerrarPinModal();
-    await cargarTodo();
+    try{
+      const res = await fetch(`${DB}/partidos/${matchId}.json`, { method:'PATCH', body: JSON.stringify({[campo]:true}) });
+      if(!res.ok) throw new Error('write-failed');
+      cerrarPinModal();
+      await cargarTodo();
+    }catch(e){
+      document.getElementById('pin-modal-error').textContent='No se pudo confirmar. Intenta de nuevo.';
+    }
   });
 }
 
@@ -700,15 +721,21 @@ async function guardarEdicion(id){
   const colorOtroTexto = document.getElementById('f-color-otro').value.trim();
   const colores = coloresSeleccionados.map(c=> c==='Otro' ? colorOtroTexto : c);
 
-  await fetch(`${DB}/equipos/${id}.json`, {
-    method:'PATCH',
-    body: JSON.stringify({ nombre, categoria, edades, jugadores, colores, encNombre, encApellido, contactoTipo, contactoValor, pin })
-  });
-  const btn = document.getElementById('btn-inscribir');
-  btn.textContent = 'Inscribir equipo';
-  btn.onclick = crearEquipo;
-  togglePanel('inscribir');
-  await cargarTodo();
+  const msgEl = document.getElementById('msg-inscribir');
+  try{
+    const res = await fetch(`${DB}/equipos/${id}.json`, {
+      method:'PATCH',
+      body: JSON.stringify({ nombre, categoria, edades, jugadores, colores, encNombre, encApellido, contactoTipo, contactoValor, pin })
+    });
+    if(!res.ok) throw new Error('write-failed');
+    const btn = document.getElementById('btn-inscribir');
+    btn.textContent = 'Inscribir equipo';
+    btn.onclick = crearEquipo;
+    togglePanel('inscribir');
+    await cargarTodo();
+  }catch(e){
+    msgEl.innerHTML = '<div class="msg-error">No se pudieron guardar los cambios. Intenta de nuevo.</div>';
+  }
 }
 
 async function cargarTodo(){
@@ -749,7 +776,7 @@ async function renderFemenina(){
 
   if(count >= FEM_META){
     sub.innerHTML = `<span class="femenina-meta">¡Meta alcanzada! ${count}/${FEM_META} solicitudes</span>`;
-    action.innerHTML = `<div class="femenina-done">Estamos preparando la Liga Femenina. ¡Gracias por pedirla!</div>`;
+    action.innerHTML = `<div class="femenina-done">Estamos preparando la Tabla Femenina. ¡Gracias por pedirla!</div>`;
     return;
   }
 
@@ -761,7 +788,7 @@ async function renderFemenina(){
   }
 
   action.innerHTML = `
-    <button class="femenina-btn" id="femenina-btn" onclick="mostrarFemeninaForm()">Quiero una Liga Femenina</button>
+    <button class="femenina-btn" id="femenina-btn" onclick="mostrarFemeninaForm()">Quiero una Tabla Femenina</button>
     <div id="femenina-form" style="display:none;">
       <div class="femenina-input-row">
         <input type="tel" id="femenina-tel" placeholder="Tu WhatsApp (sin +56)">
@@ -789,14 +816,15 @@ async function enviarFemenina(){
   }
 
   try{
-    await fetch(`${DB}/liga_femenina/solicitudes.json`, {
+    const res = await fetch(`${DB}/liga_femenina/solicitudes.json`, {
       method:'POST',
       body: JSON.stringify({ telefono: tel, ts: Date.now() })
     });
+    if(!res.ok) throw new Error('write-failed');
     marcarSolicitadoFemenina();
     await renderFemenina();
   }catch(e){
-    msgEl.innerHTML='<div class="femenina-msg err">Error al enviar. Intenta de nuevo.</div>';
+    msgEl.innerHTML='<div class="femenina-msg err">No se pudo registrar tu voto. Revisa tu conexión e intenta de nuevo.</div>';
   }
 }
 
