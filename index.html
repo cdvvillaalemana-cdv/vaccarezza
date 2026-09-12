@@ -149,6 +149,14 @@
   .cerrado-clima span { font-size: 22px; display: block; margin-bottom: 4px; }
 
 
+  /* RIVAL PANEL */
+  .rival-panel { display: none; background: #1a1a2e; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+  .rival-panel.open { display: block; }
+  .rival-panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .rival-panel-title { font-size: 13px; font-weight: 700; color: #e8c840; text-transform: uppercase; letter-spacing: 0.06em; }
+  .rival-panel-close { background: none; border: none; color: #aaa; font-size: 20px; cursor: pointer; padding: 0 4px; line-height: 1; }
+  .rival-panel-close:hover { color: #fff; }
+
   /* RIVAL FINDER */
   .rival-notice { background: #fff9e6; border: 1px solid #f5d87a; border-radius: 8px; padding: 10px 12px; font-size: 12px; color: #7a5c00; margin-bottom: 14px; line-height: 1.6; }
   .rival-form { background: #16213e; border-radius: 10px; padding: 14px; margin-bottom: 14px; }
@@ -205,12 +213,12 @@
   </div>
 </div>
 
-<div class="mundial-panel" id="mundial-panel">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-    <div class="mundial-panel-title" style="margin-bottom:0">⚽ Buscar Rival — CDV Vaccarezza</div>
-    <button onclick="toggleRival()" style="background:none;border:none;color:#aaa;font-size:20px;cursor:pointer;padding:0 4px;line-height:1;">✕</button>
+<div class="rival-panel" id="mundial-panel">
+  <div class="rival-panel-header">
+    <div class="rival-panel-title">⚽ Buscar Rival — CDV Vaccarezza</div>
+    <button class="rival-panel-close" onclick="closeRival()">✕</button>
   </div>
-  <div id="mundial-content"><div class="mundial-loading">Cargando...</div></div>
+  <div id="mundial-content"></div>
 </div>
 
 <div class="notice-bar">
@@ -673,8 +681,17 @@ function handleNivelCheck(cb) {
 
 function toggleRival() {
   const panel = document.getElementById('mundial-panel');
-  panel.classList.toggle('open');
-  if (panel.classList.contains('open')) renderRival();
+  const isOpen = panel.classList.contains('open');
+  if (isOpen) {
+    panel.classList.remove('open');
+  } else {
+    panel.classList.add('open');
+    renderRival();
+  }
+}
+
+function closeRival() {
+  document.getElementById('mundial-panel').classList.remove('open');
 }
 
 async function fetchRivales() {
