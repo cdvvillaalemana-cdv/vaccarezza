@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>El Ranking CDV – Villa Alemana</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy-deep: #0d1117;
+    --navy: #1a1a2e;
+    --navy-card: #16213e;
+    --navy-border: #2a3a5e;
+    --gold: #e8c840;
+    --green: #2dbe82;
+    --green-dark: #1a8a5a;
+    --red: #e05555;
+  }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  body { font-family:'Barlow',sans-serif; background:var(--navy-deep); color:#fff; min-height:100vh; font-size:15px; }
+
+  .header { background:#fff; border-bottom:2px solid var(--green); padding:12px 20px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+  .header img { height:40px; }
+  .header-back { font-size:13px; color:var(--green-dark); text-decoration:none; font-weight:600; }
+
+  .hero { text-align:center; padding:32px 16px 24px; }
+  .hero-title {
+    font-family:'Barlow Condensed', sans-serif; font-weight:700;
+    font-size: clamp(40px, 12vw, 64px);
+    line-height:1;
+    letter-spacing:0.01em;
+    background: linear-gradient(90deg, var(--gold), var(--green));
+    -webkit-background-clip: text; background-clip:text; color:transparent;
+    margin-bottom:6px;
+  }
+  .hero-sub { font-size:14px; color:#8a93b0; text-transform:uppercase; letter-spacing:0.08em; font-weight:600; }
+  .hero-tagline { font-size:13px; color:#aaa; margin-top:10px; max-width:320px; margin-left:auto; margin-right:auto; line-height:1.5; }
+
+  .main { max-width:700px; margin:0 auto; padding:0 16px 60px; }
+
+  .section-title { font-family:'Barlow Condensed', sans-serif; font-size:13px; color:#aaa; text-transform:uppercase; letter-spacing:0.08em; font-weight:700; margin:28px 0 12px; }
+
+  /* TABLA */
+  .tabla-wrap { background:var(--navy-card); border:1px solid var(--navy-border); border-radius:12px; overflow:hidden; }
+  .tabla-row { display:flex; align-items:center; gap:10px; padding:12px 14px; border-bottom:1px dashed var(--navy-border); }
+  .tabla-row:last-child { border-bottom:none; }
+  .tabla-row.lider { background: rgba(232,200,64,0.08); }
+  .tabla-pos { font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:20px; color:#8a93b0; width:26px; text-align:center; flex-shrink:0; }
+  .tabla-row.lider .tabla-pos { font-size:28px; color:var(--gold); }
+  .tabla-colores { display:flex; gap:3px; flex-shrink:0; }
+  .tabla-dot { width:10px; height:10px; border-radius:50%; border:1px solid rgba(255,255,255,0.25); display:inline-block; }
+  .tabla-nombre { flex:1; font-size:14px; font-weight:600; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .tabla-row.lider .tabla-nombre { font-size:15px; }
+  .tabla-pj { font-size:12px; color:#8a93b0; white-space:nowrap; }
+  .tabla-pts { font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:16px; width:30px; text-align:right; flex-shrink:0; }
+  .tabla-row.lider .tabla-pts { color:var(--gold); }
+  .tabla-empty { text-align:center; padding:24px; color:#666; font-size:13px; }
+  .tabla-nota { font-size:11px; color:#666; text-align:center; margin-top:8px; line-height:1.5; }
+
+  .btn-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:16px; }
+  .btn-main { background:var(--navy-card); border:1px solid var(--navy-border); color:#fff; border-radius:10px; padding:12px 8px; font-family:'Barlow',sans-serif; font-size:13px; font-weight:600; cursor:pointer; text-align:center; }
+  .btn-main:hover { border-color:var(--green); }
+  .btn-main.active { border-color:var(--gold); background:rgba(232,200,64,0.08); }
+
+  .panel { display:none; background:var(--navy-card); border:1px solid var(--navy-border); border-radius:12px; padding:16px; margin-top:12px; }
+  .panel.open { display:block; }
+  .panel-title { font-size:13px; font-weight:700; color:var(--gold); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:14px; }
+  .field { margin-bottom:12px; }
+  .field label { display:block; font-size:11px; color:#aaa; margin-bottom:4px; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; }
+  .field input[type=text], .field input[type=tel], .field select { width:100%; padding:9px 10px; background:var(--navy-deep); border:1px solid var(--navy-border); border-radius:6px; color:#fff; font-size:14px; font-family:'Barlow',sans-serif; outline:none; }
+  .field input:focus, .field select:focus { border-color:var(--gold); }
+  .field select option { background:var(--navy); }
+  .field-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .field-hint { font-size:11px; color:#666; margin-top:4px; }
+  .field-error { font-size:12px; color:var(--red); margin-top:4px; min-height:14px; }
+
+  .chip-group { display:flex; flex-wrap:wrap; gap:6px; }
+  .chip { padding:6px 12px; border-radius:20px; border:1px solid var(--navy-border); font-size:12px; cursor:pointer; user-select:none; color:#ccc; }
+  .chip.selected { border-color:var(--green); background:rgba(45,190,130,0.12); color:#fff; }
+
+  .color-group { display:flex; flex-wrap:wrap; gap:8px; }
+  .color-swatch { width:32px; height:32px; border-radius:50%; border:2px solid transparent; cursor:pointer; }
+  .color-swatch.selected { border-color:#fff; box-shadow:0 0 0 2px var(--gold); }
+
+  .pin-note { background:rgba(232,200,64,0.08); border:1px solid rgba(232,200,64,0.3); border-radius:8px; padding:10px 12px; font-size:12px; color:#e8d9a0; line-height:1.5; margin-bottom:4px; }
+
+  .btn-submit { width:100%; padding:11px; background:var(--green); color:#fff; border:none; border-radius:8px; font-family:'Barlow',sans-serif; font-size:14px; font-weight:700; cursor:pointer; margin-top:8px; }
+  .btn-submit:hover { background:var(--green-dark); }
+  .btn-submit:disabled { background:#444; cursor:default; }
+  .msg-success { color:var(--green); font-size:12px; margin-top:8px; font-weight:600; }
+  .msg-error { color:var(--red); font-size:12px; margin-top:8px; font-weight:600; }
+
+  .equipo-card { background:var(--navy-card); border:1px solid var(--navy-border); border-radius:12px; padding:14px 16px; margin-bottom:10px; }
+  .equipo-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; gap:8px; }
+  .equipo-nombre-wrap { display:flex; align-items:center; gap:8px; min-width:0; }
+  .equipo-nombre { font-size:15px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .equipo-colores { display:flex; gap:3px; flex-shrink:0; }
+  .equipo-badge { font-size:10px; padding:3px 9px; border-radius:20px; background:rgba(45,190,130,0.15); color:var(--green); font-weight:700; white-space:nowrap; flex-shrink:0; }
+  .equipo-chips { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:10px; }
+  .equipo-chip { font-size:11px; padding:3px 8px; border-radius:6px; background:var(--navy-deep); color:#aaa; }
+  .equipo-bottom { display:flex; align-items:center; justify-content:space-between; border-top:1px solid var(--navy-border); padding-top:10px; gap:8px; flex-wrap:wrap; }
+  .equipo-contact { display:inline-flex; align-items:center; gap:6px; background:var(--green); color:#fff; border:none; border-radius:6px; padding:7px 12px; font-size:13px; font-weight:600; cursor:pointer; text-decoration:none; }
+  .equipo-manage { display:flex; gap:10px; }
+  .equipo-manage-btn { background:none; border:none; color:#8a93b0; font-size:12px; cursor:pointer; font-weight:600; }
+  .equipo-manage-btn:hover { color:#fff; }
+  .equipo-empty { text-align:center; color:#666; font-size:13px; padding:24px 0; }
+
+  .pendiente-card { background:var(--navy-card); border:1px solid var(--navy-border); border-radius:10px; padding:12px 14px; margin-bottom:8px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+  .pendiente-info { font-size:13px; line-height:1.5; }
+  .pendiente-info b { color:var(--gold); }
+  .btn-confirmar { background:var(--gold); color:#1a1a2e; border:none; border-radius:6px; padding:7px 12px; font-size:12px; font-weight:700; cursor:pointer; }
+
+  .pin-modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:600; align-items:center; justify-content:center; padding:20px; }
+  .pin-modal-bg.open { display:flex; }
+  .pin-modal { background:var(--navy-card); border:1px solid var(--navy-border); border-radius:14px; padding:22px; max-width:300px; width:100%; text-align:center; }
+  .pin-modal-title { font-size:14px; font-weight:700; color:#fff; margin-bottom:4px; }
+  .pin-modal-sub { font-size:12px; color:#aaa; margin-bottom:14px; }
+  .pin-modal input { width:100%; padding:10px; font-size:18px; letter-spacing:4px; text-align:center; background:var(--navy-deep); border:1px solid var(--navy-border); border-radius:8px; color:#fff; margin-bottom:10px; outline:none; }
+  .pin-modal input:focus { border-color:var(--gold); }
+  .pin-modal-actions { display:flex; gap:8px; }
+  .pin-modal-btn { flex:1; padding:9px; border-radius:8px; border:none; font-size:13px; font-weight:700; cursor:pointer; font-family:'Barlow',sans-serif; }
+  .pin-modal-confirm { background:var(--green); color:#fff; }
+  .pin-modal-cancel { background:var(--navy-deep); color:#aaa; border:1px solid var(--navy-border); }
+  .pin-modal-error { font-size:12px; color:var(--red); margin-top:8px; min-height:14px; }
+
+  .femenina-box { max-width:700px; margin:0 auto 10px; padding:14px 18px; background:var(--navy-card); border:1px solid var(--navy-border); border-radius:12px; text-align:center; }
+  .femenina-title { font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:16px; color:#fff; margin-bottom:4px; }
+  .femenina-sub { font-size:12px; color:#aaa; margin-bottom:8px; }
+  .femenina-bar-wrap { height:8px; background:var(--navy-deep); border-radius:4px; overflow:hidden; margin-bottom:10px; }
+  .femenina-bar { height:100%; width:0%; background:linear-gradient(90deg,var(--green),var(--gold)); border-radius:4px; transition:width .4s ease; }
+  .femenina-btn { background:var(--gold); color:#1a1a2e; border:none; border-radius:8px; padding:9px 16px; font-size:13px; font-weight:700; cursor:pointer; font-family:'Barlow',sans-serif; }
+  .femenina-input-row { display:flex; gap:6px; margin-top:6px; }
+  .femenina-input-row input { flex:1; padding:8px 10px; background:var(--navy-deep); border:1px solid var(--navy-border); border-radius:6px; color:#fff; font-size:13px; outline:none; font-family:'Barlow',sans-serif; }
+  .femenina-input-row input:focus { border-color:var(--gold); }
+  .femenina-msg { font-size:11px; margin-top:6px; }
+  .femenina-msg.err { color:var(--red); }
+  .femenina-done { font-size:12px; color:var(--green); font-weight:600; }
+  .femenina-meta { font-size:12px; color:var(--gold); font-weight:700; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <img src="https://cdvvillaalemana-cdv.github.io/vaccarezza/Logo_horizontal.png" alt="CDV Vaccarezza">
+  <a class="header-back" href="index.html">&larr; Disponibilidad</a>
+</div>
+
+<div class="hero">
+  <div class="hero-title">El Ranking CDV</div>
+  <div class="hero-sub">Villa Alemana</div>
+  <div class="hero-tagline">Encuentra rivales, inscribe a tu equipo y pelea el primer lugar.</div>
+</div>
+
+<div class="femenina-box" id="femenina-box">
+  <div class="femenina-title">¿Quieres una Liga Femenina en CDV?</div>
+  <div class="femenina-sub" id="femenina-sub">Cargando...</div>
+  <div class="femenina-bar-wrap"><div class="femenina-bar" id="femenina-bar"></div></div>
+  <div id="femenina-action"></div>
+</div>
+
+<div class="main">
+
+  <div class="section-title">Tabla de posiciones</div>
+  <div class="tabla-wrap" id="tabla-wrap">
+    <div class="tabla-empty">Cargando...</div>
+  </div>
+  <div class="tabla-nota">Resultados informados por los propios equipos y confirmados por ambas partes. No es una liga oficial.</div>
+
+  <div class="btn-grid">
+    <button class="btn-main" id="btn-toggle-inscribir" onclick="togglePanel('inscribir')">+ Inscribir mi equipo</button>
+    <button class="btn-main" id="btn-toggle-resultado" onclick="togglePanel('resultado')">Cargar resultado</button>
+  </div>
+
+  <div class="panel" id="panel-inscribir">
+    <div class="panel-title">Inscribir equipo</div>
+    <div class="field">
+      <label>Nombre del equipo</label>
+      <input type="text" id="f-nombre" placeholder="Ej: Los Halcones FC">
+      <div class="field-error" id="err-nombre"></div>
+    </div>
+    <div class="field">
+      <label>Categoría / nivel</label>
+      <select id="f-categoria">
+        <option>Recreativo</option>
+        <option>Semi-competitivo</option>
+        <option>Competitivo</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Comuna</label>
+      <input type="text" value="Villa Alemana" disabled style="opacity:0.6">
+    </div>
+    <div class="field">
+      <label>Rango de edades (puedes marcar más de una)</label>
+      <div class="chip-group" id="f-edades">
+        <div class="chip" data-val="&lt;18">&lt;18</div>
+        <div class="chip" data-val="18-25">18-25</div>
+        <div class="chip" data-val="26-35">26-35</div>
+        <div class="chip" data-val="36-45">36-45</div>
+        <div class="chip" data-val="46+">46+</div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Jugadores por lado habituales (puedes marcar más de una)</label>
+      <div class="chip-group" id="f-jugadores">
+        <div class="chip" data-val="5">5</div>
+        <div class="chip" data-val="6">6</div>
+        <div class="chip" data-val="7">7</div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Colores del equipo (elige 2)</label>
+      <div class="color-group" id="f-colores"></div>
+      <input type="text" id="f-color-otro" placeholder="Si elegiste 'Otro', escribe el color" style="display:none;margin-top:8px;">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Nombre encargado</label>
+        <input type="text" id="f-encnombre">
+      </div>
+      <div class="field">
+        <label>Apellido encargado</label>
+        <input type="text" id="f-encapellido">
+      </div>
+    </div>
+    <div class="field">
+      <label>Forma de contacto</label>
+      <select id="f-contactotipo" onchange="onContactoTipoChange()">
+        <option value="WhatsApp">WhatsApp</option>
+        <option value="Instagram">Instagram</option>
+        <option value="SMS">SMS</option>
+        <option value="Correo">Correo</option>
+        <option value="Otro">Otro</option>
+      </select>
+      <input type="text" id="f-contactovalor" placeholder="Número (sin +56)" style="margin-top:8px;">
+      <div class="field-hint">Este dato quedará visible públicamente para que otros equipos te contacten.</div>
+    </div>
+    <div class="field">
+      <label>PIN (para editar o eliminar tu ficha después)</label>
+      <input type="text" id="f-pin" maxlength="6" placeholder="Ej: 4 a 6 números">
+      <div class="pin-note">Elige un PIN fácil de recordar. No hay forma de recuperarlo si lo olvidas.</div>
+    </div>
+    <button class="btn-submit" id="btn-inscribir" onclick="crearEquipo()">Inscribir equipo</button>
+    <div id="msg-inscribir"></div>
+  </div>
+
+  <div class="panel" id="panel-resultado">
+    <div class="panel-title">Cargar resultado de partido</div>
+    <div class="field">
+      <label>Tu equipo</label>
+      <select id="r-equipoA"></select>
+    </div>
+    <div class="field">
+      <label>Equipo rival</label>
+      <select id="r-equipoB"></select>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Goles tu equipo</label>
+        <input type="text" inputmode="numeric" id="r-golesA" placeholder="0">
+      </div>
+      <div class="field">
+        <label>Goles rival</label>
+        <input type="text" inputmode="numeric" id="r-golesB" placeholder="0">
+      </div>
+    </div>
+    <div class="field">
+      <label>PIN de tu equipo</label>
+      <input type="text" id="r-pin" maxlength="6">
+    </div>
+    <button class="btn-submit" id="btn-resultado" onclick="cargarResultado()">Cargar resultado</button>
+    <div id="msg-resultado"></div>
+  </div>
+
+  <div class="section-title" id="pendientes-title" style="display:none;">Resultados pendientes de confirmar</div>
+  <div id="pendientes-list"></div>
+
+  <div class="section-title">Equipos inscritos</div>
+  <div id="equipos-list"><div class="equipo-empty">Cargando...</div></div>
+
+</div>
+
+<div class="pin-modal-bg" id="pin-modal-bg">
+  <div class="pin-modal">
+    <div class="pin-modal-title" id="pin-modal-title">Ingresa el PIN</div>
+    <div class="pin-modal-sub" id="pin-modal-sub"></div>
+    <input type="text" id="pin-modal-input" maxlength="6" inputmode="numeric">
+    <div class="pin-modal-actions">
+      <button class="pin-modal-btn pin-modal-cancel" onclick="cerrarPinModal()">Cancelar</button>
+      <button class="pin-modal-btn pin-modal-confirm" onclick="confirmarPinModal()">Confirmar</button>
+    </div>
+    <div class="pin-modal-error" id="pin-modal-error"></div>
+  </div>
+</div>
+
+<script>
+const DB = 'https://cdv-vaccarezza-default-rtdb.firebaseio.com';
+
+const COLOR_MAP = {
+  'Rojo':'#dc2626','Azul':'#2563eb','Celeste':'#0ea5e9','Verde':'#16a34a','Amarillo':'#eab308',
+  'Naranjo':'#f97316','Morado':'#9333ea','Rosado':'#ec4899','Negro':'#1a1a1a','Blanco':'#ffffff',
+  'Gris':'#6b7280','Burdeo':'#7f1d1d'
+};
+const COLOR_NAMES = Object.keys(COLOR_MAP).concat(['Otro']);
+
+const PALABRAS_PROHIBIDAS = ['mierda','puta','conchatumadre','ctm','csm','culiao','culia0',
+  'maricon','maric0n','marica','pendejo','pichula','pico','forro','qlo'];
+
+function normalizar(s){
+  return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+}
+function contienePalabraProhibida(nombre){
+  const n = normalizar(nombre);
+  return PALABRAS_PROHIBIDAS.some(p => n.includes(p));
+}
+
+let EQUIPOS = [];
+let PARTIDOS = [];
+let coloresSeleccionados = [];
+
+async function fetchEquipos(){
+  try{
+    const res = await fetch(`${DB}/equipos.json`);
+    const data = await res.json();
+    if(!data) return [];
+    return Object.entries(data).map(([id,v])=>({id,...v}));
+  }catch(e){ return []; }
+}
+async function fetchPartidos(){
+  try{
+    const res = await fetch(`${DB}/partidos.json`);
+    const data = await res.json();
+    if(!data) return [];
+    return Object.entries(data).map(([id,v])=>({id,...v}));
+  }catch(e){ return []; }
+}
+
+function togglePanel(which){
+  const other = which==='inscribir' ? 'resultado' : 'inscribir';
+  const panel = document.getElementById('panel-'+which);
+  const otherPanel = document.getElementById('panel-'+other);
+  const btn = document.getElementById('btn-toggle-'+which);
+  const otherBtn = document.getElementById('btn-toggle-'+other);
+  const willOpen = !panel.classList.contains('open');
+  panel.classList.remove('open'); otherPanel.classList.remove('open');
+  btn.classList.remove('active'); otherBtn.classList.remove('active');
+  if(willOpen){
+    panel.classList.add('open'); btn.classList.add('active');
+    if(which==='resultado') fillResultadoSelects();
+    if(which==='inscribir'){
+      const ib = document.getElementById('btn-inscribir');
+      ib.textContent='Inscribir equipo';
+      ib.onclick=crearEquipo;
+    }
+  }
+}
+
+function renderColorSwatches(){
+  const wrap = document.getElementById('f-colores');
+  wrap.innerHTML = COLOR_NAMES.map(name=>{
+    if(name==='Otro'){
+      return `<div class="color-swatch" data-color="Otro" style="background:var(--navy-deep);display:flex;align-items:center;justify-content:center;font-size:10px;color:#aaa;border:1px dashed #666;" onclick="toggleColor('Otro')">Otro</div>`;
+    }
+    const hex = COLOR_MAP[name];
+    const extraBorder = name==='Blanco' ? 'border:1px solid #555;' : '';
+    return `<div class="color-swatch" data-color="${name}" style="background:${hex};${extraBorder}" onclick="toggleColor('${name}')" title="${name}"></div>`;
+  }).join('');
+}
+function toggleColor(name){
+  const idx = coloresSeleccionados.indexOf(name);
+  if(idx>-1){ coloresSeleccionados.splice(idx,1); }
+  else {
+    if(coloresSeleccionados.length>=2){ coloresSeleccionados.shift(); }
+    coloresSeleccionados.push(name);
+  }
+  document.querySelectorAll('#f-colores .color-swatch').forEach(el=>{
+    el.classList.toggle('selected', coloresSeleccionados.includes(el.dataset.color));
+  });
+  document.getElementById('f-color-otro').style.display = coloresSeleccionados.includes('Otro') ? 'block' : 'none';
+}
+
+function setupChipGroup(id){
+  document.querySelectorAll(`#${id} .chip`).forEach(chip=>{
+    chip.onclick = ()=> chip.classList.toggle('selected');
+  });
+}
+function getChipValues(id){
+  return Array.from(document.querySelectorAll(`#${id} .chip.selected`)).map(c=>c.dataset.val);
+}
+
+function onContactoTipoChange(){
+  const tipo = document.getElementById('f-contactotipo').value;
+  const input = document.getElementById('f-contactovalor');
+  const placeholders = {
+    WhatsApp:'Número (sin +56)', Instagram:'@usuario', SMS:'Número (sin +56)',
+    Correo:'correo@ejemplo.com', Otro:'Escribe el dato de contacto'
+  };
+  input.placeholder = placeholders[tipo];
+}
+
+async function crearEquipo(){
+  const nombre = document.getElementById('f-nombre').value.trim();
+  const errEl = document.getElementById('err-nombre');
+  errEl.textContent='';
+  const msgEl = document.getElementById('msg-inscribir');
+  msgEl.innerHTML='';
+
+  if(!nombre){ errEl.textContent='Ingresa el nombre del equipo.'; return; }
+  if(contienePalabraProhibida(nombre)){ errEl.textContent='Ese nombre no está permitido. Elige otro.'; return; }
+
+  const equiposActuales = await fetchEquipos();
+  const nombreNorm = normalizar(nombre);
+  if(equiposActuales.some(e=>normalizar(e.nombre)===nombreNorm)){
+    errEl.textContent='Ya existe un equipo con ese nombre. Elige otro.'; return;
+  }
+
+  const categoria = document.getElementById('f-categoria').value;
+  const edades = getChipValues('f-edades');
+  const jugadores = getChipValues('f-jugadores');
+  const encNombre = document.getElementById('f-encnombre').value.trim();
+  const encApellido = document.getElementById('f-encapellido').value.trim();
+  const contactoTipo = document.getElementById('f-contactotipo').value;
+  const contactoValor = document.getElementById('f-contactovalor').value.trim();
+  const pin = document.getElementById('f-pin').value.trim();
+  const colorOtroTexto = document.getElementById('f-color-otro').value.trim();
+
+  if(edades.length===0 || jugadores.length===0 || coloresSeleccionados.length<1 || !encNombre || !encApellido || !contactoValor || !pin){
+    msgEl.innerHTML = '<div class="msg-error">Completa todos los campos antes de inscribir tu equipo.</div>';
+    return;
+  }
+  if(coloresSeleccionados.includes('Otro') && !colorOtroTexto){
+    msgEl.innerHTML = '<div class="msg-error">Escribe el color en el campo "Otro".</div>';
+    return;
+  }
+  if(pin.length<4){
+    msgEl.innerHTML = '<div class="msg-error">El PIN debe tener al menos 4 caracteres.</div>';
+    return;
+  }
+
+  const colores = coloresSeleccionados.map(c => c==='Otro' ? colorOtroTexto : c);
+
+  const btn = document.getElementById('btn-inscribir');
+  btn.disabled = true; btn.textContent = 'Inscribiendo...';
+
+  try{
+    await fetch(`${DB}/equipos.json`, {
+      method:'POST',
+      body: JSON.stringify({
+        nombre, categoria, zona:'Villa Alemana', edades, jugadores,
+        colores, encNombre, encApellido, contactoTipo, contactoValor, pin,
+        ts: Date.now()
+      })
+    });
+    msgEl.innerHTML = '<div class="msg-success">Equipo inscrito. Ya apareces en el directorio.</div>';
+    ['f-nombre','f-encnombre','f-encapellido','f-contactovalor','f-pin','f-color-otro'].forEach(id=>document.getElementById(id).value='');
+    coloresSeleccionados = [];
+    document.querySelectorAll('#f-colores .color-swatch').forEach(el=>el.classList.remove('selected'));
+    document.querySelectorAll('.chip.selected').forEach(el=>el.classList.remove('selected'));
+    document.getElementById('f-color-otro').style.display='none';
+    await cargarTodo();
+  }catch(e){
+    msgEl.innerHTML = '<div class="msg-error">Error al inscribir. Intenta de nuevo.</div>';
+  }
+  btn.disabled=false; btn.textContent='Inscribir equipo';
+}
+
+function linkContacto(e){
+  const msg = 'Hola, vi tu equipo en El Ranking CDV (Villa Alemana) y me gustaría coordinar un partido.';
+  if(e.contactoTipo==='WhatsApp'){
+    const num = e.contactoValor.replace(/\D/g,'');
+    return `https://wa.me/56${num}?text=${encodeURIComponent(msg)}`;
+  }
+  if(e.contactoTipo==='Correo'){
+    return `mailto:${e.contactoValor}?subject=${encodeURIComponent('Contacto desde El Ranking CDV')}&body=${encodeURIComponent(msg)}`;
+  }
+  if(e.contactoTipo==='SMS'){
+    const num = e.contactoValor.replace(/\D/g,'');
+    return `sms:${num}?body=${encodeURIComponent(msg)}`;
+  }
+  if(e.contactoTipo==='Instagram'){
+    const user = e.contactoValor.replace('@','').trim();
+    return `https://instagram.com/${user}`;
+  }
+  return null;
+}
+function iconoContacto(tipo){
+  return {WhatsApp:'WhatsApp', Instagram:'Instagram', SMS:'SMS', Correo:'Correo', Otro:'Contacto'}[tipo] || 'Contacto';
+}
+function copiarContacto(valor){
+  navigator.clipboard.writeText(valor).then(()=> alert('Copiado: '+valor));
+}
+
+function renderEquipos(){
+  const wrap = document.getElementById('equipos-list');
+  if(EQUIPOS.length===0){
+    wrap.innerHTML = '<div class="equipo-empty">Aún no hay equipos inscritos. ¡Sé el primero!</div>';
+    return;
+  }
+  wrap.innerHTML = EQUIPOS.slice().sort((a,b)=>b.ts-a.ts).map(e=>{
+    const dots = (e.colores||[]).map(c=>`<span class="tabla-dot" style="background:${COLOR_MAP[c]||'#888'}"></span>`).join('');
+    const link = linkContacto(e);
+    const contactBtn = e.contactoTipo==='Otro'
+      ? `<button class="equipo-contact" onclick="copiarContacto('${(e.contactoValor||'').replace(/'/g,"\\'")}')">Copiar contacto</button>`
+      : `<a class="equipo-contact" href="${link}" target="_blank">${iconoContacto(e.contactoTipo)}</a>`;
+    return `<div class="equipo-card">
+      <div class="equipo-top">
+        <div class="equipo-nombre-wrap">
+          <span class="equipo-nombre">${e.nombre}</span>
+          <div class="equipo-colores">${dots}</div>
+        </div>
+        <span class="equipo-badge">${e.categoria}</span>
+      </div>
+      <div class="equipo-chips">
+        <span class="equipo-chip">${e.zona}</span>
+        <span class="equipo-chip">${(e.edades||[]).join(', ')}</span>
+        <span class="equipo-chip">Juega: ${(e.jugadores||[]).join(', ')}</span>
+      </div>
+      <div class="equipo-bottom">
+        ${contactBtn}
+        <div class="equipo-manage">
+          <button class="equipo-manage-btn" onclick="pedirPinEditar('${e.id}')">Editar</button>
+          <button class="equipo-manage-btn" onclick="pedirPinEliminar('${e.id}')">Eliminar</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderTabla(){
+  const wrap = document.getElementById('tabla-wrap');
+  const confirmados = PARTIDOS.filter(p=>p.confirmadoA && p.confirmadoB);
+  if(confirmados.length===0){
+    wrap.innerHTML = '<div class="tabla-empty">Aún no hay resultados confirmados.</div>';
+    return;
+  }
+  const stats = {};
+  confirmados.forEach(p=>{
+    [p.equipoA_id, p.equipoB_id].forEach(id=>{
+      if(!stats[id]) stats[id] = {pj:0,g:0,e:0,pe:0,pts:0};
+    });
+    const a = stats[p.equipoA_id], b = stats[p.equipoB_id];
+    a.pj++; b.pj++;
+    if(p.golesA > p.golesB){ a.g++; a.pts+=3; b.pe++; }
+    else if(p.golesA < p.golesB){ b.g++; b.pts+=3; a.pe++; }
+    else { a.e++; b.e++; a.pts++; b.pts++; }
+  });
+  const tabla = Object.entries(stats).map(([id,s])=>{
+    const equipo = EQUIPOS.find(e=>e.id===id);
+    return { id, nombre: equipo? equipo.nombre : '(equipo eliminado)', colores: equipo? equipo.colores : [], ...s };
+  }).sort((a,b)=>b.pts-a.pts);
+
+  wrap.innerHTML = tabla.map((t,i)=>{
+    const dots = (t.colores||[]).map(c=>`<span class="tabla-dot" style="background:${COLOR_MAP[c]||'#888'}"></span>`).join('');
+    return `<div class="tabla-row ${i===0?'lider':''}">
+      <div class="tabla-pos">${i+1}</div>
+      <div class="tabla-colores">${dots}</div>
+      <div class="tabla-nombre">${t.nombre}</div>
+      <div class="tabla-pj">${t.pj} PJ</div>
+      <div class="tabla-pts">${t.pts}</div>
+    </div>`;
+  }).join('');
+}
+
+function fillResultadoSelects(){
+  const opts = EQUIPOS.map(e=>`<option value="${e.id}">${e.nombre}</option>`).join('');
+  document.getElementById('r-equipoA').innerHTML = opts;
+  document.getElementById('r-equipoB').innerHTML = opts;
+}
+async function cargarResultado(){
+  const msgEl = document.getElementById('msg-resultado');
+  msgEl.innerHTML='';
+  const idA = document.getElementById('r-equipoA').value;
+  const idB = document.getElementById('r-equipoB').value;
+  const golesA = parseInt(document.getElementById('r-golesA').value,10);
+  const golesB = parseInt(document.getElementById('r-golesB').value,10);
+  const pin = document.getElementById('r-pin').value.trim();
+
+  if(!idA || !idB || idA===idB){ msgEl.innerHTML='<div class="msg-error">Selecciona dos equipos distintos.</div>'; return; }
+  if(isNaN(golesA)||isNaN(golesB)||golesA<0||golesB<0){ msgEl.innerHTML='<div class="msg-error">Ingresa un marcador válido.</div>'; return; }
+  const equipoA = EQUIPOS.find(e=>e.id===idA);
+  if(!equipoA || equipoA.pin !== pin){ msgEl.innerHTML='<div class="msg-error">PIN incorrecto para tu equipo.</div>'; return; }
+
+  const btn = document.getElementById('btn-resultado');
+  btn.disabled=true; btn.textContent='Cargando...';
+  try{
+    await fetch(`${DB}/partidos.json`, {
+      method:'POST',
+      body: JSON.stringify({
+        equipoA_id: idA, equipoB_id: idB, golesA, golesB,
+        confirmadoA:true, confirmadoB:false, ts: Date.now()
+      })
+    });
+    msgEl.innerHTML = '<div class="msg-success">Resultado cargado. Falta que el rival lo confirme para sumar puntos.</div>';
+    document.getElementById('r-golesA').value=''; document.getElementById('r-golesB').value=''; document.getElementById('r-pin').value='';
+    await cargarTodo();
+  }catch(e){
+    msgEl.innerHTML = '<div class="msg-error">Error al cargar el resultado. Intenta de nuevo.</div>';
+  }
+  btn.disabled=false; btn.textContent='Cargar resultado';
+}
+
+function renderPendientes(){
+  const pendientes = PARTIDOS.filter(p=> p.confirmadoA !== p.confirmadoB);
+  const title = document.getElementById('pendientes-title');
+  const wrap = document.getElementById('pendientes-list');
+  if(pendientes.length===0){ title.style.display='none'; wrap.innerHTML=''; return; }
+  title.style.display='block';
+  wrap.innerHTML = pendientes.map(p=>{
+    const eA = EQUIPOS.find(e=>e.id===p.equipoA_id);
+    const eB = EQUIPOS.find(e=>e.id===p.equipoB_id);
+    const faltaA = !p.confirmadoA;
+    const faltante = faltaA ? eA : eB;
+    return `<div class="pendiente-card">
+      <div class="pendiente-info">${eA?eA.nombre:'?'} ${p.golesA} - ${p.golesB} ${eB?eB.nombre:'?'}<br>
+        Falta que <b>${faltante?faltante.nombre:'?'}</b> confirme</div>
+      <button class="btn-confirmar" onclick="pedirPinConfirmar('${p.id}', '${faltaA?'A':'B'}')">Confirmar</button>
+    </div>`;
+  }).join('');
+}
+
+let pinModalCallback = null;
+function abrirPinModal(title, sub, cb){
+  document.getElementById('pin-modal-title').textContent = title;
+  document.getElementById('pin-modal-sub').textContent = sub;
+  document.getElementById('pin-modal-input').value='';
+  document.getElementById('pin-modal-error').textContent='';
+  pinModalCallback = cb;
+  document.getElementById('pin-modal-bg').classList.add('open');
+}
+function cerrarPinModal(){
+  document.getElementById('pin-modal-bg').classList.remove('open');
+  pinModalCallback = null;
+}
+function confirmarPinModal(){
+  const val = document.getElementById('pin-modal-input').value.trim();
+  if(!val){ document.getElementById('pin-modal-error').textContent='Ingresa el PIN.'; return; }
+  if(pinModalCallback) pinModalCallback(val);
+}
+
+function pedirPinEditar(id){
+  abrirPinModal('Editar equipo', 'Ingresa el PIN de tu equipo para editar.', (pin)=>{
+    const equipo = EQUIPOS.find(e=>e.id===id);
+    if(equipo.pin !== pin){ document.getElementById('pin-modal-error').textContent='PIN incorrecto.'; return; }
+    cerrarPinModal();
+    abrirFormularioEdicion(equipo);
+  });
+}
+function pedirPinEliminar(id){
+  abrirPinModal('Eliminar equipo', 'Ingresa el PIN de tu equipo para eliminarlo. Esta acción no se puede deshacer.', async (pin)=>{
+    const equipo = EQUIPOS.find(e=>e.id===id);
+    if(equipo.pin !== pin){ document.getElementById('pin-modal-error').textContent='PIN incorrecto.'; return; }
+    await fetch(`${DB}/equipos/${id}.json`, { method:'DELETE' });
+    cerrarPinModal();
+    await cargarTodo();
+  });
+}
+function pedirPinConfirmar(matchId, lado){
+  const p = PARTIDOS.find(m=>m.id===matchId);
+  const equipo = EQUIPOS.find(e=>e.id === (lado==='A'?p.equipoA_id:p.equipoB_id));
+  abrirPinModal('Confirmar resultado', `Ingresa el PIN de ${equipo?equipo.nombre:'tu equipo'} para confirmar.`, async (pin)=>{
+    if(!equipo || equipo.pin !== pin){ document.getElementById('pin-modal-error').textContent='PIN incorrecto.'; return; }
+    const campo = lado==='A' ? 'confirmadoA' : 'confirmadoB';
+    await fetch(`${DB}/partidos/${matchId}.json`, { method:'PATCH', body: JSON.stringify({[campo]:true}) });
+    cerrarPinModal();
+    await cargarTodo();
+  });
+}
+
+function abrirFormularioEdicion(equipo){
+  togglePanel('inscribir');
+  document.getElementById('f-nombre').value = equipo.nombre;
+  document.getElementById('f-categoria').value = equipo.categoria;
+  document.querySelectorAll('#f-edades .chip').forEach(c=> c.classList.toggle('selected', (equipo.edades||[]).includes(c.dataset.val)));
+  document.querySelectorAll('#f-jugadores .chip').forEach(c=> c.classList.toggle('selected', (equipo.jugadores||[]).includes(c.dataset.val)));
+  coloresSeleccionados = (equipo.colores||[]).map(c=> COLOR_MAP[c] ? c : 'Otro');
+  document.querySelectorAll('#f-colores .color-swatch').forEach(el=> el.classList.toggle('selected', coloresSeleccionados.includes(el.dataset.color)));
+  const customColor = (equipo.colores||[]).find(c=>!COLOR_MAP[c]);
+  document.getElementById('f-color-otro').value = customColor || '';
+  document.getElementById('f-color-otro').style.display = coloresSeleccionados.includes('Otro') ? 'block' : 'none';
+  document.getElementById('f-encnombre').value = equipo.encNombre||'';
+  document.getElementById('f-encapellido').value = equipo.encApellido||'';
+  document.getElementById('f-contactotipo').value = equipo.contactoTipo;
+  onContactoTipoChange();
+  document.getElementById('f-contactovalor').value = equipo.contactoValor;
+  document.getElementById('f-pin').value = equipo.pin;
+  const btn = document.getElementById('btn-inscribir');
+  btn.textContent = 'Guardar cambios';
+  btn.onclick = ()=> guardarEdicion(equipo.id);
+}
+async function guardarEdicion(id){
+  const nombre = document.getElementById('f-nombre').value.trim();
+  const categoria = document.getElementById('f-categoria').value;
+  const edades = getChipValues('f-edades');
+  const jugadores = getChipValues('f-jugadores');
+  const encNombre = document.getElementById('f-encnombre').value.trim();
+  const encApellido = document.getElementById('f-encapellido').value.trim();
+  const contactoTipo = document.getElementById('f-contactotipo').value;
+  const contactoValor = document.getElementById('f-contactovalor').value.trim();
+  const pin = document.getElementById('f-pin').value.trim();
+  const colorOtroTexto = document.getElementById('f-color-otro').value.trim();
+  const colores = coloresSeleccionados.map(c=> c==='Otro' ? colorOtroTexto : c);
+
+  await fetch(`${DB}/equipos/${id}.json`, {
+    method:'PATCH',
+    body: JSON.stringify({ nombre, categoria, edades, jugadores, colores, encNombre, encApellido, contactoTipo, contactoValor, pin })
+  });
+  const btn = document.getElementById('btn-inscribir');
+  btn.textContent = 'Inscribir equipo';
+  btn.onclick = crearEquipo;
+  togglePanel('inscribir');
+  await cargarTodo();
+}
+
+async function cargarTodo(){
+  EQUIPOS = await fetchEquipos();
+  PARTIDOS = await fetchPartidos();
+  renderTabla();
+  renderEquipos();
+  renderPendientes();
+}
+
+// ── LIGA FEMENINA ──
+const FEM_META = 30;
+const FEM_LOCAL_KEY = 'cdv_femenina_local';
+
+async function fetchFemenina(){
+  try{
+    const res = await fetch(`${DB}/liga_femenina/solicitudes.json`);
+    const data = await res.json();
+    if(!data) return [];
+    return Object.entries(data).map(([id,v])=>({id,...v}));
+  }catch(e){ return []; }
+}
+function yaSolicitoFemenina(){
+  try{ return localStorage.getItem(FEM_LOCAL_KEY) === '1'; }catch(e){ return false; }
+}
+function marcarSolicitadoFemenina(){
+  try{ localStorage.setItem(FEM_LOCAL_KEY,'1'); }catch(e){}
+}
+
+async function renderFemenina(){
+  const solicitudes = await fetchFemenina();
+  const count = solicitudes.length;
+  const sub = document.getElementById('femenina-sub');
+  const bar = document.getElementById('femenina-bar');
+  const action = document.getElementById('femenina-action');
+  const pct = Math.min(100, Math.round(count/FEM_META*100));
+  bar.style.width = pct+'%';
+
+  if(count >= FEM_META){
+    sub.innerHTML = `<span class="femenina-meta">¡Meta alcanzada! ${count}/${FEM_META} solicitudes</span>`;
+    action.innerHTML = `<div class="femenina-done">Estamos preparando la Liga Femenina. ¡Gracias por pedirla!</div>`;
+    return;
+  }
+
+  sub.textContent = `${count}/${FEM_META} solicitudes — ayúdanos a llegar a la meta`;
+
+  if(yaSolicitoFemenina()){
+    action.innerHTML = `<div class="femenina-done">Ya registraste tu interés. ¡Gracias!</div>`;
+    return;
+  }
+
+  action.innerHTML = `
+    <button class="femenina-btn" id="femenina-btn" onclick="mostrarFemeninaForm()">Quiero una Liga Femenina</button>
+    <div id="femenina-form" style="display:none;">
+      <div class="femenina-input-row">
+        <input type="tel" id="femenina-tel" placeholder="Tu WhatsApp (sin +56)">
+        <button class="femenina-btn" onclick="enviarFemenina()">Enviar</button>
+      </div>
+      <div id="femenina-msg"></div>
+    </div>`;
+}
+
+function mostrarFemeninaForm(){
+  document.getElementById('femenina-btn').style.display='none';
+  document.getElementById('femenina-form').style.display='block';
+}
+
+async function enviarFemenina(){
+  const tel = document.getElementById('femenina-tel').value.trim().replace(/\D/g,'');
+  const msgEl = document.getElementById('femenina-msg');
+  if(tel.length<8){ msgEl.innerHTML='<div class="femenina-msg err">Ingresa un número válido.</div>'; return; }
+
+  const solicitudes = await fetchFemenina();
+  if(solicitudes.some(s=>s.telefono===tel)){
+    msgEl.innerHTML='<div class="femenina-msg err">Ese número ya registró su interés.</div>';
+    marcarSolicitadoFemenina();
+    return;
+  }
+
+  try{
+    await fetch(`${DB}/liga_femenina/solicitudes.json`, {
+      method:'POST',
+      body: JSON.stringify({ telefono: tel, ts: Date.now() })
+    });
+    marcarSolicitadoFemenina();
+    await renderFemenina();
+  }catch(e){
+    msgEl.innerHTML='<div class="femenina-msg err">Error al enviar. Intenta de nuevo.</div>';
+  }
+}
+
+renderColorSwatches();
+setupChipGroup('f-edades');
+setupChipGroup('f-jugadores');
+cargarTodo();
+renderFemenina();
+</script>
+</body>
+</html>
