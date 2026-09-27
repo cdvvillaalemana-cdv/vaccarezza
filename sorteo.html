@@ -245,7 +245,7 @@ const COLORS = [
 const colorByName = n => COLORS.find(c => c.name === n) || COLORS[0];
 
 // Palabras que indican que una línea es un título y no un jugador
-const TITLE_WORDS = ['pichanga','partido','futbol','fútbol','baby','cancha','canchas','cdv','vaccarezza','hrs','hr','hora','horas','lista','jugadores','equipos','equipo','lunes','martes','miercoles','miércoles','jueves','viernes','sabado','sábado','domingo','hoy','mañana','manana','confirmados','confirmado','fecha','pm','am','suplentes','titulares'];
+const TITLE_WORDS = ['pichanga','partido','futbol','fútbol','baby','cancha','canchas','cdv','vaccarezza','hrs','hr','hora','horas','lista','jugadores','equipos','equipo','lunes','martes','miercoles','miércoles','jueves','viernes','sabado','sábado','domingo','hoy','mañana','manana','confirmados','confirmado','fecha','pm','am','suplentes','titulares','transferencia','transferencias','transferir','banco','cuenta','rut','pago','pagos','pagar','abono','corriente','vista','ahorro'];
 
 // ── ESTADO ────────────────────────────────────────────────────
 let players = [];           // { name, gk, lvl }
@@ -284,10 +284,20 @@ function load() {
 
 // ── LIMPIEZA DE LA LISTA ──────────────────────────────────────
 function parseList(text) {
-  // Quita el prefijo de mensaje copiado de WhatsApp: [20:15, 27/9/2026] Nombre:
-  const chunks = text.split(/\r?\n/)
-    .map(line => line.replace(/^\s*\[[^\]]*\]\s*[^:]*:\s*/, ''))
-    .flatMap(line => line.split(','));
+  const NUMBERED = /^\s*\d{1,3}\s*[.\-):°º]+\s*\p{L}/u;
+  const lines = text.split(/\r?\n/).map(line => line
+    // Caracteres invisibles que agrega WhatsApp y espacios especiales
+    .replace(/[\u200B-\u200F\u2060-\u2064\uFEFF\u00AD]/g, '')
+    .replace(/[\u00A0\u2000-\u200A\u202F\u205F\u3000]/g, ' ')
+    // Prefijo de mensaje copiado de WhatsApp: [20:15, 27/9/2026] Nombre:
+    .replace(/^\s*\[[^\]]*\]\s*[^:]*:\s*/, '')
+  );
+
+  // Si la lista viene numerada, se usan solo las líneas numeradas
+  // (así se ignoran títulos, montos, datos de transferencia, etc.)
+  const numbered = lines.filter(l => NUMBERED.test(l));
+  const chunks = (numbered.length >= 3 ? numbered : lines).flatMap(l => l.split(','));
+
   const out = [];
   chunks.forEach(raw => {
     let s = raw;
@@ -301,7 +311,7 @@ function parseList(text) {
     s = s.replace(/^[\.\-\:\s]+|[\-\s]+$/g, '').trim();
     if (!s) return;
     if (s.endsWith(':')) return;                 // "Arqueros:"
-    if (/\d/.test(s)) return;                    // títulos con horas o fechas
+    if (/\d/.test(s)) return;                    // títulos con horas, fechas o RUT
     if (s.split(' ').length > 4) return;         // frases largas
     if (s.length > 30) return;
     const words = s.toLowerCase().split(/[\s\/]+/);
