@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>El Sorteo CDV – Complejo Deportivo Vaccarezza</title>
+<meta name="description" content="Pega la lista de tu pichanga y arma equipos parejos en segundos.">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #2dbe82;
+    --green-dark: #1a8a5a;
+    --green-light: #e8faf3;
+    --gold: #f5a623;
+    --red: #e05555;
+    --gray-bg: #f5f5f3;
+    --gray-mid: #e0deda;
+    --gray-text: #666;
+    --dark: #1a1a1a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Barlow', sans-serif; background: #f0f0ee; color: var(--dark); min-height: 100vh; font-size: 15px; }
+  button, input, textarea { font-family: inherit; }
+
+  .header { background: #fff; border-bottom: 2px solid var(--green); padding: 14px 20px; display: flex; align-items: center; justify-content: center; position: sticky; top: 0; z-index: 100; }
+
+  .main { max-width: 560px; margin: 0 auto; padding: 20px 16px 48px; }
+
+  .hero { text-align: center; margin-bottom: 18px; }
+  .hero h1 { font-family: 'Barlow Condensed', sans-serif; font-size: 40px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; line-height: 1; color: var(--green-dark); }
+  .hero h1 span { color: var(--gold); }
+  .hero p { font-size: 14px; color: var(--gray-text); margin-top: 6px; }
+
+  .step-label { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 600; color: var(--green-dark); margin-bottom: 8px; }
+
+  .box { background: #fff; border: 1px solid var(--gray-mid); border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; }
+  .box-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .box-sub { font-size: 13px; color: var(--gray-text); margin-bottom: 10px; line-height: 1.5; }
+
+  textarea { width: 100%; min-height: 220px; border: 1px solid var(--gray-mid); border-radius: 10px; padding: 12px; font-size: 15px; line-height: 1.6; resize: vertical; background: var(--gray-bg); color: var(--dark); outline: none; }
+  textarea:focus, input:focus { border-color: var(--green); }
+
+  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 14px; border: none; border-radius: 12px; font-family: 'Barlow Condensed', sans-serif; font-size: 21px; font-weight: 700; letter-spacing: 0.03em; cursor: pointer; transition: background 0.15s; text-decoration: none; }
+  .btn-green { background: var(--green); color: #fff; }
+  .btn-green:hover { background: var(--green-dark); }
+  .btn-wa { background: #25d366; color: #fff; }
+  .btn-wa:hover { background: #1ebe5c; }
+  .btn-outline { background: #fff; color: var(--green-dark); border: 2px solid var(--green); font-size: 18px; padding: 12px; }
+  .btn-outline:hover { background: var(--green-light); }
+  .btn-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+  .link-btn { background: none; border: none; color: var(--gray-text); font-size: 14px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; padding: 8px; display: block; margin: 6px auto 0; }
+
+  .error { color: var(--red); font-size: 13px; font-weight: 600; margin-top: 8px; }
+  .notice { background: #fff9e6; border: 1px solid #f5d87a; border-radius: 8px; padding: 9px 12px; font-size: 13px; color: #7a5c00; margin-bottom: 10px; line-height: 1.5; }
+
+  /* JUGADORES */
+  .help { background: var(--green-light); border: 1px solid var(--green); border-radius: 8px; padding: 9px 12px; font-size: 13px; color: var(--green-dark); line-height: 1.55; margin-bottom: 10px; }
+  .p-row { display: flex; align-items: center; gap: 6px; padding: 6px 0; border-bottom: 1px solid #f0f0ee; }
+  .p-row:last-child { border-bottom: none; }
+  .p-num { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; color: #aaa; width: 20px; text-align: right; flex-shrink: 0; }
+  .p-name { flex: 1; min-width: 0; border: 1px solid transparent; border-radius: 6px; padding: 6px 7px; font-size: 15px; font-weight: 500; background: transparent; color: var(--dark); outline: none; }
+  .p-name:hover { border-color: var(--gray-mid); }
+  .p-row.dup .p-name { border-color: var(--red); background: #fdeeee; }
+  .p-btn { border: 1px solid var(--gray-mid); background: #fff; border-radius: 7px; height: 34px; min-width: 38px; padding: 0 6px; font-size: 15px; cursor: pointer; flex-shrink: 0; color: #bbb; }
+  .p-btn.gk { filter: grayscale(1); opacity: 0.45; }
+  .p-btn.gk.on { filter: none; opacity: 1; background: var(--green-light); border-color: var(--green); }
+  .p-btn.lvl { font-size: 14px; letter-spacing: 1px; min-width: 58px; }
+  .p-btn.lvl .s-on { color: var(--gold); }
+  .p-btn.lvl.on { border-color: var(--gold); background: #fffbf0; }
+  .p-btn.del { color: var(--red); border-color: transparent; min-width: 30px; }
+  .add-row { display: flex; gap: 8px; margin-top: 10px; }
+  .add-row input { flex: 1; min-width: 0; border: 1px solid var(--gray-mid); border-radius: 8px; padding: 10px; font-size: 15px; outline: none; }
+  .add-row button { background: var(--green); color: #fff; border: none; border-radius: 8px; padding: 0 16px; font-size: 15px; font-weight: 600; cursor: pointer; }
+
+  /* CHIPS */
+  .chips { display: flex; flex-wrap: wrap; gap: 7px; }
+  .chip { border: 1.5px solid var(--gray-mid); background: #fff; border-radius: 20px; padding: 7px 13px; font-size: 14px; font-weight: 500; cursor: pointer; color: #444; display: inline-flex; align-items: center; gap: 6px; }
+  .chip.on { border-color: var(--green); background: var(--green); color: #fff; }
+  .chip:disabled { opacity: 0.45; cursor: default; }
+  .chip-note { font-size: 12px; color: var(--gray-text); margin-top: 7px; }
+
+  .team-color-block { margin-bottom: 12px; }
+  .team-color-block:last-child { margin-bottom: 0; }
+  .team-color-label { font-size: 13px; font-weight: 600; color: #444; margin-bottom: 6px; }
+  .c-chip { border: 1.5px solid var(--gray-mid); background: #fff; border-radius: 20px; padding: 5px 10px 5px 6px; font-size: 13px; cursor: pointer; color: #444; display: inline-flex; align-items: center; gap: 5px; }
+  .c-chip.on { border: 2px solid var(--green-dark); background: var(--green-light); font-weight: 600; color: var(--green-dark); }
+  .dot { width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.15); flex-shrink: 0; display: inline-block; }
+
+  /* PAGO */
+  .toggle-row { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 15px; font-weight: 600; }
+  .toggle-row input { width: 20px; height: 20px; accent-color: var(--green); cursor: pointer; }
+  .pay-body { margin-top: 12px; }
+  .price-other { display: inline-flex; align-items: center; border: 1.5px solid var(--gray-mid); border-radius: 20px; padding: 0 12px; background: #fff; }
+  .price-other.on { border-color: var(--green); background: var(--green-light); }
+  .price-other span { font-size: 14px; color: var(--gray-text); }
+  .price-other input { border: none; outline: none; background: transparent; width: 92px; padding: 7px 4px; font-size: 14px; font-weight: 500; }
+  .payers-row { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 14px; color: #444; flex-wrap: wrap; }
+  .payers-row input { width: 64px; border: 1px solid var(--gray-mid); border-radius: 8px; padding: 7px; font-size: 15px; font-weight: 600; text-align: center; outline: none; }
+  .payers-row .reset { background: none; border: none; color: var(--green-dark); font-size: 13px; text-decoration: underline; cursor: pointer; }
+
+  /* RESULTADO */
+  .team-card { background: #fff; border: 1px solid var(--gray-mid); border-radius: 12px; overflow: hidden; margin-bottom: 12px; }
+  .team-head { display: flex; align-items: center; gap: 10px; padding: 11px 16px; background: var(--gray-bg); border-bottom: 1px solid var(--gray-mid); }
+  .team-head .dot { width: 20px; height: 20px; }
+  .team-name { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+  .team-count { margin-left: auto; font-size: 13px; color: var(--gray-text); }
+  .team-list { list-style: none; padding: 6px 16px 10px; }
+  .team-list li { padding: 7px 0; border-bottom: 1px solid #f0f0ee; font-size: 16px; font-weight: 500; }
+  .team-list li:last-child { border-bottom: none; }
+  .team-list li.pending { color: #b07a00; font-style: italic; font-weight: 400; }
+
+  .pay-result { background: var(--green-light); border: 1px solid var(--green); border-radius: 12px; padding: 12px 16px; text-align: center; margin-bottom: 14px; }
+  .pay-main { font-family: 'Barlow Condensed', sans-serif; font-size: 34px; font-weight: 700; color: var(--green-dark); line-height: 1.1; }
+  .pay-sub { font-size: 13px; color: var(--green-dark); margin-top: 2px; }
+
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px); background: var(--dark); color: #fff; padding: 11px 18px; border-radius: 10px; font-size: 14px; font-weight: 600; opacity: 0; transition: opacity 0.2s, transform 0.2s; pointer-events: none; z-index: 300; max-width: calc(100vw - 32px); text-align: center; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .hidden { display: none !important; }
+
+  .footer { text-align: center; font-size: 12px; color: var(--gray-text); margin-top: 26px; line-height: 1.7; }
+  .footer a { color: var(--green-dark); }
+
+  @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <img src="https://cdvvillaalemana-cdv.github.io/vaccarezza/Logo_horizontal.png" alt="Complejo Deportivo Vaccarezza" style="height:48px;object-fit:contain;">
+</div>
+
+<div class="main">
+
+  <div class="hero">
+    <h1>El Sorteo <span>CDV</span></h1>
+    <p>Pega la lista de tu pichanga y arma equipos parejos en segundos.</p>
+  </div>
+
+  <!-- PASO 1: LISTA -->
+  <section id="step1">
+    <div class="step-label">Paso 1 de 3 · Lista de jugadores</div>
+    <div class="box">
+      <div class="box-title">¿Quiénes juegan?</div>
+      <div class="box-sub">Pega la lista tal como viene del grupo de WhatsApp, o escribe los nombres separados por coma. Nosotros limpiamos títulos, números y emojis.</div>
+      <textarea id="raw-list" placeholder="Pichanga martes 20 hrs&#10;1. Juan&#10;2. Pedro&#10;3. Diego&#10;..."></textarea>
+      <div id="restore-note" class="chip-note hidden">Dejamos cargada tu última lista. Bórrala si es otra.</div>
+      <div id="err1" class="error hidden"></div>
+    </div>
+    <button class="btn btn-green" onclick="goStep2()">Continuar</button>
+  </section>
+
+  <!-- PASO 2: REVISAR Y OPCIONES -->
+  <section id="step2" class="hidden">
+    <div class="step-label">Paso 2 de 3 · Revisa y ajusta</div>
+
+    <div class="box">
+      <div class="box-title" id="players-title">Jugadores</div>
+      <div class="help">
+        <strong>Opcional:</strong> marca 🧤 a los arqueros y toca las estrellas para indicar el nivel de cada jugador (★ básico, ★★ medio, ★★★ crack). Así el sorteo reparte parejo. Si no marcas nada, el sorteo es 100% al azar.<br>
+        Toca un nombre para corregirlo.
+      </div>
+      <div id="dup-notice" class="notice hidden"></div>
+      <div id="players-list"></div>
+      <div class="add-row">
+        <input id="add-input" type="text" placeholder="Agregar jugador" onkeydown="if(event.key==='Enter')addPlayer()">
+        <button onclick="addPlayer()">Agregar</button>
+      </div>
+    </div>
+
+    <div class="box">
+      <div class="box-title">Cantidad de equipos</div>
+      <div class="chips" id="teams-chips"></div>
+      <div class="chip-note" id="teams-note"></div>
+    </div>
+
+    <div class="box">
+      <div class="box-title">Colores de los equipos</div>
+      <div class="box-sub">Opcional. Por defecto van negro y rojo.</div>
+      <div id="colors-wrap"></div>
+    </div>
+
+    <div class="box">
+      <label class="toggle-row"><input type="checkbox" id="pay-toggle" onchange="togglePay()"> Calcular cuánto paga cada uno</label>
+      <div id="pay-body" class="pay-body hidden">
+        <div class="box-sub" style="margin-bottom:8px">Valor de la cancha:</div>
+        <div class="chips" id="price-chips"></div>
+        <div class="payers-row">
+          Se divide entre <input id="payers-input" type="number" min="1" inputmode="numeric" oninput="onPayersInput()"> personas
+          <button class="reset hidden" id="payers-reset" onclick="resetPayers()">usar todos</button>
+        </div>
+        <div class="chip-note">Si a alguien no se le cobra, cambia el número de personas.</div>
+      </div>
+    </div>
+
+    <div id="err2" class="error hidden" style="margin-bottom:10px"></div>
+    <button class="btn btn-green" onclick="sortear()">⚽ Sortear equipos</button>
+    <button class="link-btn" onclick="showStep(1)">Volver a la lista</button>
+  </section>
+
+  <!-- PASO 3: RESULTADO -->
+  <section id="step3" class="hidden">
+    <div class="step-label">Paso 3 de 3 · Equipos listos</div>
+    <div id="result-teams"></div>
+    <div id="result-pay"></div>
+    <div class="btn-stack">
+      <button class="btn btn-wa" onclick="shareImage()">📷 Compartir imagen</button>
+      <button class="btn btn-wa" onclick="copyText()">📋 Copiar texto</button>
+      <button class="btn btn-outline" onclick="sortear()">🔀 Sortear de nuevo</button>
+    </div>
+    <button class="link-btn" onclick="showStep(2)">Editar jugadores u opciones</button>
+  </section>
+
+  <div class="footer">
+    El Sorteo CDV · Complejo Deportivo Vaccarezza, Villa Alemana<br>
+    <a href="https://cdvvillaalemana-cdv.github.io/vaccarezza/" target="_blank">Ver disponibilidad de canchas</a>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIGURACIÓN ─────────────────────────────────────────────
+// Cuando tengas el link corto de bit.ly, reemplázalo aquí:
+const SHARE_URL = 'cdvvillaalemana-cdv.github.io/vaccarezza/sorteo';
+const LOGO_URL  = 'https://cdvvillaalemana-cdv.github.io/vaccarezza/Logo_horizontal.png';
+const PRICES    = [16000, 18000, 20000, 22000];
+const MIN_FOR_3 = 15;
+const STORE_KEY = 'cdv_sorteo_v1';
+
+const COLORS = [
+  { name: 'Negro',    hex: '#1a1a1a', emoji: '⚫' },
+  { name: 'Rojo',     hex: '#dc2626', emoji: '🔴' },
+  { name: 'Blanco',   hex: '#ffffff', emoji: '⚪' },
+  { name: 'Azul',     hex: '#2563eb', emoji: '🔵' },
+  { name: 'Celeste',  hex: '#0ea5e9', emoji: ''   },
+  { name: 'Verde',    hex: '#16a34a', emoji: '🟢' },
+  { name: 'Amarillo', hex: '#eab308', emoji: '🟡' },
+  { name: 'Naranjo',  hex: '#f97316', emoji: '🟠' },
+  { name: 'Morado',   hex: '#9333ea', emoji: '🟣' },
+  { name: 'Rosado',   hex: '#ec4899', emoji: ''   },
+  { name: 'Gris',     hex: '#6b7280', emoji: ''   },
+  { name: 'Burdeo',   hex: '#7f1d1d', emoji: ''   }
+];
+const colorByName = n => COLORS.find(c => c.name === n) || COLORS[0];
+
+// Palabras que indican que una línea es un título y no un jugador
+const TITLE_WORDS = ['pichanga','partido','futbol','fútbol','baby','cancha','canchas','cdv','vaccarezza','hrs','hr','hora','horas','lista','jugadores','equipos','equipo','lunes','martes','miercoles','miércoles','jueves','viernes','sabado','sábado','domingo','hoy','mañana','manana','confirmados','confirmado','fecha','pm','am','suplentes','titulares'];
+
+// ── ESTADO ────────────────────────────────────────────────────
+let players = [];           // { name, gk, lvl }
+let numTeams = 2;
+let teamColors = ['Negro', 'Rojo', 'Blanco'];
+let payOn = false;
+let priceChip = null;       // valor de chip seleccionado
+let priceOther = '';        // monto escrito a mano
+let payersEdited = false;
+let result = null;
+
+// ── UTILIDADES ────────────────────────────────────────────────
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function shuffle(a) { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; }
+function money(n) { return '$' + Math.round(n).toLocaleString('es-CL'); }
+function showErr(id, msg) { const el = document.getElementById(id); if (msg) { el.textContent = msg; el.classList.remove('hidden'); } else { el.classList.add('hidden'); } }
+
+let toastTimer;
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+function save() {
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify({
+      raw: document.getElementById('raw-list').value, players, numTeams, teamColors,
+      payOn, priceChip, priceOther
+    }));
+  } catch (e) {}
+}
+function load() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); } catch (e) { return null; }
+}
+
+// ── LIMPIEZA DE LA LISTA ──────────────────────────────────────
+function parseList(text) {
+  // Quita el prefijo de mensaje copiado de WhatsApp: [20:15, 27/9/2026] Nombre:
+  const chunks = text.split(/\r?\n/)
+    .map(line => line.replace(/^\s*\[[^\]]*\]\s*[^:]*:\s*/, ''))
+    .flatMap(line => line.split(','));
+  const out = [];
+  chunks.forEach(raw => {
+    let s = raw;
+    const hasGloves = /🧤/.test(s) || /\(?\b(arquero|arq)\b\)?/i.test(s);
+    s = s.replace(/\(?\b(arquero|arq)\b\)?/ig, '');
+    // Emojis y símbolos
+    s = s.replace(/[\p{Extended_Pictographic}\u{1F3FB}-\u{1F3FF}\u{FE0F}\u{200D}\u{20E3}\u{2B50}]/gu, '');
+    // Numeración y viñetas al inicio: "1.", "2-", "3)", "•", "*", "-"
+    s = s.replace(/^\s*(\d{1,3}\s*[\.\-\)\:°º]*|[•\*\-–—·>]+)\s*/, '');
+    s = s.replace(/\s+/g, ' ').trim();
+    s = s.replace(/^[\.\-\:\s]+|[\-\s]+$/g, '').trim();
+    if (!s) return;
+    if (s.endsWith(':')) return;                 // "Arqueros:"
+    if (/\d/.test(s)) return;                    // títulos con horas o fechas
+    if (s.split(' ').length > 4) return;         // frases largas
+    if (s.length > 30) return;
+    const words = s.toLowerCase().split(/[\s\/]+/);
+    if (words.some(w => TITLE_WORDS.includes(w))) return;
+    out.push({ name: s, gk: hasGloves, lvl: 0 });
+  });
+  return out;
+}
+
+// ── NAVEGACIÓN ────────────────────────────────────────────────
+function showStep(n) {
+  ['step1','step2','step3'].forEach((id, i) => document.getElementById(id).classList.toggle('hidden', i !== n - 1));
+  if (n === 2) renderStep2();
+  window.scrollTo({ top: 0 });
+}
+
+function goStep2() {
+  const text = document.getElementById('raw-list').value;
+  const parsed = parseList(text);
+  if (parsed.length === 0) { showErr('err1', 'No encontramos nombres. Escribe al menos 4 jugadores.'); return; }
+  showErr('err1', '');
+  // Conserva marcas (arquero y nivel) de jugadores que ya estaban
+  const prev = {};
+  players.forEach(p => prev[p.name.toLowerCase()] = p);
+  players = parsed.map(p => {
+    const old = prev[p.name.toLowerCase()];
+    return old ? { name: p.name, gk: p.gk || old.gk, lvl: old.lvl } : p;
+  });
+  if (players.length < MIN_FOR_3 && numTeams === 3) numTeams = 2;
+  save();
+  showStep(2);
+}
+
+// ── PASO 2 ────────────────────────────────────────────────────
+function renderStep2() {
+  renderPlayers();
+  renderTeamsChips();
+  renderColors();
+  renderPay();
+}
+
+function renderPlayers() {
+  const counts = {};
+  players.forEach(p => { const k = p.name.trim().toLowerCase(); counts[k] = (counts[k] || 0) + 1; });
+  const dups = Object.keys(counts).filter(k => counts[k] > 1);
+
+  document.getElementById('players-title').textContent = `Jugadores (${players.length})`;
+  const dupEl = document.getElementById('dup-notice');
+  if (dups.length) {
+    const names = players.filter(p => dups.includes(p.name.trim().toLowerCase())).map(p => p.name);
+    dupEl.textContent = `Hay nombres repetidos (${[...new Set(names)].join(', ')}). Tócalos para diferenciarlos, por ejemplo "Diego M." y "Diego P.".`;
+    dupEl.classList.remove('hidden');
+  } else dupEl.classList.add('hidden');
+
+  document.getElementById('players-list').innerHTML = players.map((p, i) => {
+    const stars = p.lvl === 0
+      ? '☆☆☆'
+      : `<span class="s-on">${'★'.repeat(p.lvl)}</span>${'☆'.repeat(3 - p.lvl)}`;
+    const dup = dups.includes(p.name.trim().toLowerCase()) ? ' dup' : '';
+    return `<div class="p-row${dup}">
+      <span class="p-num">${i + 1}</span>
+      <input class="p-name" value="${esc(p.name)}" onchange="renamePlayer(${i}, this.value)" aria-label="Nombre del jugador ${i + 1}">
+      <button class="p-btn gk${p.gk ? ' on' : ''}" onclick="toggleGk(${i})" aria-label="Marcar arquero">🧤</button>
+      <button class="p-btn lvl${p.lvl ? ' on' : ''}" onclick="cycleLvl(${i})" aria-label="Nivel del jugador">${stars}</button>
+      <button class="p-btn del" onclick="removePlayer(${i})" aria-label="Quitar jugador">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function renamePlayer(i, v) {
+  const name = v.replace(/\s+/g, ' ').trim();
+  if (!name) { removePlayer(i); return; }
+  players[i].name = name; save(); renderPlayers();
+}
+function toggleGk(i) { players[i].gk = !players[i].gk; save(); renderPlayers(); }
+function cycleLvl(i) { players[i].lvl = (players[i].lvl + 1) % 4; save(); renderPlayers(); }
+function removePlayer(i) {
+  players.splice(i, 1);
+  if (players.length < MIN_FOR_3 && numTeams === 3) numTeams = 2;
+  save(); renderStep2();
+}
+function addPlayer() {
+  const inp = document.getElementById('add-input');
+  const name = inp.value.replace(/\s+/g, ' ').trim();
+  if (!name) return;
+  players.push({ name, gk: false, lvl: 0 });
+  inp.value = ''; save(); renderStep2();
+  inp.focus();
+}
+
+function renderTeamsChips() {
+  const can3 = players.length >= MIN_FOR_3;
+  document.getElementById('teams-chips').innerHTML = `
+    <button class="chip${numTeams === 2 ? ' on' : ''}" onclick="setTeams(2)">2 equipos</button>
+    <button class="chip${numTeams === 3 ? ' on' : ''}" onclick="setTeams(3)"${can3 ? '' : ' disabled'}>3 equipos</button>`;
+  document.getElementById('teams-note').textContent = can3
+    ? 'Con 3 equipos, uno descansa y entra el que espera.'
+    : `La opción de 3 equipos se activa desde ${MIN_FOR_3} jugadores.`;
+}
+function setTeams(n) { numTeams = n; save(); renderTeamsChips(); renderColors(); }
+
+function renderColors() {
+  let html = '';
+  for (let t = 0; t < numTeams; t++) {
+    html += `<div class="team-color-block">
+      <div class="team-color-label">Equipo ${t + 1}</div>
+      <div class="chips">${COLORS.map(c =>
+        `<button class="c-chip${teamColors[t] === c.name ? ' on' : ''}" onclick="setColor(${t}, '${c.name}')"><span class="dot" style="background:${c.hex}"></span>${c.name}</button>`
+      ).join('')}</div>
+    </div>`;
+  }
+  document.getElementById('colors-wrap').innerHTML = html;
+}
+function setColor(t, name) {
+  // Si otro equipo ya tiene ese color, se intercambian
+  const other = teamColors.findIndex((c, i) => c === name && i !== t);
+  if (other !== -1) teamColors[other] = teamColors[t];
+  teamColors[t] = name;
+  save(); renderColors();
+}
+
+function renderPay() {
+  document.getElementById('pay-toggle').checked = payOn;
+  document.getElementById('pay-body').classList.toggle('hidden', !payOn);
+  const otherOn = priceChip === null && priceOther !== '';
+  document.getElementById('price-chips').innerHTML =
+    PRICES.map(p => `<button class="chip${priceChip === p ? ' on' : ''}" onclick="setPrice(${p})">${money(p)}</button>`).join('') +
+    `<label class="price-other${otherOn ? ' on' : ''}" id="price-other-wrap"><span>Otro $</span><input id="price-other" type="text" inputmode="numeric" placeholder="monto" value="${esc(priceOther)}" oninput="onOtherPrice(this)"></label>`;
+  const pin = document.getElementById('payers-input');
+  if (!payersEdited) pin.value = players.length;
+  document.getElementById('payers-reset').classList.toggle('hidden', !payersEdited);
+}
+function togglePay() { payOn = document.getElementById('pay-toggle').checked; save(); renderPay(); }
+function setPrice(p) { priceChip = p; priceOther = ''; save(); renderPay(); }
+function onOtherPrice(el) {
+  const digits = el.value.replace(/\D/g, '');
+  const formatted = digits ? Number(digits).toLocaleString('es-CL') : '';
+  el.value = formatted;
+  priceOther = formatted;
+  priceChip = null;
+  document.querySelectorAll('#price-chips .chip').forEach(c => c.classList.remove('on'));
+  document.getElementById('price-other-wrap').classList.toggle('on', !!digits);
+  save();
+}
+function onPayersInput() { payersEdited = true; document.getElementById('payers-reset').classList.remove('hidden'); }
+function resetPayers() { payersEdited = false; renderPay(); }
+
+function getTotal() {
+  if (priceChip !== null) return priceChip;
+  const n = Number(String(priceOther).replace(/\D/g, ''));
+  return n > 0 ? n : null;
+}
+
+// ── SORTEO ────────────────────────────────────────────────────
+function sortear() {
+  const k = numTeams;
+  const n = players.length;
+  if (n < k * 2) { showStep(2); showErr('err2', `Necesitas al menos ${k * 2} jugadores para ${k} equipos.`); return; }
+
+  let pay = null;
+  if (payOn) {
+    const total = getTotal();
+    const payers = parseInt(document.getElementById('payers-input').value, 10);
+    if (!total) { showStep(2); showErr('err2', 'Elige el valor de la cancha o escribe el monto.'); return; }
+    if (!payers || payers < 1) { showStep(2); showErr('err2', 'Indica entre cuántas personas se divide.'); return; }
+    const exact = total / payers;
+    const rounded = Math.ceil(exact / 100) * 100;
+    pay = { total, payers, exact, rounded, isRounded: Math.abs(rounded - exact) > 0.001 };
+  }
+  showErr('err2', '');
+
+  // Cupos por equipo (si no es exacto, algunos equipos tienen uno menos)
+  const base = Math.floor(n / k), extra = n % k;
+  const caps = shuffle(Array.from({ length: k }, (_, i) => i < extra ? base + 1 : base));
+  const teams = Array.from({ length: k }, (_, i) => ({ cap: caps[i], gks: [], field: [], sum: 0 }));
+  const size = t => t.gks.length + t.field.length;
+
+  // 1) Un arquero por equipo
+  const gks = shuffle(players.filter(p => p.gk));
+  let field = players.filter(p => !p.gk);
+  const order = shuffle([...Array(k).keys()]);
+  gks.forEach((p, i) => {
+    if (i < k) { teams[order[i]].gks.push(p); teams[order[i]].sum += p.lvl; }
+    else field.push(p);
+  });
+
+  // 2) Jugadores con nivel, de mayor a menor, al equipo con menos puntaje
+  // 3) El resto al azar, al equipo con menos jugadores
+  field = shuffle(field).sort((a, b) => b.lvl - a.lvl);
+  field.forEach(p => {
+    const open = teams.filter(t => size(t) < t.cap);
+    let best;
+    if (p.lvl > 0) {
+      const minSum = Math.min(...open.map(t => t.sum));
+      const bySum = open.filter(t => t.sum === minSum);
+      const minCount = Math.min(...bySum.map(size));
+      best = shuffle(bySum.filter(t => size(t) === minCount))[0];
+    } else {
+      const minCount = Math.min(...open.map(size));
+      best = shuffle(open.filter(t => size(t) === minCount))[0];
+    }
+    best.field.push(p); best.sum += p.lvl;
+  });
+
+  const maxSize = Math.max(...teams.map(size));
+  result = {
+    teams: teams.map((t, i) => ({
+      color: colorByName(teamColors[i]),
+      gks: t.gks.map(p => p.name),
+      field: shuffle(t.field).map(p => p.name),
+      pending: maxSize - size(t)
+    })),
+    pay
+  };
+  save();
+  renderResult();
+  showStep(3);
+}
+
+function renderResult() {
+  document.getElementById('result-teams').innerHTML = result.teams.map(t => {
+    const items = [
+      ...t.gks.map(n => `<li>${esc(n)} 🧤</li>`),
+      ...t.field.map(n => `<li>${esc(n)}</li>`),
+      ...Array(t.pending).fill('<li class="pending">Jugador pendiente</li>')
+    ].join('');
+    const total = t.gks.length + t.field.length;
+    const border = t.color.name === 'Blanco' ? '#cfcfcf' : t.color.hex;
+    return `<div class="team-card" style="border-top:5px solid ${border}">
+      <div class="team-head"><span class="dot" style="background:${t.color.hex}"></span><span class="team-name">${t.color.name}</span><span class="team-count">${total} jugador${total !== 1 ? 'es' : ''}</span></div>
+      <ul class="team-list">${items}</ul>
+    </div>`;
+  }).join('');
+
+  const p = result.pay;
+  document.getElementById('result-pay').innerHTML = p
+    ? `<div class="pay-result"><div class="pay-main">${money(p.rounded)} c/u</div>${p.isRounded ? `<div class="pay-sub">valor exacto ${money(p.exact)}</div>` : ''}<div class="pay-sub" style="color:var(--gray-text)">Cancha ${money(p.total)} entre ${p.payers} persona${p.payers !== 1 ? 's' : ''}</div></div>`
+    : '';
+}
+
+// ── TEXTO PARA WHATSAPP ───────────────────────────────────────
+function buildText() {
+  let s = '⚽ *Equipos CDV*\n';
+  result.teams.forEach(t => {
+    s += `\n${t.color.emoji ? t.color.emoji + ' ' : ''}*${t.color.name.toUpperCase()}*\n`;
+    t.gks.forEach(n => s += `${n} 🧤\n`);
+    t.field.forEach(n => s += `${n}\n`);
+    for (let i = 0; i < t.pending; i++) s += `Jugador pendiente\n`;
+  });
+  const p = result.pay;
+  if (p) s += `\n💰 ${money(p.rounded)} c/u${p.isRounded ? ` · valor exacto ${money(p.exact)}` : ''}\n`;
+  s += `\nSorteado con El Sorteo CDV ⚽\n${SHARE_URL}`;
+  return s;
+}
+
+async function copyText() {
+  const text = buildText();
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch (e) {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (e2) {}
+    document.body.removeChild(ta);
+  }
+  toast('Texto copiado. Pégalo en el grupo de WhatsApp.');
+}
+
+// ── IMAGEN PARA COMPARTIR ─────────────────────────────────────
+function loadLogo() {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = LOGO_URL;
+  });
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.closePath();
+}
+
+async function drawImage(withLogo) {
+  try {
+    await Promise.all([
+      document.fonts.load('700 60px "Barlow Condensed"'),
+      document.fonts.load('500 36px "Barlow"'),
+      document.fonts.load('400 30px "Barlow"')
+    ]);
+  } catch (e) {}
+  const logo = withLogo ? await loadLogo() : null;
+
+  const W = 1080, PAD = 60, LINE = 58, HEAD = 96;
+  const headerH = 170, titleH = 110;
+  const teamH = t => HEAD + (t.gks.length + t.field.length + t.pending) * LINE + 30;
+  const payH = result.pay ? (result.pay.isRounded ? 190 : 150) : 0;
+  const footerH = 130;
+  const H = headerH + titleH + result.teams.reduce((a, t) => a + teamH(t) + 30, 0) + payH + footerH;
+
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d');
+
+  // Fondo y encabezado
+  ctx.fillStyle = '#f0f0ee'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, headerH);
+  ctx.fillStyle = '#2dbe82'; ctx.fillRect(0, headerH - 6, W, 6);
+  if (logo) {
+    const lh = 110, lw = logo.width * (lh / logo.height);
+    ctx.drawImage(logo, (W - lw) / 2, (headerH - 6 - lh) / 2, lw, lh);
+  } else {
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#1a8a5a'; ctx.font = '600 34px "Barlow Condensed", sans-serif';
+    ctx.fillText('COMPLEJO DEPORTIVO', W / 2, 72);
+    ctx.fillStyle = '#f5a623'; ctx.font = '700 58px "Barlow Condensed", sans-serif';
+    ctx.fillText('VACCAREZZA', W / 2, 128);
+  }
+
+  // Título
+  let y = headerH + 80;
+  ctx.textAlign = 'center';
+  ctx.font = '700 64px "Barlow Condensed", sans-serif';
+  const t1 = 'EL SORTEO ', t2 = 'CDV';
+  const w1 = ctx.measureText(t1).width, w2 = ctx.measureText(t2).width;
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#1a8a5a'; ctx.fillText(t1, (W - w1 - w2) / 2, y);
+  ctx.fillStyle = '#f5a623'; ctx.fillText(t2, (W - w1 - w2) / 2 + w1, y);
+  y += 30;
+
+  // Equipos
+  result.teams.forEach(t => {
+    const h = teamH(t);
+    const x = PAD, w = W - PAD * 2;
+    ctx.save();
+    roundRect(ctx, x, y, w, h, 22); ctx.fillStyle = '#ffffff'; ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = '#e0deda'; ctx.stroke();
+    ctx.clip();
+    ctx.fillStyle = t.color.name === 'Blanco' ? '#cfcfcf' : t.color.hex;
+    ctx.fillRect(x, y, w, 14);
+    ctx.restore();
+
+    // Encabezado del equipo
+    ctx.beginPath(); ctx.arc(x + 50, y + 60, 18, 0, Math.PI * 2);
+    ctx.fillStyle = t.color.hex; ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.stroke();
+    ctx.textAlign = 'left'; ctx.fillStyle = '#1a1a1a';
+    ctx.font = '700 46px "Barlow Condensed", sans-serif';
+    ctx.fillText(t.color.name.toUpperCase(), x + 84, y + 76);
+
+    let ly = y + HEAD + 36;
+    const names = [...t.gks.map(n => ({ n: n + '  🧤' })), ...t.field.map(n => ({ n })), ...Array(t.pending).fill({ n: 'Jugador pendiente', pend: true })];
+    names.forEach((it, i) => {
+      if (i > 0) { ctx.fillStyle = '#f0f0ee'; ctx.fillRect(x + 40, ly - LINE + 12, w - 80, 2); }
+      ctx.fillStyle = it.pend ? '#b07a00' : '#1a1a1a';
+      ctx.font = it.pend ? 'italic 400 34px "Barlow", sans-serif' : '500 36px "Barlow", sans-serif';
+      ctx.fillText(it.n, x + 50, ly);
+      ly += LINE;
+    });
+    y += h + 30;
+  });
+
+  // Pago
+  if (result.pay) {
+    const p = result.pay, x = PAD, w = W - PAD * 2, h = payH - 30;
+    roundRect(ctx, x, y, w, h, 22); ctx.fillStyle = '#e8faf3'; ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = '#2dbe82'; ctx.stroke();
+    ctx.textAlign = 'center'; ctx.fillStyle = '#1a8a5a';
+    ctx.font = '700 64px "Barlow Condensed", sans-serif';
+    ctx.fillText(`${money(p.rounded)} c/u`, W / 2, y + 76);
+    if (p.isRounded) {
+      ctx.font = '400 30px "Barlow", sans-serif';
+      ctx.fillText(`valor exacto ${money(p.exact)}`, W / 2, y + 122);
+    }
+    y += payH;
+  }
+
+  // Pie
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#666'; ctx.font = '500 30px "Barlow", sans-serif';
+  ctx.fillText('Sorteado con El Sorteo CDV', W / 2, H - 76);
+  ctx.fillStyle = '#1a8a5a'; ctx.font = '500 28px "Barlow", sans-serif';
+  ctx.fillText(SHARE_URL, W / 2, H - 36);
+
+  return cv;
+}
+
+function canvasToBlob(cv) {
+  return new Promise((resolve, reject) => {
+    try { cv.toBlob(b => b ? resolve(b) : reject(new Error('blob')), 'image/png'); }
+    catch (e) { reject(e); }
+  });
+}
+
+async function shareImage() {
+  toast('Preparando imagen...');
+  let blob;
+  try { blob = await canvasToBlob(await drawImage(true)); }
+  catch (e) {
+    // Si el logo bloquea la imagen, se genera sin logo
+    try { blob = await canvasToBlob(await drawImage(false)); }
+    catch (e2) { toast('No pudimos crear la imagen. Usa "Copiar texto".'); return; }
+  }
+  const file = new File([blob], 'equipos-cdv.png', { type: 'image/png' });
+
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: 'Equipos CDV' });
+      return;
+    } catch (e) {
+      if (e && e.name === 'AbortError') return;   // la persona cerró el menú
+    }
+  }
+  // Respaldo: descargar la imagen
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'equipos-cdv.png';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+  toast('Imagen descargada. Envíala desde tu galería.');
+}
+
+// ── INICIO ────────────────────────────────────────────────────
+(function init() {
+  const s = load();
+  if (s) {
+    if (s.raw) {
+      document.getElementById('raw-list').value = s.raw;
+      document.getElementById('restore-note').classList.remove('hidden');
+    }
+    players = Array.isArray(s.players) ? s.players : [];
+    if (Array.isArray(s.teamColors) && s.teamColors.length === 3) teamColors = s.teamColors;
+    payOn = !!s.payOn;
+    priceChip = typeof s.priceChip === 'number' ? s.priceChip : null;
+    priceOther = s.priceOther || '';
+  }
+  document.getElementById('raw-list').addEventListener('input', () => {
+    document.getElementById('restore-note').classList.add('hidden');
+    save();
+  });
+})();
+</script>
+</body>
+</html>
