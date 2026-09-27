@@ -22,7 +22,7 @@
   body { font-family: 'Barlow', sans-serif; background: #f0f0ee; color: var(--dark); min-height: 100vh; font-size: 15px; }
   button, input, textarea { font-family: inherit; }
 
-  .header { background: #fff; border-bottom: 2px solid var(--green); padding: 14px 20px; display: flex; align-items: center; justify-content: center; position: sticky; top: 0; z-index: 100; }
+  .header { background: #fff; border-bottom: 2px solid var(--green); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; position: sticky; top: 0; z-index: 100; }
 
   .main { max-width: 560px; margin: 0 auto; padding: 20px 16px 48px; }
 
@@ -116,6 +116,27 @@
   .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px); background: var(--dark); color: #fff; padding: 11px 18px; border-radius: 10px; font-size: 14px; font-weight: 600; opacity: 0; transition: opacity 0.2s, transform 0.2s; pointer-events: none; z-index: 300; max-width: calc(100vw - 32px); text-align: center; }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+  /* ── MENÚ CDV ── */
+  .cdv-menu-btn { width: 44px; height: 44px; border: 1px solid #e0deda; background: #fff; border-radius: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; flex-shrink: 0; }
+  .cdv-menu-btn:hover { background: #f5f5f3; }
+  .cdv-menu-btn span { display: block; width: 20px; height: 2.5px; background: #1a1a1a; border-radius: 2px; transition: transform 0.2s, opacity 0.2s; }
+  .cdv-menu-btn[aria-expanded="true"] span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
+  .cdv-menu-btn[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
+  .cdv-menu-btn[aria-expanded="true"] span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
+  .cdv-menu-panel { display: none; position: absolute; top: calc(100% + 6px); right: 12px; width: min(310px, calc(100vw - 24px)); background: #fff; border: 1px solid #e0deda; border-radius: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.14); padding: 8px; z-index: 150; }
+  .cdv-menu-panel.open { display: block; }
+  .cdv-menu-item { display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 10px; font-family: 'Barlow', sans-serif; font-size: 16px; font-weight: 600; color: #1a1a1a; text-decoration: none; border: 1.5px solid transparent; white-space: nowrap; }
+  .cdv-menu-item + .cdv-menu-item { margin-top: 4px; }
+  .cdv-menu-item:hover { background: #f5f5f3; }
+  .cdv-menu-icon { font-size: 20px; width: 26px; text-align: center; flex-shrink: 0; }
+  .cdv-menu-item.ranking { background: linear-gradient(135deg, #1a5c0e 0%, #4aab20 50%, #7ed43a 100%); color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.4); }
+  .cdv-menu-item.ranking:hover { filter: brightness(1.06); }
+  .cdv-menu-item.is-current { border-color: #2dbe82; background: #e8faf3; cursor: default; }
+  .cdv-menu-item.ranking.is-current { border-color: #1a5c0e; background: linear-gradient(135deg, #1a5c0e 0%, #4aab20 50%, #7ed43a 100%); }
+  .cdv-menu-here { margin-left: auto; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; background: #2dbe82; color: #fff; text-shadow: none; white-space: nowrap; }
+  .cdv-menu-item.ranking .cdv-menu-here { background: rgba(255,255,255,0.25); }
+  @media (prefers-reduced-motion: reduce) { .cdv-menu-btn span { transition: none; } }
+
   .hidden { display: none !important; }
 
   .footer { text-align: center; font-size: 12px; color: var(--gray-text); margin-top: 26px; line-height: 1.7; }
@@ -127,7 +148,15 @@
 <body>
 
 <div class="header">
-  <img src="https://cdvvillaalemana-cdv.github.io/vaccarezza/Logo_horizontal.png" alt="Complejo Deportivo Vaccarezza" style="height:48px;object-fit:contain;">
+  <img src="https://cdvvillaalemana-cdv.github.io/vaccarezza/Logo_horizontal.png" alt="Complejo Deportivo Vaccarezza" style="height:48px;max-width:65%;object-fit:contain;object-position:left;">
+  <button class="cdv-menu-btn" id="cdv-menu-btn" aria-label="Abrir menú" aria-expanded="false" aria-controls="cdv-menu-panel">
+    <span></span><span></span><span></span>
+  </button>
+  <nav class="cdv-menu-panel" id="cdv-menu-panel" aria-label="Menú CDV">
+    <a class="cdv-menu-item" data-page="disponibilidad" href="https://cdvvillaalemana-cdv.github.io/vaccarezza/"><span class="cdv-menu-icon">📅</span>Disponibilidad</a>
+    <a class="cdv-menu-item ranking" data-page="ranking" href="https://cdvvillaalemana-cdv.github.io/vaccarezza/El_ranking_CDV"><span class="cdv-menu-icon">🏆</span>El Ranking CDV</a>
+    <a class="cdv-menu-item" data-page="sorteo" href="https://cdvvillaalemana-cdv.github.io/vaccarezza/sorteo"><span class="cdv-menu-icon">🎲</span>Sorteo de equipos</a>
+  </nav>
 </div>
 
 <div class="main">
@@ -738,6 +767,37 @@ async function shareImage() {
   setTimeout(() => URL.revokeObjectURL(url), 4000);
   toast('Imagen descargada. Envíala desde tu galería.');
 }
+
+// ── MENÚ CDV ──────────────────────────────────────────────────
+(function () {
+  const btn = document.getElementById('cdv-menu-btn');
+  const panel = document.getElementById('cdv-menu-panel');
+  if (!btn || !panel) return;
+
+  // Marca la página actual según la dirección
+  const path = location.pathname.replace(/\/+$/, '').toLowerCase();
+  let current = null;
+  if (/sorteo(\.html)?$/.test(path)) current = 'sorteo';
+  else if (/el_ranking_cdv(\.html)?$/.test(path)) current = 'ranking';
+  else if (/vaccarezza$/.test(path) || /index\.html$/.test(path)) current = 'disponibilidad';
+  const cur = current && panel.querySelector(`[data-page="${current}"]`);
+  if (cur) {
+    cur.classList.add('is-current');
+    cur.removeAttribute('href');
+    cur.setAttribute('aria-current', 'page');
+    cur.insertAdjacentHTML('beforeend', '<span class="cdv-menu-here">Estás aquí</span>');
+  }
+
+  function setOpen(open) {
+    panel.classList.toggle('open', open);
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    btn.setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú');
+  }
+  btn.addEventListener('click', e => { e.stopPropagation(); setOpen(!panel.classList.contains('open')); });
+  panel.addEventListener('click', e => { if (e.target.closest('.cdv-menu-item')) setOpen(false); });
+  document.addEventListener('click', e => { if (!panel.contains(e.target) && e.target !== btn) setOpen(false); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') setOpen(false); });
+})();
 
 // ── INICIO ────────────────────────────────────────────────────
 (function init() {
