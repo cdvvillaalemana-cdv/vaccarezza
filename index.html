@@ -149,6 +149,18 @@
   .cerrado-clima span { font-size: 22px; display: block; margin-bottom: 4px; }
 
 
+
+  /* HAMBURGER MENU */
+  .hamburger-btn { background: none; border: none; cursor: pointer; padding: 6px; display: flex; flex-direction: column; gap: 5px; justify-content: center; }
+  .hamburger-btn span { display: block; width: 22px; height: 2px; background: var(--dark); border-radius: 2px; transition: all 0.2s; }
+  .hamburger-menu { display: none; position: absolute; top: calc(100% + 4px); right: 20px; background: #fff; border: 1px solid var(--gray-mid); border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 999; min-width: 200px; overflow: hidden; }
+  .hamburger-menu.open { display: block; }
+  .menu-item { display: flex; align-items: center; gap: 10px; padding: 13px 16px; font-size: 14px; font-weight: 600; color: var(--dark); text-decoration: none; cursor: pointer; border: none; background: none; width: 100%; text-align: left; font-family: 'Barlow', sans-serif; transition: background 0.1s; border-bottom: 1px solid #f0f0ee; }
+  .menu-item:last-child { border-bottom: none; }
+  .menu-item:hover { background: var(--gray-bg); }
+  .menu-item-ranking { background: linear-gradient(135deg,#1a5c0e 0%,#4aab20 50%,#7ed43a 100%); color: #fff; }
+  .menu-item-ranking:hover { opacity: 0.9; background: linear-gradient(135deg,#1a5c0e 0%,#4aab20 50%,#7ed43a 100%); }
+
   /* RIVAL PANEL */
   .rival-panel { display: none; background: #1a1a2e; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
   .rival-panel.open { display: block; }
@@ -207,9 +219,16 @@
 
 <div class="header">
   <img src="https://cdvvillaalemana-cdv.github.io/vaccarezza/Logo_horizontal.png" alt="Complejo Deportivo Vaccarezza" style="height:48px;object-fit:contain;">
-  <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
-    <button class="rival-header-btn" onclick="toggleRival()">⚽️ Rival</button>
-    <a class="ranking-btn" href="https://cdvvillaalemana-cdv.github.io/vaccarezza/El_ranking_CDV" target="_blank" style="background:linear-gradient(135deg,#1a5c0e 0%,#4aab20 50%,#7ed43a 100%);color:#fff;display:flex;align-items:center;gap:8px;border-radius:10px;padding:8px 14px;font-family:Barlow,sans-serif;font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,0.4);box-shadow:0 2px 8px rgba(74,171,32,0.5);">🏆 El Ranking CDV <span style="background:rgba(255,255,255,0.25);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;letter-spacing:0.05em;">¡NUEVO!</span></a>
+  <div style="position:relative;">
+    <button class="hamburger-btn" onclick="toggleMenu()" id="hamburger-btn" aria-label="Menú">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="hamburger-menu" id="hamburger-menu">
+      <a class="menu-item" onclick="scrollToCalendar();closeMenu()">📅 Disponibilidad</a>
+      <a class="menu-item" onclick="toggleRival();closeMenu()">⚽️ Buscar Rival</a>
+      <a class="menu-item menu-item-ranking" href="https://cdvvillaalemana-cdv.github.io/vaccarezza/El_ranking_CDV" target="_blank" onclick="closeMenu()">🏆 El Ranking CDV</a>
+      <a class="menu-item" href="https://cdvvillaalemana-cdv.github.io/vaccarezza/sorteo" target="_blank" onclick="closeMenu()">🎲 Sorteo de equipos</a>
+    </div>
   </div>
 </div>
 
@@ -711,7 +730,7 @@ async function fetchRivales() {
 async function publishRival() {
   const local = getRivalLocal();
   if (local.count >= MAX_RIVAL_PER_DAY) {
-    document.getElementById('rival-msg').innerHTML = '<span class="rival-error">Ya publicaste 3 avisos hoy.</span>';
+    document.getElementById('rival-msg').innerHTML = '<span class="rival-error">Ya publicaste tu aviso de hoy.</span>';
     return;
   }
 
@@ -799,8 +818,7 @@ async function renderRival() {
   <div class="rival-form">
     <div class="rival-form-title">📢 Publicar aviso (${remaining} disponible${remaining!==1?'s':''} hoy)</div>
     <div class="rival-field"><label>Tu nombre</label><input id="r-nombre" type="text" placeholder="Ej: Juan Pérez"></div>
-    <div class="rival-fields-row">
-      <div class="rival-field"><label>Color del equipo</label><input id="r-color" type="text" placeholder="Ej: Azul, Rojo y blanco..."></div>
+    <div class="rival-field"><label>Color del equipo</label><input id="r-color" type="text" placeholder="Ej: Azul, Rojo y blanco..."></div>
     <div class="rival-field">
       <label>Nivel (máximo 2 opciones)</label>
       <div class="nivel-options">
@@ -815,7 +833,7 @@ async function renderRival() {
         <label class="nivel-opt nivel-otro-wrap"><input type="checkbox" name="nivel" value="Otro" id="nivel-otro-check" onchange="handleNivelCheck(this)"> Otro: <input type="text" id="nivel-otro-text" placeholder="Escribe aquí..." style="display:none;margin-left:6px;background:#0d1117;border:1px solid #2a3a5e;border-radius:4px;color:#fff;padding:2px 6px;font-size:12px;width:120px"></label>
       </div>
       <div id="nivel-error" style="font-size:11px;color:#e05555;margin-top:4px;display:none">Máximo 2 opciones</div>
-    </div
+    </div>
     </div>
     <div class="rival-fields-row">
       <div class="rival-field"><label>Fecha</label><select id="r-fecha">${fechaOpts}</select></div>
@@ -834,7 +852,8 @@ async function renderRival() {
     html += `<div class="rival-list-title">Equipos buscando rival</div>`;
     rivales.forEach(r => {
       const dotColor = COLORS_MAP[r.color] || '#888';
-      const levelClass = 'level-intermedio';
+      const nivelLower = (r.nivel || '').toLowerCase();
+      const levelClass = nivelLower.includes('amateur') ? 'level-amateur' : nivelLower.includes('competitivo') || nivelLower.includes('avanzado') ? 'level-avanzado' : 'level-intermedio';
       const d = new Date(r.fecha + 'T00:00:00');
       const esDia = r.fecha === todayD ? 'Hoy' : 'Mañana';
       const dateLabel = `${esDia} — ${dias[d.getDay()]} ${d.getDate()} de ${meses[d.getMonth()]} a las ${r.hora}`;
@@ -857,6 +876,27 @@ async function renderRival() {
 
   document.getElementById('mundial-content').innerHTML = html;
 }
+
+
+// ── MENU ─────────────────────────────────────────────────────
+function toggleMenu() {
+  document.getElementById('hamburger-menu').classList.toggle('open');
+}
+function closeMenu() {
+  document.getElementById('hamburger-menu').classList.remove('open');
+}
+function scrollToCalendar() {
+  const el = document.getElementById('calendar-container');
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+// Close menu on outside click
+document.addEventListener('click', function(e) {
+  const menu = document.getElementById('hamburger-menu');
+  const btn = document.getElementById('hamburger-btn');
+  if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) {
+    menu.classList.remove('open');
+  }
+});
 
 // ── TOOLTIP POSITIONING ──────────────────────────────────────
 function closeTooltips() {
