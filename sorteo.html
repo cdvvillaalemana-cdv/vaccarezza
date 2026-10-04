@@ -137,6 +137,27 @@
   .cdv-menu-item.ranking .cdv-menu-here { background: rgba(255,255,255,0.25); }
   @media (prefers-reduced-motion: reduce) { .cdv-menu-btn span { transition: none; } }
 
+  /* MODOS Y CANCHA */
+  .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .mode { border: 1.5px solid var(--gray-mid); background: #fff; border-radius: 10px; padding: 9px 10px; text-align: left; cursor: pointer; font-family: inherit; }
+  .mode b { display: block; font-size: 15px; font-weight: 600; color: var(--dark); }
+  .mode span { font-size: 12px; color: var(--gray-text); line-height: 1.3; }
+  .mode.on { border: 2px solid var(--green); background: var(--green-light); }
+  .mode.on b { color: var(--green-dark); }
+  .p-btn.pos { min-width: 46px; font-size: 12px; font-weight: 700; }
+  .p-btn.pos.on { color: #2563eb; border-color: #2563eb; background: #eef6ff; }
+  .pos-tag { font-size: 11px; font-weight: 700; color: #2563eb; background: #eef6ff; border-radius: 4px; padding: 1px 5px; margin-left: 4px; }
+  .view-switch { display: flex; border: 2px solid var(--green); border-radius: 10px; overflow: hidden; margin-bottom: 12px; }
+  .view-switch button { flex: 1; padding: 9px; border: none; background: #fff; color: var(--green-dark); font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .view-switch button.on { background: var(--green); color: #fff; }
+  .pitch-preview img { width: 100%; display: block; border-radius: 12px; margin-bottom: 10px; border: 1px solid var(--gray-mid); }
+  .pitch-preview:empty { min-height: 300px; background: var(--gray-bg); border-radius: 12px; margin-bottom: 10px; }
+  .reorder-row { display: flex; align-items: center; gap: 8px; }
+  .reorder-row .btn { flex: 1; }
+  .arrow-btn { width: 50px; height: 50px; border: 2px solid var(--green); background: #fff; border-radius: 10px; font-size: 26px; line-height: 1; color: var(--green-dark); cursor: pointer; flex-shrink: 0; }
+  .arrow-btn:disabled { border-color: var(--gray-mid); color: #ccc; cursor: default; }
+  .form-count { text-align: center; font-size: 12px; color: var(--gray-text); margin: 6px 0 14px; }
+
   .hidden { display: none !important; }
 
   .footer { text-align: center; font-size: 12px; color: var(--gray-text); margin-top: 26px; line-height: 1.7; }
@@ -184,11 +205,13 @@
     <div class="step-label">Paso 2 de 3 · Revisa y ajusta</div>
 
     <div class="box">
+      <div class="box-title">¿Cómo quieres sortear?</div>
+      <div class="modes" id="modes"></div>
+    </div>
+
+    <div class="box">
       <div class="box-title" id="players-title">Jugadores</div>
-      <div class="help">
-        <strong>Opcional:</strong> marca 🧤 a los arqueros y toca las estrellas para indicar el nivel de cada jugador (★ básico, ★★ medio, ★★★ crack). Así el sorteo reparte parejo. Si no marcas nada, el sorteo es 100% al azar.<br>
-        Toca un nombre para corregirlo.
-      </div>
+      <div class="help" id="help-text"></div>
       <div id="dup-notice" class="notice hidden"></div>
       <div id="players-list"></div>
       <div class="add-row">
@@ -230,7 +253,20 @@
   <!-- PASO 3: RESULTADO -->
   <section id="step3" class="hidden">
     <div class="step-label">Paso 3 de 3 · Equipos listos</div>
-    <div id="result-teams"></div>
+    <div class="view-switch hidden" id="view-switch">
+      <button id="vs-lista" onclick="setView('lista')">Lista</button>
+      <button id="vs-cancha" onclick="setView('cancha')">Cancha</button>
+    </div>
+    <div id="list-view"><div id="result-teams"></div></div>
+    <div id="cancha-view" class="hidden">
+      <div class="pitch-preview" id="pitch-preview"></div>
+      <div class="reorder-row">
+        <button class="arrow-btn" id="hist-prev" onclick="histMove(-1)" aria-label="Formación anterior">‹</button>
+        <button class="btn btn-outline" onclick="reordenar()">🔀 Reordenar</button>
+        <button class="arrow-btn" id="hist-next" onclick="histMove(1)" aria-label="Formación siguiente">›</button>
+      </div>
+      <div class="form-count" id="form-count"></div>
+    </div>
     <div id="result-pay"></div>
     <div class="btn-stack">
       <button class="btn btn-wa" onclick="shareImage()">📷 Compartir imagen</button>
@@ -277,7 +313,12 @@ const colorByName = n => COLORS.find(c => c.name === n) || COLORS[0];
 const TITLE_WORDS = ['pichanga','partido','futbol','fútbol','baby','cancha','canchas','cdv','vaccarezza','hrs','hr','hora','horas','lista','jugadores','equipos','equipo','lunes','martes','miercoles','miércoles','jueves','viernes','sabado','sábado','domingo','hoy','mañana','manana','confirmados','confirmado','fecha','pm','am','suplentes','titulares','transferencia','transferencias','transferir','banco','cuenta','rut','pago','pagos','pagar','abono','corriente','vista','ahorro'];
 
 // ── ESTADO ────────────────────────────────────────────────────
-let players = [];           // { name, gk, lvl }
+let players = [];           // { name, gk, lvl, pos }
+let mode = 'azar';          // azar | nivel | pos | ambos
+let view = 'lista';         // lista | cancha
+let formations = [];        // historial de formaciones en la cancha
+let formIdx = 0;
+let reorderCount = 0;
 let numTeams = 2;
 let teamColors = ['Negro', 'Rojo', 'Blanco'];
 let payOn = false;
@@ -302,7 +343,7 @@ function toast(msg) {
 function save() {
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify({
-      raw: document.getElementById('raw-list').value, players, numTeams, teamColors,
+      raw: document.getElementById('raw-list').value, players, numTeams, teamColors, mode,
       payOn, priceChip, priceOther
     }));
   } catch (e) {}
@@ -367,7 +408,7 @@ function goStep2() {
   players.forEach(p => prev[p.name.toLowerCase()] = p);
   players = parsed.map(p => {
     const old = prev[p.name.toLowerCase()];
-    return old ? { name: p.name, gk: p.gk || old.gk, lvl: old.lvl } : p;
+    return old ? { name: p.name, gk: p.gk || old.gk, lvl: old.lvl || 0, pos: old.pos || '' } : { ...p, pos: '' };
   });
   if (players.length < MIN_FOR_3 && numTeams === 3) numTeams = 2;
   save();
@@ -375,7 +416,27 @@ function goStep2() {
 }
 
 // ── PASO 2 ────────────────────────────────────────────────────
+const MODES = [
+  { id: 'azar',  t: 'Al azar',          d: 'Rápido, sin marcar nada' },
+  { id: 'nivel', t: 'Por nivel',        d: 'Marca estrellas' },
+  { id: 'pos',   t: 'Por posición',     d: 'Marca la posición de cada uno' },
+  { id: 'ambos', t: 'Nivel y posición', d: 'Lo más parejo posible' }
+];
+const HELP = {
+  azar:  '<strong>Opcional:</strong> marca 🧤 a los arqueros para que quede uno en cada equipo. Toca un nombre para corregirlo.',
+  nivel: 'Marca 🧤 a los arqueros y toca las estrellas para indicar el nivel de cada jugador (★ básico, ★★ medio, ★★★ crack). Toca un nombre para corregirlo.',
+  pos:   'Marca 🧤 a los arqueros y toca la posición para cambiarla (– · DEF · MED · DEL). Toca un nombre para corregirlo.',
+  ambos: 'Marca 🧤 a los arqueros, las estrellas para el nivel (★ básico, ★★ medio, ★★★ crack) y la posición (– · DEF · MED · DEL). Toca un nombre para corregirlo.'
+};
+function renderModes() {
+  document.getElementById('modes').innerHTML = MODES.map(m =>
+    `<button class="mode${mode === m.id ? ' on' : ''}" onclick="setMode('${m.id}')" aria-pressed="${mode === m.id}"><b>${m.t}</b><span>${m.d}</span></button>`).join('');
+  document.getElementById('help-text').innerHTML = HELP[mode];
+}
+function setMode(m) { mode = m; save(); renderModes(); renderPlayers(); }
+
 function renderStep2() {
+  renderModes();
   renderPlayers();
   renderTeamsChips();
   renderColors();
@@ -400,11 +461,14 @@ function renderPlayers() {
       ? '☆☆☆'
       : `<span class="s-on">${'★'.repeat(p.lvl)}</span>${'☆'.repeat(3 - p.lvl)}`;
     const dup = dups.includes(p.name.trim().toLowerCase()) ? ' dup' : '';
+    const showLvl = mode === 'nivel' || mode === 'ambos';
+    const showPos = mode === 'pos' || mode === 'ambos';
     return `<div class="p-row${dup}">
-      <span class="p-num">${i + 1}</span>
+      ${mode === 'ambos' ? '' : `<span class="p-num">${i + 1}</span>`}
       <input class="p-name" value="${esc(p.name)}" onchange="renamePlayer(${i}, this.value)" aria-label="Nombre del jugador ${i + 1}">
       <button class="p-btn gk${p.gk ? ' on' : ''}" onclick="toggleGk(${i})" aria-label="Marcar arquero">🧤</button>
-      <button class="p-btn lvl${p.lvl ? ' on' : ''}" onclick="cycleLvl(${i})" aria-label="Nivel del jugador">${stars}</button>
+      ${showLvl ? `<button class="p-btn lvl${p.lvl ? ' on' : ''}" onclick="cycleLvl(${i})" aria-label="Nivel del jugador">${stars}</button>` : ''}
+      ${showPos ? `<button class="p-btn pos${p.pos ? ' on' : ''}" onclick="cyclePos(${i})" aria-label="Posición del jugador">${p.pos || '–'}</button>` : ''}
       <button class="p-btn del" onclick="removePlayer(${i})" aria-label="Quitar jugador">✕</button>
     </div>`;
   }).join('');
@@ -416,7 +480,12 @@ function renamePlayer(i, v) {
   players[i].name = name; save(); renderPlayers();
 }
 function toggleGk(i) { players[i].gk = !players[i].gk; save(); renderPlayers(); }
-function cycleLvl(i) { players[i].lvl = (players[i].lvl + 1) % 4; save(); renderPlayers(); }
+function cycleLvl(i) { players[i].lvl = ((players[i].lvl || 0) + 1) % 4; save(); renderPlayers(); }
+function cyclePos(i) {
+  const cyc = ['', 'DEF', 'MED', 'DEL'];
+  players[i].pos = cyc[(cyc.indexOf(players[i].pos || '') + 1) % cyc.length];
+  save(); renderPlayers();
+}
 function removePlayer(i) {
   players.splice(i, 1);
   if (players.length < MIN_FOR_3 && numTeams === 3) numTeams = 2;
@@ -426,7 +495,7 @@ function addPlayer() {
   const inp = document.getElementById('add-input');
   const name = inp.value.replace(/\s+/g, ' ').trim();
   if (!name) return;
-  players.push({ name, gk: false, lvl: 0 });
+  players.push({ name, gk: false, lvl: 0, pos: '' });
   inp.value = ''; save(); renderStep2();
   inp.focus();
 }
@@ -495,6 +564,12 @@ function getTotal() {
 }
 
 // ── SORTEO ────────────────────────────────────────────────────
+const POS = ['DEF', 'MED', 'DEL'];
+const POS_NEAR = { DEF: ['MED'], MED: ['DEF', 'DEL'], DEL: ['MED'] };
+const modeHasLvl = () => mode === 'nivel' || mode === 'ambos';
+const modeHasPos = () => mode === 'pos' || mode === 'ambos';
+const randInt = n => Math.floor(Math.random() * n);
+
 function sortear() {
   const k = numTeams;
   const n = players.length;
@@ -512,62 +587,216 @@ function sortear() {
   }
   showErr('err2', '');
 
+  // Qué criterios se usan según el modo (y si se marcó algo)
+  const useLvl = modeHasLvl() && players.some(p => p.lvl > 0);
+  const usePos = modeHasPos() && players.some(p => p.pos);
+  const missing = [];
+  if (modeHasLvl() && !useLvl) missing.push('niveles');
+  if (modeHasPos() && !usePos) missing.push('posiciones');
+
+  const pl = players.map(p => ({ name: p.name, gk: p.gk, lvl: useLvl ? p.lvl : 0, pos: usePos ? (p.pos || '') : '' }));
+
   // Cupos por equipo (si no es exacto, algunos equipos tienen uno menos)
   const base = Math.floor(n / k), extra = n % k;
   const caps = shuffle(Array.from({ length: k }, (_, i) => i < extra ? base + 1 : base));
-  const teams = Array.from({ length: k }, (_, i) => ({ cap: caps[i], gks: [], field: [], sum: 0 }));
+  const teams = Array.from({ length: k }, (_, i) => ({ cap: caps[i], gks: [], field: [], sum: 0, posCount: { DEF: 0, MED: 0, DEL: 0 } }));
   const size = t => t.gks.length + t.field.length;
 
+  function assign(p, pool) {
+    if (p.lvl > 0) {
+      const minSum = Math.min(...pool.map(t => t.sum));
+      pool = pool.filter(t => t.sum === minSum);
+    }
+    const minCount = Math.min(...pool.map(size));
+    const best = shuffle(pool.filter(t => size(t) === minCount))[0];
+    best.field.push(p); best.sum += p.lvl;
+    if (p.pos) best.posCount[p.pos]++;
+  }
+  const open = () => teams.filter(t => size(t) < t.cap);
+
   // 1) Un arquero por equipo
-  const gks = shuffle(players.filter(p => p.gk));
-  let field = players.filter(p => !p.gk);
+  const gks = shuffle(pl.filter(p => p.gk));
+  let field = pl.filter(p => !p.gk);
   const order = shuffle([...Array(k).keys()]);
   gks.forEach((p, i) => {
     if (i < k) { teams[order[i]].gks.push(p); teams[order[i]].sum += p.lvl; }
     else field.push(p);
   });
 
-  // 2) Jugadores con nivel, de mayor a menor, al equipo con menos puntaje
-  // 3) El resto al azar, al equipo con menos jugadores
-  field = shuffle(field).sort((a, b) => b.lvl - a.lvl);
-  field.forEach(p => {
-    const open = teams.filter(t => size(t) < t.cap);
-    let best;
-    if (p.lvl > 0) {
-      const minSum = Math.min(...open.map(t => t.sum));
-      const bySum = open.filter(t => t.sum === minSum);
-      const minCount = Math.min(...bySum.map(size));
-      best = shuffle(bySum.filter(t => size(t) === minCount))[0];
-    } else {
-      const minCount = Math.min(...open.map(size));
-      best = shuffle(open.filter(t => size(t) === minCount))[0];
-    }
-    best.field.push(p); best.sum += p.lvl;
-  });
+  if (usePos) {
+    // 2) Cada posición se reparte pareja entre equipos (y por nivel dentro de ella)
+    POS.forEach(ps => {
+      shuffle(field.filter(p => p.pos === ps)).sort((a, b) => b.lvl - a.lvl).forEach(p => {
+        let pool = open();
+        const minP = Math.min(...pool.map(t => t.posCount[ps]));
+        assign(p, pool.filter(t => t.posCount[ps] === minP));
+      });
+    });
+    // 3) Los sin posición completan
+    shuffle(field.filter(p => !p.pos)).sort((a, b) => b.lvl - a.lvl).forEach(p => assign(p, open()));
+  } else {
+    // 2) Con nivel, de mayor a menor; 3) el resto al azar
+    shuffle(field).sort((a, b) => b.lvl - a.lvl).forEach(p => assign(p, open()));
+  }
 
   const maxSize = Math.max(...teams.map(size));
   result = {
-    teams: teams.map((t, i) => ({
-      color: colorByName(teamColors[i]),
-      gks: t.gks.map(p => p.name),
-      field: shuffle(t.field).map(p => p.name),
-      pending: maxSize - size(t)
-    })),
+    usePos,
+    teams: teams.map((t, i) => {
+      const fieldOrder = shuffle(t.field);
+      return {
+        color: colorByName(teamColors[i]),
+        gks: t.gks.map(p => p.name),
+        field: fieldOrder.map(p => p.name),
+        members: [...t.gks.map(p => ({ name: p.name, gk: true, pos: '' })), ...fieldOrder.map(p => ({ name: p.name, gk: false, pos: p.pos }))],
+        pending: maxSize - size(t)
+      };
+    }),
     pay
   };
+
+  formations = usePos ? [initialFormation()] : [];
+  formIdx = 0;
+  reorderCount = 0;
+  view = usePos ? 'cancha' : 'lista';
   save();
   renderResult();
   showStep(3);
+  if (missing.length) toast(`No marcaste ${missing.join(' ni ')}, así que no se usaron en el sorteo.`);
 }
 
+// ── FORMACIÓN EN LA CANCHA ────────────────────────────────────
+function lineSizes(lines) { return POS.map(ps => lines[ps].length); }
+function allField(tf) { return [...tf.lines.DEF, ...tf.lines.MED, ...tf.lines.DEL]; }
+function smallestLine(lines) {
+  const pref = ['MED', 'DEF', 'DEL'];
+  const min = Math.min(...lineSizes(lines));
+  return pref.find(ps => lines[ps].length === min);
+}
+function removeFromLines(lines, m) { POS.forEach(ps => { lines[ps] = lines[ps].filter(x => x !== m); }); }
+
+// Cada línea con al menos un jugador (si hay 3 o más jugadores de campo)
+function enforceMin(lines) {
+  const total = lines.DEF.length + lines.MED.length + lines.DEL.length;
+  if (total < 3) return;
+  POS.forEach(ps => {
+    if (lines[ps].length > 0) return;
+    let sources = POS_NEAR[ps].filter(s => lines[s].length > 1).sort((a, b) => lines[b].length - lines[a].length);
+    if (!sources.length) sources = POS.filter(s => lines[s].length > 1).sort((a, b) => lines[b].length - lines[a].length);
+    if (!sources.length) return;
+    const src = lines[sources[0]];
+    const freeOnes = src.filter(m => !m.pos);
+    const pick = freeOnes.length ? freeOnes[randInt(freeOnes.length)] : src[randInt(src.length)];
+    lines[sources[0]] = src.filter(m => m !== pick);
+    lines[ps].push(pick);
+  });
+}
+
+// Ubica a los jugadores según la posición que marcaron
+function buildFromMarks(members) {
+  const lines = { DEF: [], MED: [], DEL: [] };
+  const free = [];
+  members.forEach(m => m.pos ? lines[m.pos].push(m) : free.push(m));
+  shuffle(free).forEach(m => lines[smallestLine(lines)].push(m));
+  enforceMin(lines);
+  POS.forEach(ps => { lines[ps] = shuffle(lines[ps]); });
+  return lines;
+}
+
+function initialFormation() {
+  return result.teams.map(t => {
+    const gk = t.members.find(m => m.gk) || null;
+    let rest = t.members.filter(m => m !== gk);
+    let goal = gk;
+    if (!goal && rest.length) {
+      // Sin arquero marcado: va al arco alguien sin posición (o cualquiera) y luego rota
+      const free = rest.filter(m => !m.pos);
+      const pool = free.length ? free : rest;
+      goal = pool[randInt(pool.length)];
+      rest = rest.filter(m => m !== goal);
+    }
+    return { goal, fixedGk: !!gk, keepersUsed: goal ? [goal.name] : [], lines: buildFromMarks(rest) };
+  });
+}
+
+function reorderTeam(tf, r) {
+  const t = { goal: tf.goal, fixedGk: tf.fixedGk, keepersUsed: [...tf.keepersUsed], lines: { DEF: [...tf.lines.DEF], MED: [...tf.lines.MED], DEL: [...tf.lines.DEL] } };
+  let oldKeeper = null;
+
+  // Arquero rotativo cuando no hay arquero marcado
+  if (!t.fixedGk) {
+    const field = allField(t);
+    if (field.length) {
+      let cands = field.filter(m => !t.keepersUsed.includes(m.name));
+      if (!cands.length) { t.keepersUsed = t.goal ? [t.goal.name] : []; cands = field; }
+      const nk = cands[randInt(cands.length)];
+      removeFromLines(t.lines, nk);
+      oldKeeper = t.goal;
+      t.goal = nk;
+      t.keepersUsed.push(nk.name);
+    }
+  }
+
+  if (r <= 3) {
+    // Etapa 1: cada uno en su línea, solo cambian de lado
+    const field = allField(t);
+    if (oldKeeper) field.push(oldKeeper);
+    t.lines = buildFromMarks(field);
+  } else if (r <= 7) {
+    // Etapa 2: además, 1 o 2 jugadores pasan a una posición vecina
+    if (oldKeeper) (oldKeeper.pos ? t.lines[oldKeeper.pos] : t.lines[smallestLine(t.lines)]).push(oldKeeper);
+    const moves = 1 + randInt(2);
+    for (let i = 0; i < moves; i++) {
+      const total = allField(t).length;
+      const cands = [];
+      POS.forEach(ps => { if (t.lines[ps].length > 1 || total < 3) t.lines[ps].forEach(m => cands.push({ m, from: ps })); });
+      if (!cands.length) break;
+      const { m, from } = cands[randInt(cands.length)];
+      const to = POS_NEAR[from][randInt(POS_NEAR[from].length)];
+      t.lines[from] = t.lines[from].filter(x => x !== m);
+      t.lines[to].push(m);
+    }
+    enforceMin(t.lines);
+    POS.forEach(ps => { t.lines[ps] = shuffle(t.lines[ps]); });
+  } else {
+    // Etapa 3: completamente al azar (con al menos uno por línea)
+    const field = shuffle([...allField(t), ...(oldKeeper ? [oldKeeper] : [])]);
+    const sizes = [0, 0, 0];
+    if (field.length >= 3) { sizes[0] = sizes[1] = sizes[2] = 1; for (let i = 3; i < field.length; i++) sizes[randInt(3)]++; }
+    else for (let i = 0; i < field.length; i++) sizes[randInt(3)]++;
+    let idx = 0;
+    t.lines = { DEF: [], MED: [], DEL: [] };
+    POS.forEach((ps, j) => { t.lines[ps] = field.slice(idx, idx + sizes[j]); idx += sizes[j]; });
+  }
+  return t;
+}
+
+function reordenar() {
+  if (!formations.length) return;
+  reorderCount++;
+  const next = formations[formIdx].map(tf => reorderTeam(tf, reorderCount));
+  formations = formations.slice(0, formIdx + 1);
+  formations.push(next);
+  formIdx = formations.length - 1;
+  if (reorderCount === 4) toast('Ahora también se mueven jugadores a posiciones cercanas');
+  if (reorderCount === 8) toast('Ahora el orden en la cancha es completamente al azar');
+  renderCancha();
+}
+function histMove(d) {
+  const ni = formIdx + d;
+  if (ni < 0 || ni >= formations.length) return;
+  formIdx = ni;
+  renderCancha();
+}
+
+// ── RESULTADO ─────────────────────────────────────────────────
 function renderResult() {
   document.getElementById('result-teams').innerHTML = result.teams.map(t => {
     const items = [
-      ...t.gks.map(n => `<li>${esc(n)} 🧤</li>`),
-      ...t.field.map(n => `<li>${esc(n)}</li>`),
+      ...t.members.map(m => `<li>${esc(m.name)}${m.gk ? ' 🧤' : ''}${result.usePos && m.pos ? ` <span class="pos-tag">${m.pos}</span>` : ''}</li>`),
       ...Array(t.pending).fill('<li class="pending">Jugador pendiente</li>')
     ].join('');
-    const total = t.gks.length + t.field.length;
+    const total = t.members.length;
     const border = t.color.name === 'Blanco' ? '#cfcfcf' : t.color.hex;
     return `<div class="team-card" style="border-top:5px solid ${border}">
       <div class="team-head"><span class="dot" style="background:${t.color.hex}"></span><span class="team-name">${t.color.name}</span><span class="team-count">${total} jugador${total !== 1 ? 'es' : ''}</span></div>
@@ -579,6 +808,35 @@ function renderResult() {
   document.getElementById('result-pay').innerHTML = p
     ? `<div class="pay-result"><div class="pay-main">${money(p.rounded)} c/u</div>${p.isRounded ? `<div class="pay-sub">valor exacto ${money(p.exact)}</div>` : ''}<div class="pay-sub" style="color:var(--gray-text)">Cancha ${money(p.total)} entre ${p.payers} persona${p.payers !== 1 ? 's' : ''}</div></div>`
     : '';
+
+  document.getElementById('view-switch').classList.toggle('hidden', !result.usePos);
+  setView(result.usePos ? view : 'lista');
+}
+
+function setView(v) {
+  view = v;
+  document.getElementById('vs-lista').classList.toggle('on', v === 'lista');
+  document.getElementById('vs-cancha').classList.toggle('on', v === 'cancha');
+  document.getElementById('list-view').classList.toggle('hidden', v !== 'lista');
+  document.getElementById('cancha-view').classList.toggle('hidden', v !== 'cancha');
+  if (v === 'cancha') renderCancha();
+}
+
+let previewToken = 0;
+async function renderCancha() {
+  document.getElementById('hist-prev').disabled = formIdx <= 0;
+  document.getElementById('hist-next').disabled = formIdx >= formations.length - 1;
+  document.getElementById('form-count').textContent = `Formación ${formIdx + 1} de ${formations.length}`;
+  const token = ++previewToken;
+  const canvases = await safeCanvases(drawPitchImages);
+  if (token !== previewToken) return;
+  document.getElementById('pitch-preview').innerHTML = '';
+  canvases.forEach((cv, i) => {
+    const img = document.createElement('img');
+    try { img.src = cv.toDataURL('image/png'); } catch (e) { return; }
+    img.alt = `Formación en la cancha, imagen ${i + 1}`;
+    document.getElementById('pitch-preview').appendChild(img);
+  });
 }
 
 // ── TEXTO PARA WHATSAPP ───────────────────────────────────────
@@ -610,17 +868,28 @@ async function copyText() {
   toast('Texto copiado. Pégalo en el grupo de WhatsApp.');
 }
 
-// ── IMAGEN PARA COMPARTIR ─────────────────────────────────────
+// ── IMÁGENES PARA COMPARTIR ───────────────────────────────────
+let logoPromise = null;
 function loadLogo() {
-  return new Promise(resolve => {
+  if (!logoPromise) logoPromise = new Promise(resolve => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => resolve(img);
     img.onerror = () => resolve(null);
     img.src = LOGO_URL;
   });
+  return logoPromise;
 }
-
+async function loadFonts() {
+  try {
+    await Promise.all([
+      document.fonts.load('700 60px "Barlow Condensed"'),
+      document.fonts.load('600 34px "Barlow"'),
+      document.fonts.load('500 36px "Barlow"'),
+      document.fonts.load('400 30px "Barlow"')
+    ]);
+  } catch (e) {}
+}
 function roundRect(ctx, x, y, w, h, r) {
   ctx.beginPath();
   ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
@@ -629,57 +898,55 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.closePath();
 }
 
-async function drawImage(withLogo) {
-  try {
-    await Promise.all([
-      document.fonts.load('700 60px "Barlow Condensed"'),
-      document.fonts.load('500 36px "Barlow"'),
-      document.fonts.load('400 30px "Barlow"')
-    ]);
-  } catch (e) {}
-  const logo = withLogo ? await loadLogo() : null;
+const IMG_W = 1080, IMG_PAD = 60, TOP_H = 290, FOOT_H = 130;
 
-  const W = 1080, PAD = 60, LINE = 58, HEAD = 96;
-  const headerH = 170, titleH = 110;
-  const teamH = t => HEAD + (t.gks.length + t.field.length + t.pending) * LINE + 30;
-  const payH = result.pay ? (result.pay.isRounded ? 190 : 150) : 0;
-  const footerH = 130;
-  const H = headerH + titleH + result.teams.reduce((a, t) => a + teamH(t) + 30, 0) + payH + footerH;
-
+// Encabezado (logo + título) y pie (link), comunes a todas las imágenes
+function newCanvas(contentH, logo) {
+  const H = TOP_H + contentH + FOOT_H;
   const cv = document.createElement('canvas');
-  cv.width = W; cv.height = H;
+  cv.width = IMG_W; cv.height = H;
   const ctx = cv.getContext('2d');
-
-  // Fondo y encabezado
-  ctx.fillStyle = '#f0f0ee'; ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, headerH);
-  ctx.fillStyle = '#2dbe82'; ctx.fillRect(0, headerH - 6, W, 6);
+  ctx.fillStyle = '#f0f0ee'; ctx.fillRect(0, 0, IMG_W, H);
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, IMG_W, 170);
+  ctx.fillStyle = '#2dbe82'; ctx.fillRect(0, 164, IMG_W, 6);
   if (logo) {
     const lh = 110, lw = logo.width * (lh / logo.height);
-    ctx.drawImage(logo, (W - lw) / 2, (headerH - 6 - lh) / 2, lw, lh);
+    ctx.drawImage(logo, (IMG_W - lw) / 2, 27, lw, lh);
   } else {
     ctx.textAlign = 'center';
     ctx.fillStyle = '#1a8a5a'; ctx.font = '600 34px "Barlow Condensed", sans-serif';
-    ctx.fillText('COMPLEJO DEPORTIVO', W / 2, 72);
+    ctx.fillText('COMPLEJO DEPORTIVO', IMG_W / 2, 72);
     ctx.fillStyle = '#f5a623'; ctx.font = '700 58px "Barlow Condensed", sans-serif';
-    ctx.fillText('VACCAREZZA', W / 2, 128);
+    ctx.fillText('VACCAREZZA', IMG_W / 2, 128);
   }
-
-  // Título
-  let y = headerH + 80;
-  ctx.textAlign = 'center';
   ctx.font = '700 64px "Barlow Condensed", sans-serif';
   const t1 = 'EL SORTEO ', t2 = 'CDV';
   const w1 = ctx.measureText(t1).width, w2 = ctx.measureText(t2).width;
   ctx.textAlign = 'left';
-  ctx.fillStyle = '#1a8a5a'; ctx.fillText(t1, (W - w1 - w2) / 2, y);
-  ctx.fillStyle = '#f5a623'; ctx.fillText(t2, (W - w1 - w2) / 2 + w1, y);
-  y += 30;
+  ctx.fillStyle = '#1a8a5a'; ctx.fillText(t1, (IMG_W - w1 - w2) / 2, 250);
+  ctx.fillStyle = '#f5a623'; ctx.fillText(t2, (IMG_W - w1 - w2) / 2 + w1, 250);
 
-  // Equipos
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#666'; ctx.font = '500 30px "Barlow", sans-serif';
+  ctx.fillText('Sorteado con El Sorteo CDV', IMG_W / 2, H - 76);
+  ctx.fillStyle = '#1a8a5a'; ctx.font = '500 28px "Barlow", sans-serif';
+  ctx.fillText(SHARE_URL, IMG_W / 2, H - 36);
+  return ctx;
+}
+
+// Imagen de lista
+async function drawListImage(withLogo) {
+  await loadFonts();
+  const logo = withLogo ? await loadLogo() : null;
+  const LINE = 58, HEAD = 96;
+  const teamH = t => HEAD + (t.members.length + t.pending) * LINE + 30;
+  const payH = result.pay ? (result.pay.isRounded ? 190 : 150) : 0;
+  const contentH = result.teams.reduce((a, t) => a + teamH(t) + 30, 0) + payH;
+  const ctx = newCanvas(contentH, logo);
+  let y = TOP_H + 10;
+
   result.teams.forEach(t => {
-    const h = teamH(t);
-    const x = PAD, w = W - PAD * 2;
+    const h = teamH(t), x = IMG_PAD, w = IMG_W - IMG_PAD * 2;
     ctx.save();
     roundRect(ctx, x, y, w, h, 22); ctx.fillStyle = '#ffffff'; ctx.fill();
     ctx.lineWidth = 2; ctx.strokeStyle = '#e0deda'; ctx.stroke();
@@ -688,7 +955,6 @@ async function drawImage(withLogo) {
     ctx.fillRect(x, y, w, 14);
     ctx.restore();
 
-    // Encabezado del equipo
     ctx.beginPath(); ctx.arc(x + 50, y + 60, 18, 0, Math.PI * 2);
     ctx.fillStyle = t.color.hex; ctx.fill();
     ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.stroke();
@@ -697,40 +963,145 @@ async function drawImage(withLogo) {
     ctx.fillText(t.color.name.toUpperCase(), x + 84, y + 76);
 
     let ly = y + HEAD + 36;
-    const names = [...t.gks.map(n => ({ n: n + '  🧤' })), ...t.field.map(n => ({ n })), ...Array(t.pending).fill({ n: 'Jugador pendiente', pend: true })];
-    names.forEach((it, i) => {
+    const rows = [
+      ...t.members.map(m => ({ n: m.name + (m.gk ? '  🧤' : ''), pos: result.usePos ? m.pos : '' })),
+      ...Array(t.pending).fill({ n: 'Jugador pendiente', pend: true })
+    ];
+    rows.forEach((it, i) => {
       if (i > 0) { ctx.fillStyle = '#f0f0ee'; ctx.fillRect(x + 40, ly - LINE + 12, w - 80, 2); }
+      ctx.textAlign = 'left';
       ctx.fillStyle = it.pend ? '#b07a00' : '#1a1a1a';
       ctx.font = it.pend ? 'italic 400 34px "Barlow", sans-serif' : '500 36px "Barlow", sans-serif';
       ctx.fillText(it.n, x + 50, ly);
+      if (it.pos) {
+        ctx.textAlign = 'right'; ctx.fillStyle = '#2563eb';
+        ctx.font = '600 28px "Barlow", sans-serif';
+        ctx.fillText(it.pos, x + w - 50, ly);
+      }
       ly += LINE;
     });
     y += h + 30;
   });
 
-  // Pago
   if (result.pay) {
-    const p = result.pay, x = PAD, w = W - PAD * 2, h = payH - 30;
+    const p = result.pay, x = IMG_PAD, w = IMG_W - IMG_PAD * 2, h = payH - 30;
     roundRect(ctx, x, y, w, h, 22); ctx.fillStyle = '#e8faf3'; ctx.fill();
     ctx.lineWidth = 2; ctx.strokeStyle = '#2dbe82'; ctx.stroke();
     ctx.textAlign = 'center'; ctx.fillStyle = '#1a8a5a';
     ctx.font = '700 64px "Barlow Condensed", sans-serif';
-    ctx.fillText(`${money(p.rounded)} c/u`, W / 2, y + 76);
+    ctx.fillText(`${money(p.rounded)} c/u`, IMG_W / 2, y + 76);
     if (p.isRounded) {
       ctx.font = '400 30px "Barlow", sans-serif';
-      ctx.fillText(`valor exacto ${money(p.exact)}`, W / 2, y + 122);
+      ctx.fillText(`valor exacto ${money(p.exact)}`, IMG_W / 2, y + 122);
     }
-    y += payH;
   }
+  return [ctx.canvas];
+}
 
-  // Pie
+// Dibuja el pasto y las líneas. half = media cancha con el arco abajo
+function drawField(ctx, x, y, w, h, half) {
+  const bands = half ? 6 : 12;
+  for (let i = 0; i < bands; i++) {
+    ctx.fillStyle = i % 2 ? '#1d8238' : '#22913f';
+    ctx.fillRect(x, y + (h / bands) * i, w, h / bands + 1);
+  }
+  ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 5;
+  const m = 24, fx = x + m, fy = y + m, fw = w - m * 2, fh = h - m * 2;
+  ctx.strokeRect(fx, fy, fw, fh);
+  const boxW = fw * 0.5, boxH = fh * (half ? 0.2 : 0.12), smW = fw * 0.24, smH = fh * (half ? 0.08 : 0.045);
+  // área inferior
+  ctx.strokeRect(fx + (fw - boxW) / 2, fy + fh - boxH, boxW, boxH);
+  ctx.strokeRect(fx + (fw - smW) / 2, fy + fh - smH, smW, smH);
+  if (half) {
+    ctx.beginPath(); ctx.arc(fx + fw / 2, fy, fw * 0.14, 0, Math.PI); ctx.stroke();
+  } else {
+    ctx.beginPath(); ctx.moveTo(fx, fy + fh / 2); ctx.lineTo(fx + fw, fy + fh / 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(fx + fw / 2, fy + fh / 2, fw * 0.14, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeRect(fx + (fw - boxW) / 2, fy, boxW, boxH);
+    ctx.strokeRect(fx + (fw - smW) / 2, fy, smW, smH);
+  }
+}
+
+function fitName(ctx, name, maxW) {
+  let size = 42;
+  ctx.font = `600 ${size}px "Barlow", sans-serif`;
+  while (ctx.measureText(name).width > maxW && size > 26) {
+    size -= 2;
+    ctx.font = `600 ${size}px "Barlow", sans-serif`;
+  }
+  let txt = name;
+  while (ctx.measureText(txt).width > maxW && txt.length > 3) txt = txt.slice(0, -2) + '…';
+  return txt;
+}
+
+function drawPlayer(ctx, cx, cy, name, color, maxW) {
+  ctx.beginPath(); ctx.arc(cx, cy, 34, 0, Math.PI * 2);
+  ctx.fillStyle = color.hex; ctx.fill();
+  ctx.lineWidth = 6; ctx.strokeStyle = color.name === 'Blanco' ? '#1a1a1a' : '#ffffff'; ctx.stroke();
+  const txt = fitName(ctx, name, maxW);
   ctx.textAlign = 'center';
-  ctx.fillStyle = '#666'; ctx.font = '500 30px "Barlow", sans-serif';
-  ctx.fillText('Sorteado con El Sorteo CDV', W / 2, H - 76);
-  ctx.fillStyle = '#1a8a5a'; ctx.font = '500 28px "Barlow", sans-serif';
-  ctx.fillText(SHARE_URL, W / 2, H - 36);
+  ctx.lineWidth = 8; ctx.lineJoin = 'round'; ctx.strokeStyle = '#0b3d1a';
+  ctx.strokeText(txt, cx, cy + 82);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(txt, cx, cy + 82);
+}
 
-  return cv;
+// Ubica un equipo: goalY = línea de su arco; dir = 1 hacia abajo, -1 hacia arriba
+function drawTeamOnField(ctx, tf, color, x, w, goalY, dir, halfH) {
+  const FR = { goal: 0.08, DEF: 0.32, MED: 0.57, DEL: 0.82 };
+  const yAt = f => goalY + dir * f * halfH - 20;
+  if (tf.goal) drawPlayer(ctx, x + w / 2, yAt(FR.goal) + (dir > 0 ? 10 : -10), tf.goal.name, color, w * 0.4);
+  POS.forEach(ps => {
+    const line = tf.lines[ps], n = line.length;
+    line.forEach((m, i) => {
+      const cx = x + (w * (i + 1)) / (n + 1);
+      drawPlayer(ctx, cx, yAt(FR[ps]), m.name, color, w / (n + 0.4) - 20);
+    });
+  });
+}
+
+function drawTeamLabel(ctx, color, x, y) {
+  ctx.beginPath(); ctx.arc(x + 16, y - 14, 15, 0, Math.PI * 2);
+  ctx.fillStyle = color.hex; ctx.fill();
+  ctx.lineWidth = 4; ctx.strokeStyle = color.name === 'Blanco' ? '#1a1a1a' : '#ffffff'; ctx.stroke();
+  ctx.textAlign = 'left'; ctx.font = '700 40px "Barlow Condensed", sans-serif';
+  ctx.lineWidth = 7; ctx.strokeStyle = '#0b3d1a'; ctx.strokeText(color.name.toUpperCase(), x + 42, y);
+  ctx.fillStyle = '#ffffff'; ctx.fillText(color.name.toUpperCase(), x + 42, y);
+}
+
+// Imágenes de cancha: equipos 1 vs 2 en una; el 3 (y 4) en otra
+async function drawPitchImages(withLogo) {
+  await loadFonts();
+  const logo = withLogo ? await loadLogo() : null;
+  const form = formations[formIdx];
+  const out = [];
+  const x = IMG_PAD, w = IMG_W - IMG_PAD * 2;
+  for (let i = 0; i < result.teams.length; i += 2) {
+    const a = i, b = i + 1 < result.teams.length ? i + 1 : null;
+    if (b !== null) {
+      const fh = 1440, half = fh / 2;
+      const ctx = newCanvas(fh + 20, logo);
+      const y = TOP_H + 10;
+      roundRect(ctx, x, y, w, fh, 20); ctx.save(); ctx.clip();
+      drawField(ctx, x, y, w, fh, false); ctx.restore();
+      // Equipo A arriba (arco arriba), equipo B abajo
+      drawTeamOnField(ctx, form[a], result.teams[a].color, x + 24, w - 48, y + 24, 1, half - 24);
+      drawTeamOnField(ctx, form[b], result.teams[b].color, x + 24, w - 48, y + fh - 24, -1, half - 24);
+      drawTeamLabel(ctx, result.teams[a].color, x + 44, y + half - 22);
+      drawTeamLabel(ctx, result.teams[b].color, x + 44, y + half + 58);
+      out.push(ctx.canvas);
+    } else {
+      const fh = 780;
+      const ctx = newCanvas(fh + 20, logo);
+      const y = TOP_H + 10;
+      roundRect(ctx, x, y, w, fh, 20); ctx.save(); ctx.clip();
+      drawField(ctx, x, y, w, fh, true); ctx.restore();
+      drawTeamOnField(ctx, form[a], result.teams[a].color, x + 24, w - 48, y + fh - 24, -1, fh - 70);
+      drawTeamLabel(ctx, result.teams[a].color, x + 44, y + 74);
+      out.push(ctx.canvas);
+    }
+  }
+  return out;
 }
 
 function canvasToBlob(cv) {
@@ -740,32 +1111,37 @@ function canvasToBlob(cv) {
   });
 }
 
+// Si el logo bloquea la imagen (seguridad del navegador), se rehace sin logo
+async function safeCanvases(drawFn) {
+  let cvs = await drawFn(true);
+  try { cvs.forEach(c => c.toDataURL()); }
+  catch (e) { cvs = await drawFn(false); }
+  return cvs;
+}
+
 async function shareImage() {
   toast('Preparando imagen...');
-  let blob;
-  try { blob = await canvasToBlob(await drawImage(true)); }
-  catch (e) {
-    // Si el logo bloquea la imagen, se genera sin logo
-    try { blob = await canvasToBlob(await drawImage(false)); }
-    catch (e2) { toast('No pudimos crear la imagen. Usa "Copiar texto".'); return; }
-  }
-  const file = new File([blob], 'equipos-cdv.png', { type: 'image/png' });
+  let files;
+  try {
+    const cvs = await safeCanvases(result.usePos && view === 'cancha' ? drawPitchImages : drawListImage);
+    const blobs = await Promise.all(cvs.map(canvasToBlob));
+    files = blobs.map((b, i) => new File([b], blobs.length > 1 ? `equipos-cdv-${i + 1}.png` : 'equipos-cdv.png', { type: 'image/png' }));
+  } catch (e) { toast('No pudimos crear la imagen. Usa "Copiar texto".'); return; }
 
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    try {
-      await navigator.share({ files: [file], title: 'Equipos CDV' });
-      return;
-    } catch (e) {
-      if (e && e.name === 'AbortError') return;   // la persona cerró el menú
-    }
+  if (navigator.canShare && navigator.canShare({ files })) {
+    try { await navigator.share({ files, title: 'Equipos CDV' }); return; }
+    catch (e) { if (e && e.name === 'AbortError') return; }
   }
-  // Respaldo: descargar la imagen
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'equipos-cdv.png';
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 4000);
-  toast('Imagen descargada. Envíala desde tu galería.');
+  files.forEach((f, i) => {
+    setTimeout(() => {
+      const url = URL.createObjectURL(f);
+      const a = document.createElement('a');
+      a.href = url; a.download = f.name;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+    }, i * 400);
+  });
+  toast(files.length > 1 ? 'Imágenes descargadas. Envíalas desde tu galería.' : 'Imagen descargada. Envíala desde tu galería.');
 }
 
 // ── MENÚ CDV ──────────────────────────────────────────────────
@@ -809,6 +1185,8 @@ async function shareImage() {
     }
     players = Array.isArray(s.players) ? s.players : [];
     if (Array.isArray(s.teamColors) && s.teamColors.length === 3) teamColors = s.teamColors;
+    if (['azar', 'nivel', 'pos', 'ambos'].includes(s.mode)) mode = s.mode;
+    players.forEach(p => { if (!p.pos) p.pos = ''; if (!p.lvl) p.lvl = 0; });
     payOn = !!s.payOn;
     priceChip = typeof s.priceChip === 'number' ? s.priceChip : null;
     priceOther = s.priceOther || '';
