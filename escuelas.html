@@ -97,7 +97,7 @@
   .resumen-mensual-total { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 700; color: var(--green-dark); text-align: right; }
   .share-img-btn { width: 100%; margin: 2px 0 14px; }
 
-  .week-group-box { }
+  .week-group-box { background: var(--green-light); border: 1px solid var(--green); border-radius: 10px; padding: 12px 14px; margin: 4px 0 10px; }
   .cal-grid-week { margin-bottom: 8px; }
 
   .empty-msg { color: var(--gray-text); font-size: 13px; padding: 14px 0; text-align: center; }
@@ -143,7 +143,15 @@
   .modal-delete { margin-top: 14px; text-align: center; }
   .modal-delete button { background: none; border: none; color: var(--red); font-size: 13px; cursor: pointer; text-decoration: underline; font-family: 'Barlow', sans-serif; }
 
-  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--dark); color: #fff; padding: 10px 18px; border-radius: 30px; font-size: 13px; font-weight: 600; z-index: 999; box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--dark); color: #fff; padding: 10px 18px; border-radius: 30px; font-size: 13px; font-weight: 600; z-index: 999; box-shadow: 0 4px 16px rgba(0,0,0,0.3); max-width: 90vw; text-align: center; }
+  .toast.error { background: #b91c1c; }
+
+  .historial-version-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--gray-mid); font-size: 12.5px; }
+  .historial-version-row:last-child { border-bottom: none; }
+  .historial-version-info { line-height: 1.4; }
+  .historial-version-fecha { font-weight: 700; color: var(--gray-text); display: block; }
+  .historial-version-resumen { color: var(--gray-text); }
+  .historial-version-del { background: none; border: none; color: var(--red); font-size: 15px; cursor: pointer; padding: 2px 4px; flex-shrink: 0; }
 
   @media (max-width: 480px) {
     .edit-block-row { grid-template-columns: 1fr 1fr; }
@@ -205,6 +213,10 @@
       <div class="bloques-editor-title">Horario habitual</div>
       <div id="f-bloques"></div>
       <button class="add-block-link" onclick="addFormBloque()">+ Agregar bloque de horario</button>
+      <div id="historial-versiones-wrap" style="display:none">
+        <div class="bloques-editor-title" style="margin-top:14px">Historial de cambios de horario</div>
+        <div id="historial-versiones"></div>
+      </div>
       <div class="modal-error" id="modal-error"></div>
       <div class="modal-actions">
         <button class="btn-small primary" onclick="guardarEscuela()">Guardar</button>
@@ -352,12 +364,15 @@ function ensureExcluidasObj(fact) {
   return fact.excluidas;
 }
 
-function showToast(msg) {
+function showToast(msg, isError) {
   const el = document.createElement('div');
-  el.className = 'toast';
+  el.className = isError ? 'toast error' : 'toast';
   el.textContent = msg;
   document.body.appendChild(el);
-  setTimeout(() => el.remove(), 1800);
+  setTimeout(() => el.remove(), isError ? 3400 : 1800);
+}
+function showErrorToast(msg) {
+  showToast('⚠️ ' + msg, true);
 }
 
 // ── PIN ───────────────────────────────────────────────────────
@@ -381,6 +396,23 @@ async function fetchJSON(url) {
     throw new Error(`HTTP ${res.status} ${res.statusText}${body ? ' — ' + body : ''}`);
   }
   return res.json();
+}
+
+// Igual que fetch(), pero revisa que la respuesta haya sido exitosa — si
+// Firebase devuelve un error (o la conexión se cae) esto lanza una excepción
+// en vez de dejar que el código siga como si se hubiera guardado bien.
+async function writeFetch(url, options) {
+  let res;
+  try {
+    res = await fetch(url, options);
+  } catch (e) {
+    throw new Error('Sin conexión a internet.');
+  }
+  if (!res.ok) {
+    const body = await res.text().catch(()=> '');
+    throw new Error(`HTTP ${res.status} ${res.statusText}${body ? ' — ' + body : ''}`);
+  }
+  return res;
 }
 
 async function loadConfig() {
@@ -440,31 +472,31 @@ async function seedInitialData() {
 }
 
 async function saveExcluidas(monthKey, schoolId, arr) {
-  await fetch(`${DB_BASE}/escuelas/facturacion/${monthKey}/${schoolId}/excluidas.json`, { method: 'PUT', body: JSON.stringify(arr) });
+  await writeFetch(`${DB_BASE}/escuelas/facturacion/${monthKey}/${schoolId}/excluidas.json`, { method: 'PUT', body: JSON.stringify(arr) });
 }
 async function saveEdicion(monthKey, schoolId, dateStr, blocks) {
-  await fetch(`${DB_BASE}/escuelas/facturacion/${monthKey}/${schoolId}/ediciones/${dateStr}.json`, { method: 'PUT', body: JSON.stringify(blocks) });
+  await writeFetch(`${DB_BASE}/escuelas/facturacion/${monthKey}/${schoolId}/ediciones/${dateStr}.json`, { method: 'PUT', body: JSON.stringify(blocks) });
 }
 async function deleteEdicion(monthKey, schoolId, dateStr) {
-  await fetch(`${DB_BASE}/escuelas/facturacion/${monthKey}/${schoolId}/ediciones/${dateStr}.json`, { method: 'DELETE' });
+  await writeFetch(`${DB_BASE}/escuelas/facturacion/${monthKey}/${schoolId}/ediciones/${dateStr}.json`, { method: 'DELETE' });
 }
 async function saveExtra(monthKey, schoolId, dateStr, blocks) {
-  await fetch(`${DB_BASE}/escuelas/facturacion/${monthKey}/${schoolId}/extras/${dateStr}.json`, { method: 'PUT', body: JSON.stringify(blocks) });
+  await writeFetch(`${DB_BASE}/escuelas/facturacion/${monthKey}/${schoolId}/extras/${dateStr}.json`, { method: 'PUT', body: JSON.stringify(blocks) });
 }
 async function deleteExtra(monthKey, schoolId, dateStr) {
-  await fetch(`${DB_BASE}/escuelas/facturacion/${monthKey}/${schoolId}/extras/${dateStr}.json`, { method: 'DELETE' });
+  await writeFetch(`${DB_BASE}/escuelas/facturacion/${monthKey}/${schoolId}/extras/${dateStr}.json`, { method: 'DELETE' });
 }
 async function saveEscuelaConfig(id, data) {
-  await fetch(`${DB_BASE}/escuelas/config/${id}.json`, { method: 'PUT', body: JSON.stringify(data) });
+  await writeFetch(`${DB_BASE}/escuelas/config/${id}.json`, { method: 'PUT', body: JSON.stringify(data) });
 }
 async function deleteEscuelaConfig(id) {
-  await fetch(`${DB_BASE}/escuelas/config/${id}.json`, { method: 'DELETE' });
+  await writeFetch(`${DB_BASE}/escuelas/config/${id}.json`, { method: 'DELETE' });
 }
 async function toggleEscuelaActiva(id, activa) {
-  await fetch(`${DB_BASE}/escuelas/config/${id}.json`, { method: 'PATCH', body: JSON.stringify({activa}) });
+  await writeFetch(`${DB_BASE}/escuelas/config/${id}.json`, { method: 'PATCH', body: JSON.stringify({activa}) });
 }
 async function pushNuevaEscuela(data) {
-  const res = await fetch(`${DB_BASE}/escuelas/config.json`, { method: 'POST', body: JSON.stringify(data) });
+  const res = await writeFetch(`${DB_BASE}/escuelas/config.json`, { method: 'POST', body: JSON.stringify(data) });
   const j = await res.json();
   return j.name;
 }
@@ -846,18 +878,32 @@ function renderEditPanel() {
 async function toggleExcluir(schoolId, dateStr) {
   const fact = state.fact[state.activeMonth][schoolId] || (state.fact[state.activeMonth][schoolId] = {});
   const map = ensureExcluidasObj(fact);
-  if (dateStr in map) delete map[dateStr]; else map[dateStr] = true;
+  const estabaExcluida = dateStr in map;
+  if (estabaExcluida) delete map[dateStr]; else map[dateStr] = true;
   render();
-  await saveExcluidas(state.activeMonth, schoolId, map);
+  try {
+    await saveExcluidas(state.activeMonth, schoolId, map);
+  } catch (err) {
+    if (estabaExcluida) map[dateStr] = true; else delete map[dateStr];
+    render();
+    showErrorToast('No se pudo guardar. Revisa tu conexión e intenta de nuevo.');
+  }
 }
 
 async function setMotivo(schoolId, dateStr, motivo) {
   const fact = state.fact[state.activeMonth][schoolId] || (state.fact[state.activeMonth][schoolId] = {});
   const map = ensureExcluidasObj(fact);
   if (!(dateStr in map)) return; // la fecha ya no está excluida
+  const anterior = map[dateStr];
   map[dateStr] = motivo || true;
   render();
-  await saveExcluidas(state.activeMonth, schoolId, map);
+  try {
+    await saveExcluidas(state.activeMonth, schoolId, map);
+  } catch (err) {
+    map[dateStr] = anterior;
+    render();
+    showErrorToast('No se pudo guardar el motivo. Revisa tu conexión e intenta de nuevo.');
+  }
 }
 
 function editarFecha(schoolId, dateStr, isExtra) {
@@ -900,12 +946,20 @@ async function guardarEdicionFecha() {
     $('edit-error').textContent = 'La fecha debe estar dentro del mes seleccionado.'; return;
   }
   const fact = state.fact[state.activeMonth][e.schoolId] || (state.fact[state.activeMonth][e.schoolId] = {});
-  if (e.isExtra) {
-    (fact.extras || (fact.extras = {}))[e.date] = e.blocks;
-    await saveExtra(state.activeMonth, e.schoolId, e.date, e.blocks);
-  } else {
-    (fact.ediciones || (fact.ediciones = {}))[e.date] = e.blocks;
-    await saveEdicion(state.activeMonth, e.schoolId, e.date, e.blocks);
+  const anteriorExtra = fact.extras && fact.extras[e.date];
+  const anteriorEdicion = fact.ediciones && fact.ediciones[e.date];
+  if (e.isExtra) (fact.extras || (fact.extras = {}))[e.date] = e.blocks;
+  else (fact.ediciones || (fact.ediciones = {}))[e.date] = e.blocks;
+  render();
+  try {
+    if (e.isExtra) await saveExtra(state.activeMonth, e.schoolId, e.date, e.blocks);
+    else await saveEdicion(state.activeMonth, e.schoolId, e.date, e.blocks);
+  } catch (err) {
+    if (e.isExtra) { if (anteriorExtra) fact.extras[e.date] = anteriorExtra; else delete fact.extras[e.date]; }
+    else { if (anteriorEdicion) fact.ediciones[e.date] = anteriorEdicion; else delete fact.ediciones[e.date]; }
+    render();
+    showErrorToast('No se pudo guardar. Revisa tu conexión e intenta de nuevo.');
+    return;
   }
   state.editing = null;
   render();
@@ -914,17 +968,31 @@ async function guardarEdicionFecha() {
 
 async function restablecerFecha(schoolId, dateStr) {
   const fact = state.fact[state.activeMonth][schoolId];
+  const anterior = fact && fact.ediciones && fact.ediciones[dateStr];
   if (fact && fact.ediciones) delete fact.ediciones[dateStr];
   render();
-  await deleteEdicion(state.activeMonth, schoolId, dateStr);
+  try {
+    await deleteEdicion(state.activeMonth, schoolId, dateStr);
+  } catch (err) {
+    if (anterior) (fact.ediciones || (fact.ediciones = {}))[dateStr] = anterior;
+    render();
+    showErrorToast('No se pudo restablecer. Revisa tu conexión e intenta de nuevo.');
+  }
 }
 
 async function eliminarExtra(schoolId, dateStr) {
   const fact = state.fact[state.activeMonth][schoolId];
+  const anterior = fact && fact.extras && fact.extras[dateStr];
   if (fact && fact.extras) delete fact.extras[dateStr];
   if (state.editing && state.editing.schoolId===schoolId && state.editing.date===dateStr) state.editing = null;
   render();
-  await deleteExtra(state.activeMonth, schoolId, dateStr);
+  try {
+    await deleteExtra(state.activeMonth, schoolId, dateStr);
+  } catch (err) {
+    if (anterior) (fact.extras || (fact.extras = {}))[dateStr] = anterior;
+    render();
+    showErrorToast('No se pudo eliminar. Revisa tu conexión e intenta de nuevo.');
+  }
 }
 
 // Horario habitual de la escuela para usar como punto de partida al agregar
@@ -952,7 +1020,13 @@ function agregarFechaExtra(schoolId) {
 async function toggleActiva(id, activa) {
   state.schools[id].activa = activa;
   render();
-  await toggleEscuelaActiva(id, activa);
+  try {
+    await toggleEscuelaActiva(id, activa);
+  } catch (err) {
+    state.schools[id].activa = !activa;
+    render();
+    showErrorToast('No se pudo guardar. Revisa tu conexión e intenta de nuevo.');
+  }
 }
 
 // ── MODAL AGREGAR / EDITAR ESCUELA ─────────────────────────────
@@ -972,7 +1046,78 @@ function abrirModalEscuela(id) {
   $('modal-form-fields').style.display = 'block';
   $('modal-vigencia-step').style.display = 'none';
   renderFormBloques();
+  renderHistorialVersiones();
   $('modal-escuela').classList.add('open');
+}
+
+// Lista de versiones guardadas del horario de la escuela (desde cuándo rige
+// cada una), con opción de eliminar una versión mal guardada. Solo se
+// muestra si hay más de una versión — si hay una sola no hay nada que
+// gestionar.
+function renderHistorialVersiones() {
+  const wrap = $('historial-versiones-wrap');
+  const id = state.editingSchoolId;
+  if (!id) { wrap.style.display = 'none'; return; }
+  const horarios = getHorarios(state.schools[id]);
+  if (horarios.length <= 1) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  $('historial-versiones').innerHTML = horarios.map((h, i) => `
+    <div class="historial-version-row">
+      <div class="historial-version-info">
+        <span class="historial-version-fecha">Desde ${formatFechaCorta(h.vigenteDesde)}</span>
+        <span class="historial-version-resumen">${horarioVersionTexto(h.bloques)}</span>
+      </div>
+      <button class="historial-version-del" onclick="eliminarVersionHistorial(${i})" title="Eliminar esta versión">🗑</button>
+    </div>`).join('');
+}
+
+function formatFechaCorta(ds) {
+  const [y,m,d] = ds.split('-');
+  return `${d}-${m}-${y}`;
+}
+
+// Resumen corto de un conjunto de bloques (para la lista de historial):
+// fusiona bloques consecutivos del mismo día y cancha, igual que
+// horarioHabitualTexto, pero sobre un solo arreglo de bloques ya dado.
+function horarioVersionTexto(bloques) {
+  if (!bloques || !bloques.length) return 'Sin bloques';
+  const merged = [];
+  const sorted = [...bloques].sort((a,b) => a.dia - b.dia || a.horaInicio.localeCompare(b.horaInicio));
+  sorted.forEach(b => {
+    const last = merged[merged.length - 1];
+    if (last && last.dia === b.dia && last.cancha === b.cancha && last.horaFin === b.horaInicio) {
+      last.horaFin = b.horaFin;
+    } else {
+      merged.push({ dia: b.dia, cancha: b.cancha, horaInicio: b.horaInicio, horaFin: b.horaFin });
+    }
+  });
+  return merged.map(c => `${DIAS[c.dia].toLowerCase()} ${c.horaInicio}-${c.horaFin} ${c.cancha.replace('Cancha ','C')}`).join('; ');
+}
+
+async function eliminarVersionHistorial(i) {
+  const id = state.editingSchoolId;
+  const horarios = getHorarios(state.schools[id]);
+  if (horarios.length <= 1) return; // siempre debe quedar al menos una versión
+  if (!confirm(`¿Eliminar la versión de horario vigente desde ${formatFechaCorta(horarios[i].vigenteDesde)}? Esto no se puede deshacer.`)) return;
+  const anteriorData = state.schools[id];
+  const nuevosHorarios = horarios.slice(0, i).concat(horarios.slice(i + 1));
+  const data = { ...state.schools[id], horarios: nuevosHorarios };
+  state.schools[id] = data;
+  state.formBloques = JSON.parse(JSON.stringify(resolveBloques(data, dateKey(new Date()))));
+  renderFormBloques();
+  renderHistorialVersiones();
+  render();
+  try {
+    await saveEscuelaConfig(id, data);
+    showToast('Versión eliminada ✓');
+  } catch (err) {
+    state.schools[id] = anteriorData;
+    state.formBloques = JSON.parse(JSON.stringify(resolveBloques(anteriorData, dateKey(new Date()))));
+    renderFormBloques();
+    renderHistorialVersiones();
+    render();
+    showErrorToast('No se pudo eliminar la versión. Revisa tu conexión e intenta de nuevo.');
+  }
 }
 
 function cerrarModalEscuela() {
@@ -1031,12 +1176,18 @@ async function guardarEscuela() {
     const tempId = 'tmp-' + Date.now();
     state.schools[tempId] = data;
     render();
-    const realId = await pushNuevaEscuela(data);
-    delete state.schools[tempId];
-    state.schools[realId] = data;
-    cerrarModalEscuela();
-    render();
-    showToast('Escuela guardada ✓');
+    try {
+      const realId = await pushNuevaEscuela(data);
+      delete state.schools[tempId];
+      state.schools[realId] = data;
+      cerrarModalEscuela();
+      render();
+      showToast('Escuela guardada ✓');
+    } catch (err) {
+      delete state.schools[tempId];
+      render();
+      $('modal-error').textContent = 'No se pudo guardar. Revisa tu conexión e intenta de nuevo.';
+    }
     return;
   }
 
@@ -1047,12 +1198,18 @@ async function guardarEscuela() {
   const cambioHorario = JSON.stringify(bloquesActuales) !== JSON.stringify(state.formBloques);
 
   if (!cambioHorario) {
-    const data = { ...state.schools[state.editingSchoolId], ...datosBase };
+    const anteriorData = state.schools[state.editingSchoolId];
+    const data = { ...anteriorData, ...datosBase };
     state.schools[state.editingSchoolId] = data;
-    await saveEscuelaConfig(state.editingSchoolId, data);
-    cerrarModalEscuela();
-    render();
-    showToast('Escuela guardada ✓');
+    try {
+      await saveEscuelaConfig(state.editingSchoolId, data);
+      cerrarModalEscuela();
+      render();
+      showToast('Escuela guardada ✓');
+    } catch (err) {
+      state.schools[state.editingSchoolId] = anteriorData;
+      $('modal-error').textContent = 'No se pudo guardar. Revisa tu conexión e intenta de nuevo.';
+    }
     return;
   }
 
@@ -1073,31 +1230,80 @@ function cancelarVigencia() {
 async function confirmarVigencia() {
   const fecha = $('modal-vigencia-fecha').value;
   if (!fecha) { $('modal-vigencia-error').textContent = 'Elige una fecha.'; return; }
+  const id = state.editingSchoolId;
   const datosBase = state.pendingSave;
-  const existentes = getHorarios(state.schools[state.editingSchoolId]);
+  const anteriorData = state.schools[id];
+  const existentes = getHorarios(anteriorData);
   let horarios;
   if (existentes.length && existentes[existentes.length - 1].vigenteDesde === fecha) {
     horarios = existentes.slice(0, -1).concat([{ vigenteDesde: fecha, bloques: state.formBloques }]);
   } else {
     horarios = existentes.concat([{ vigenteDesde: fecha, bloques: state.formBloques }]);
   }
-  const data = { ...state.schools[state.editingSchoolId], ...datosBase, horarios };
-  state.schools[state.editingSchoolId] = data;
-  await saveEscuelaConfig(state.editingSchoolId, data);
+  const data = { ...anteriorData, ...datosBase, horarios };
+  state.schools[id] = data;
+  try {
+    await saveEscuelaConfig(id, data);
+  } catch (err) {
+    state.schools[id] = anteriorData;
+    $('modal-vigencia-error').textContent = 'No se pudo guardar. Revisa tu conexión e intenta de nuevo.';
+    return;
+  }
+  // El horario base cambió: si quedaron ediciones puntuales de fechas que
+  // ahora coinciden exactamente con el nuevo horario, ya no tiene sentido
+  // mantenerlas aparte (fue justamente para esto que se cambió el horario).
+  await limpiarEdicionesRedundantes(id, fecha);
   state.pendingSave = null;
   cerrarModalEscuela();
   render();
   showToast('Escuela guardada ✓');
 }
 
+// Tras guardar un nuevo horario base vigente desde `fecha`, revisa las
+// ediciones puntuales guardadas (de los meses ya cargados) para esa escuela
+// en fechas >= `fecha`: si el contenido de la edición ya coincide con lo que
+// generaría el nuevo horario base, la edición quedó redundante y se borra
+// (así deja de "tapar" el patrón habitual en el resumen).
+function normalizarBloques(bloques) {
+  return (bloques || []).map(b => ({ cancha: b.cancha, horaInicio: b.horaInicio, horaFin: b.horaFin, tarifaHora: Number(b.tarifaHora) }))
+    .sort((a,b) => a.cancha.localeCompare(b.cancha) || a.horaInicio.localeCompare(b.horaInicio));
+}
+
+async function limpiarEdicionesRedundantes(schoolId, fecha) {
+  const school = state.schools[schoolId];
+  for (const mk of state.months) {
+    if (mk < fecha.slice(0,7)) continue;
+    const fact = state.fact[mk] && state.fact[mk][schoolId];
+    if (!fact || !fact.ediciones) continue;
+    for (const ds of Object.keys(fact.ediciones)) {
+      if (ds < fecha) continue;
+      const dow = new Date(ds + 'T00:00:00').getDay();
+      const vigentes = resolveBloques(school, ds).filter(b => b.dia === dow);
+      if (!vigentes.length) continue;
+      const edited = fact.ediciones[ds];
+      if (JSON.stringify(normalizarBloques(edited)) === JSON.stringify(normalizarBloques(vigentes))) {
+        delete fact.ediciones[ds];
+        try { await deleteEdicion(mk, schoolId, ds); } catch (err) { /* no crítico: se puede restablecer manualmente */ }
+      }
+    }
+  }
+}
+
 async function eliminarEscuela() {
   if (!state.editingSchoolId) return;
   if (!confirm('¿Eliminar esta escuela? Se perderá su configuración (el historial de facturación ya guardado no se borra).')) return;
   const id = state.editingSchoolId;
+  const anteriorData = state.schools[id];
   delete state.schools[id];
   cerrarModalEscuela();
   render();
-  await deleteEscuelaConfig(id);
+  try {
+    await deleteEscuelaConfig(id);
+  } catch (err) {
+    state.schools[id] = anteriorData;
+    render();
+    showErrorToast('No se pudo eliminar. Revisa tu conexión e intenta de nuevo.');
+  }
 }
 
 // ── INIT ──────────────────────────────────────────────────────
