@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Por anotar – CDV</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #2dbe82; --green-dark: #1a8a5a; --green-light: #e8faf3;
+    --gold: #f5a623; --amber-bg: #fff7e6; --amber-text: #7a4a00;
+    --red: #e05555; --red-bg: #fdeeee;
+    --gray-bg: #f5f5f3; --gray-mid: #e0deda; --gray-text: #666; --dark: #1a1a1a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Barlow', sans-serif; background: #f0f0ee; color: var(--dark); min-height: 100vh; font-size: 15px; }
+
+  .header { background: #fff; border-bottom: 2px solid var(--green); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; gap: 10px; position: sticky; top: 0; z-index: 50; }
+  .header img { height: 40px; object-fit: contain; }
+  .header-title { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; color: var(--green-dark); text-transform: uppercase; letter-spacing: 0.04em; }
+  .icon-btn { background: #fff; border: 1px solid var(--gray-mid); border-radius: 8px; padding: 7px 11px; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; color: var(--dark); }
+  .icon-btn:hover { background: var(--gray-bg); }
+
+  .main { max-width: 640px; margin: 0 auto; padding: 16px 16px 60px; }
+
+  /* PIN */
+  .pin-wrap { max-width: 320px; margin: 60px auto 0; background: #fff; border: 1px solid var(--gray-mid); border-radius: 14px; padding: 26px 22px; text-align: center; }
+  .pin-wrap h2 { font-size: 19px; margin-bottom: 6px; }
+  .pin-wrap p { font-size: 14px; color: var(--gray-text); margin-bottom: 18px; }
+  .pin-input { width: 100%; font-size: 28px; letter-spacing: 0.4em; text-align: center; padding: 10px; border: 2px solid var(--gray-mid); border-radius: 10px; font-family: inherit; }
+  .pin-input:focus { outline: none; border-color: var(--green); }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: none; border-radius: 9px; padding: 10px 14px; font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer; transition: filter 0.15s; }
+  .btn:hover { filter: brightness(0.95); }
+  .btn:disabled { opacity: 0.55; cursor: default; filter: none; }
+  .btn-primary { background: var(--green); color: #fff; }
+  .btn-ghost { background: #fff; color: var(--dark); border: 1px solid var(--gray-mid); }
+  .btn-amber { background: var(--gold); color: #fff; }
+  .btn-block { width: 100%; padding: 13px; font-size: 16px; margin-top: 14px; }
+  .error { color: var(--red); font-size: 13px; font-weight: 600; margin-top: 10px; min-height: 18px; }
+
+  /* RESUMEN */
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+  .stat { background: #fff; border: 1px solid var(--gray-mid); border-radius: 12px; padding: 12px 14px; }
+  .stat-num { font-family: 'Barlow Condensed', sans-serif; font-size: 30px; font-weight: 700; line-height: 1; }
+  .stat-label { font-size: 13px; color: var(--gray-text); margin-top: 4px; }
+  .stat.alert .stat-num { color: #b45309; }
+  .updated { font-size: 12px; color: var(--gray-text); margin: -8px 0 14px; }
+
+  .section-title { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin: 22px 0 10px; display: flex; align-items: center; gap: 8px; }
+  .count { background: var(--dark); color: #fff; font-family: 'Barlow', sans-serif; font-size: 12px; border-radius: 20px; padding: 1px 9px; letter-spacing: 0; }
+  .empty { background: #fff; border: 1px dashed var(--gray-mid); border-radius: 12px; padding: 18px; text-align: center; color: var(--gray-text); font-size: 14px; }
+
+  /* TARJETAS POR HORARIO */
+  .slot-card { background: #fff; border: 1px solid var(--gray-mid); border-radius: 12px; margin-bottom: 12px; overflow: hidden; }
+  .slot-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; padding: 10px 14px; background: var(--gray-bg); border-bottom: 1px solid var(--gray-mid); }
+  .slot-cancha { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; }
+  .slot-when { font-size: 15px; font-weight: 600; }
+  .slot-warn { width: 100%; font-size: 13px; color: #9b2c2c; background: var(--red-bg); border-radius: 6px; padding: 5px 8px; margin-top: 4px; }
+
+  .req { padding: 12px 14px; border-bottom: 1px solid #f0f0ee; }
+  .req:last-child { border-bottom: none; }
+  .req-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+  .code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 15px; font-weight: 700; background: var(--dark); color: #fff; border-radius: 6px; padding: 2px 8px; }
+  .pos { font-size: 12px; font-weight: 700; border-radius: 20px; padding: 2px 9px; }
+  .pos.p1 { background: var(--green-light); color: var(--green-dark); }
+  .pos.pn { background: var(--amber-bg); color: var(--amber-text); }
+  .tag-guardado { font-size: 12px; font-weight: 700; border-radius: 20px; padding: 2px 9px; background: #eef2ff; color: #3730a3; }
+  .wait { font-size: 13px; color: var(--gray-text); margin-left: auto; }
+  .wait.late { color: #b45309; font-weight: 700; }
+  .req-row { display: flex; gap: 8px; align-items: center; }
+  .name-input { flex: 1; min-width: 0; padding: 9px 10px; border: 1.5px solid var(--gray-mid); border-radius: 8px; font-family: inherit; font-size: 15px; }
+  .name-input:focus { outline: none; border-color: var(--green); }
+
+  .notify-card { background: #fff; border: 1px solid #f3c6c6; border-left: 4px solid var(--red); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .notify-info { flex: 1; min-width: 180px; font-size: 14px; line-height: 1.5; }
+  .notify-info .who { font-weight: 700; }
+
+  /* GUARDAR CUPO */
+  .form-card { background: #fff; border: 1px solid var(--gray-mid); border-radius: 12px; padding: 14px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; color: #333; }
+  .field select, .field input { width: 100%; padding: 10px; border: 1.5px solid var(--gray-mid); border-radius: 8px; font-family: inherit; font-size: 15px; background: #fff; }
+  .field.full { grid-column: 1 / -1; }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; border: 1.5px solid var(--gray-mid); border-radius: 8px; overflow: hidden; }
+  .seg button { border: none; background: #fff; padding: 10px 6px; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; color: var(--dark); }
+  .seg button.on { background: var(--green); color: #fff; }
+  .seg button:disabled { color: #bbb; cursor: default; background: var(--gray-bg); }
+  .form-note { font-size: 12px; color: var(--gray-text); margin-top: 8px; }
+
+  .toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%) translateY(120px); background: var(--dark); color: #fff; padding: 12px 18px; border-radius: 10px; font-size: 14px; font-weight: 600; max-width: calc(100vw - 32px); box-shadow: 0 6px 20px rgba(0,0,0,0.25); transition: transform 0.25s; z-index: 100; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.warn { background: #b45309; }
+  .toast.bad { background: #b91c1c; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <img src="https://cdvvillaalemana-cdv.github.io/vaccarezza/Logo_horizontal.png" alt="CDV">
+  <div class="header-title">Por anotar</div>
+  <button class="icon-btn hidden" id="btn-refresh" onclick="cargar(true)" aria-label="Actualizar">↻</button>
+</div>
+
+<div class="main">
+
+  <!-- PIN -->
+  <div class="pin-wrap" id="pin-view">
+    <h2>🔒 Acceso privado</h2>
+    <p>Ingresa el PIN para ver las solicitudes.</p>
+    <input class="pin-input" id="pin" type="password" inputmode="numeric" maxlength="8" autocomplete="off">
+    <button class="btn btn-primary btn-block" id="pin-btn" onclick="entrar()">Entrar</button>
+    <div class="error" id="pin-error"></div>
+  </div>
+
+  <!-- APP -->
+  <div id="app-view" class="hidden">
+    <div class="stats">
+      <div class="stat" id="stat-pend"><div class="stat-num" id="n-pend">–</div><div class="stat-label">Solicitudes por anotar</div></div>
+      <div class="stat" id="stat-avisar"><div class="stat-num" id="n-avisar">–</div><div class="stat-label">Por avisar (cupo tomado)</div></div>
+    </div>
+    <div class="updated" id="updated"></div>
+
+    <div id="avisar-zona"></div>
+
+    <div class="section-title">📝 Por anotar <span class="count" id="c-pend">0</span></div>
+    <div id="pend-zona"></div>
+
+    <div class="section-title">📌 Guardar cupo</div>
+    <div class="form-card">
+      <div class="form-grid">
+        <div class="field">
+          <label for="g-dia">Día</label>
+          <select id="g-dia" onchange="llenarHoras()"></select>
+        </div>
+        <div class="field">
+          <label for="g-hora">Hora</label>
+          <select id="g-hora" onchange="pintarCanchas()"></select>
+        </div>
+        <div class="field full">
+          <label>Cancha</label>
+          <div class="seg" id="g-cancha">
+            <button type="button" data-c="1" onclick="elegirCancha(1)">1 (Muro)</button>
+            <button type="button" data-c="2" onclick="elegirCancha(2)">2 (Estacionamiento)</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="g-min">Minutos</label>
+          <input id="g-min" type="number" inputmode="numeric" min="1" max="1440" placeholder="Ej: 35">
+        </div>
+        <div class="field">
+          <label for="g-nombre">Nombre (opcional)</label>
+          <input id="g-nombre" type="text" maxlength="60" placeholder="Ej: Equipo Los Toros">
+        </div>
+      </div>
+      <button class="btn btn-primary btn-block" id="g-btn" onclick="guardarCupo()">Guardar cupo</button>
+      <div class="form-note">El cupo se muestra como "Pendiente" en la página y se libera solo al cumplirse los minutos. Si ya hay solicitudes en ese horario, queda en la lista de espera.</div>
+    </div>
+
+    <div style="text-align:center;margin-top:26px;">
+      <button class="icon-btn" onclick="salir()">Cerrar sesión</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIGURACIÓN ─────────────────────────────────────────────
+// La misma URL de Apps Script que en index.html (termina en /exec)
+const API_URL = 'PEGAR_AQUI_URL_APPS_SCRIPT';
+const RECORDATORIO_MIN = 30;
+
+const DIAS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+const CANCHA = { 1: 'Cancha 1 · Muro', 2: 'Cancha 2 · Estacionamiento' };
+
+let PIN = '';
+let datos = { items: [], grilla: [], ahora: Date.now() };
+let canchaSel = null;
+let ocupado = false;
+
+// ── UTILIDADES ────────────────────────────────────────────────
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function dia(fecha) { const d = new Date(fecha + 'T00:00:00'); return `${DIAS[d.getDay()]} ${fecha.slice(8,10)}/${fecha.slice(5,7)}`; }
+function hace(ms) {
+  const m = Math.max(0, Math.round((Date.now() - ms) / 60000));
+  if (m < 1) return 'recién';
+  if (m < 60) return `hace ${m} min`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `hace ${h} h ${m % 60} min`;
+  return `hace ${Math.floor(h / 24)} d`;
+}
+function falta(ms) {
+  const m = Math.max(0, Math.round((ms - Date.now()) / 60000));
+  return m < 60 ? `vence en ${m} min` : `vence en ${Math.floor(m/60)} h ${m%60} min`;
+}
+let toastT;
+function toast(msg, tipo) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show' + (tipo ? ' ' + tipo : '');
+  clearTimeout(toastT); toastT = setTimeout(() => t.className = 'toast', 3800);
+}
+
+async function api(body) {
+  const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ ...body, pin: PIN }) });
+  return res.json();
+}
+
+// ── ACCESO ────────────────────────────────────────────────────
+async function entrar(pinGuardado) {
+  const err = document.getElementById('pin-error');
+  const pin = pinGuardado || document.getElementById('pin').value.trim();
+  if (!pin) { err.textContent = 'Ingresa el PIN.'; return; }
+  if (!/^https:\/\/script\.google\.com\//.test(API_URL)) { err.textContent = 'Falta configurar la URL de Apps Script en esta página.'; return; }
+  const btn = document.getElementById('pin-btn');
+  btn.disabled = true; btn.textContent = 'Verificando…'; err.textContent = '';
+  PIN = pin;
+  try {
+    const r = await api({ action: 'login' });
+    if (!r.ok) throw new Error('pin');
+    try { localStorage.setItem('cdv_pin', pin); } catch(e) {}
+    document.getElementById('pin-view').classList.add('hidden');
+    document.getElementById('app-view').classList.remove('hidden');
+    document.getElementById('btn-refresh').classList.remove('hidden');
+    await cargar();
+    setInterval(() => { if (document.visibilityState === 'visible') cargar(); }, 60000);
+  } catch(e) {
+    PIN = '';
+    try { localStorage.removeItem('cdv_pin'); } catch(_) {}
+    err.textContent = e.message === 'pin' ? 'PIN incorrecto.' : 'No se pudo conectar. Revisa tu internet.';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Entrar';
+  }
+}
+
+function salir() {
+  try { localStorage.removeItem('cdv_pin'); } catch(e) {}
+  location.reload();
+}
+
+document.getElementById('pin').addEventListener('keydown', e => { if (e.key === 'Enter') entrar(); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && PIN) cargar(); });
+
+// ── CARGA Y RENDER ────────────────────────────────────────────
+async function cargar(manual) {
+  if (ocupado) return;
+  try {
+    const r = await api({ action: 'listar' });
+    if (!r.ok) { if (r.motivo === 'pin') salir(); return; }
+    // Conservar lo que se esté escribiendo en los nombres
+    const borradores = {};
+    document.querySelectorAll('.name-input[data-cod]').forEach(i => { if (i.dataset.dirty) borradores[i.dataset.cod] = i.value; });
+    datos = r;
+    render(borradores);
+    const d = new Date();
+    document.getElementById('updated').textContent = `Actualizado a las ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
+    if (manual) toast('Actualizado');
+  } catch(e) {
+    if (manual) toast('No se pudo actualizar', 'bad');
+  }
+}
+
+function render(borradores = {}) {
+  const pend = datos.items.filter(x => x.estado === 'pendiente');
+  const avisar = datos.items.filter(x => x.estado === 'cupo_tomado');
+  const clientes = pend.filter(x => x.tipo === 'cliente').length;
+
+  document.getElementById('n-pend').textContent = clientes;
+  document.getElementById('n-avisar').textContent = avisar.length;
+  document.getElementById('c-pend').textContent = pend.length;
+  document.getElementById('stat-pend').classList.toggle('alert', clientes > 0);
+  document.getElementById('stat-avisar').classList.toggle('alert', avisar.length > 0);
+
+  // Por avisar
+  const az = document.getElementById('avisar-zona');
+  if (avisar.length) {
+    az.innerHTML = `<div class="section-title">📣 Avisar: cupo tomado <span class="count">${avisar.length}</span></div>` +
+      avisar.sort((a, b) => a.creado - b.creado).map(x => `
+        <div class="notify-card">
+          <span class="code">${esc(x.codigo)}</span>
+          <div class="notify-info">
+            <span class="who">${esc(x.nombre)}</span><br>
+            ${CANCHA[x.cancha]} · ${dia(x.fecha)} · ${esc(x.hora)}<br>
+            <span style="color:var(--gray-text);font-size:13px">El cupo se anotó para ${x.celda ? '<b>' + esc(x.celda) + '</b>' : 'otra persona'}. Escríbele para ofrecer otro horario.</span>
+          </div>
+          <button class="btn btn-ghost" onclick="accion('avisado','${esc(x.codigo)}',this)">✓ Ya avisé</button>
+        </div>`).join('');
+  } else az.innerHTML = '';
+
+  // Por anotar, agrupado por horario
+  const pz = document.getElementById('pend-zona');
+  if (!pend.length) {
+    pz.innerHTML = `<div class="empty">🎉 No hay solicitudes por anotar.</div>`;
+  } else {
+    const grupos = {};
+    pend.forEach(x => { const k = `${x.fecha}|${x.hora}|${x.cancha}`; (grupos[k] = grupos[k] || []).push(x); });
+    const claves = Object.keys(grupos).sort((a, b) => {
+      const ma = Math.min(...grupos[a].map(x => x.creado)), mb = Math.min(...grupos[b].map(x => x.creado));
+      return ma - mb;
+    });
+    pz.innerHTML = claves.map(k => {
+      const lista = grupos[k].sort((a, b) => a.posicion - b.posicion);
+      const g = lista[0];
+      const warn = g.celda ? `<div class="slot-warn">⚠️ En el Sheet esta celda ya dice "<b>${esc(g.celda)}</b>". Revisa antes de anotar.</div>` : '';
+      return `<div class="slot-card">
+        <div class="slot-head"><span class="slot-cancha">${CANCHA[g.cancha]}</span><span class="slot-when">${dia(g.fecha)} · ${esc(g.hora)}</span>${warn}</div>
+        ${lista.map(x => fila(x, borradores)).join('')}
+      </div>`;
+    }).join('');
+    pz.querySelectorAll('.name-input').forEach(i => i.addEventListener('input', () => { i.dataset.dirty = '1'; }));
+  }
+
+  llenarDias();
+}
+
+function fila(x, borradores) {
+  const guardado = x.tipo === 'guardado';
+  const pos = x.posicion === 1
+    ? `<span class="pos p1">1° en la fila</span>`
+    : `<span class="pos pn">En espera · ${x.posicion}°</span>`;
+  const late = !guardado && (Date.now() - x.creado) >= RECORDATORIO_MIN * 60000;
+  const tiempo = guardado
+    ? `<span class="wait">${x.vence ? falta(x.vence) : ''}</span>`
+    : `<span class="wait${late ? ' late' : ''}">${hace(x.creado)}</span>`;
+  const nombreBase = guardado && x.nombre === 'Cupo guardado' ? '' : x.nombre;
+  const valor = borradores[x.codigo] !== undefined ? borradores[x.codigo] : nombreBase;
+  return `<div class="req">
+    <div class="req-top">
+      <span class="code">${esc(x.codigo)}</span>
+      ${guardado ? '<span class="tag-guardado">📌 Cupo guardado</span>' : ''}
+      ${pos}
+      ${tiempo}
+    </div>
+    <div class="req-row">
+      <input class="name-input" data-cod="${esc(x.codigo)}" value="${esc(valor)}" placeholder="Nombre para anotar" maxlength="60" aria-label="Nombre para anotar">
+      <button class="btn btn-primary" onclick="anotar('${esc(x.codigo)}',this)">✍️ Anotar</button>
+      <button class="btn btn-ghost" onclick="liberar('${esc(x.codigo)}',this)" title="Liberar">Liberar</button>
+    </div>
+  </div>`;
+}
+
+// ── ACCIONES ──────────────────────────────────────────────────
+async function anotar(codigo, btn) {
+  const input = document.querySelector(`.name-input[data-cod="${CSS.escape(codigo)}"]`);
+  const nombre = (input ? input.value : '').trim();
+  if (nombre.length < 2) { toast('Escribe el nombre para anotar', 'warn'); if (input) input.focus(); return; }
+  btn.disabled = true; btn.textContent = 'Anotando…'; ocupado = true;
+  try {
+    const r = await api({ action: 'anotar', codigo, nombre });
+    ocupado = false;
+    if (r.ok) {
+      toast(r.avisar ? `Anotado ✓ · Hay ${r.avisar} en espera para avisar` : 'Anotado en el Sheet ✓', r.avisar ? 'warn' : '');
+    } else if (r.motivo === 'ocupada') {
+      toast(`No se anotó: la celda ya dice "${r.actual}". Revisa el Sheet.`, 'bad');
+    } else if (r.motivo === 'no_existe') {
+      toast('Esta solicitud ya no está pendiente', 'warn');
+    } else toast('No se pudo anotar', 'bad');
+  } catch(e) { ocupado = false; toast('Sin conexión. No se anotó.', 'bad'); }
+  await cargar();
+}
+
+async function liberar(codigo, btn) {
+  if (!confirm(`¿Liberar la solicitud ${codigo}? Úsalo si nunca llegó su WhatsApp o si ya le avisaste.`)) return;
+  await accion('liberar', codigo, btn);
+}
+
+async function accion(action, codigo, btn) {
+  btn.disabled = true; ocupado = true;
+  try {
+    const r = await api({ action, codigo });
+    ocupado = false;
+    toast(r.ok ? (action === 'avisado' ? 'Listo ✓' : 'Liberado ✓') : 'Ya no estaba pendiente', r.ok ? '' : 'warn');
+  } catch(e) { ocupado = false; toast('Sin conexión', 'bad'); }
+  await cargar();
+}
+
+// ── GUARDAR CUPO ──────────────────────────────────────────────
+function slotsPorDia() {
+  const m = {};
+  (datos.grilla || []).forEach(s => (m[s.fecha] = m[s.fecha] || []).push(s));
+  return m;
+}
+
+function llenarDias() {
+  const sel = document.getElementById('g-dia');
+  const previo = sel.value;
+  const m = slotsPorDia();
+  const dias = Object.keys(m).sort();
+  sel.innerHTML = dias.length ? dias.map(f => `<option value="${f}">${dia(f)}</option>`).join('') : '<option value="">Sin horarios</option>';
+  if (dias.includes(previo)) sel.value = previo;
+  llenarHoras();
+}
+
+function llenarHoras() {
+  const sel = document.getElementById('g-hora');
+  const previo = sel.value;
+  const lista = (slotsPorDia()[document.getElementById('g-dia').value] || []).slice().sort((a, b) => a.hora.localeCompare(b.hora));
+  sel.innerHTML = lista.length ? lista.map(s => `<option value="${s.hora}">${s.hora}${s.c1 && s.c2 ? ' (ocupado)' : ''}</option>`).join('') : '<option value="">—</option>';
+  if (lista.some(s => s.hora === previo)) sel.value = previo;
+  pintarCanchas();
+}
+
+function pintarCanchas() {
+  const s = (slotsPorDia()[document.getElementById('g-dia').value] || []).find(x => x.hora === document.getElementById('g-hora').value);
+  document.querySelectorAll('#g-cancha button').forEach(b => {
+    const c = Number(b.dataset.c);
+    const ocup = !s || (c === 1 ? s.c1 : s.c2);
+    b.disabled = ocup;
+    b.textContent = (c === 1 ? '1 (Muro)' : '2 (Estacionamiento)') + (s && ocup ? ' · ocupada' : '');
+    if (ocup && canchaSel === c) canchaSel = null;
+    b.classList.toggle('on', canchaSel === c);
+  });
+}
+
+function elegirCancha(c) { canchaSel = c; pintarCanchas(); }
+
+async function guardarCupo() {
+  const fecha = document.getElementById('g-dia').value;
+  const hora = document.getElementById('g-hora').value;
+  const minutos = Math.round(Number(document.getElementById('g-min').value));
+  const nombre = document.getElementById('g-nombre').value.trim();
+  if (!fecha || !hora) { toast('Elige día y hora', 'warn'); return; }
+  if (!canchaSel) { toast('Elige la cancha', 'warn'); return; }
+  if (!(minutos >= 1 && minutos <= 1440)) { toast('Escribe los minutos (1 a 1440)', 'warn'); document.getElementById('g-min').focus(); return; }
+  const btn = document.getElementById('g-btn');
+  btn.disabled = true; btn.textContent = 'Guardando…'; ocupado = true;
+  try {
+    const r = await api({ action: 'guardar', fecha, hora, cancha: canchaSel, minutos, nombre });
+    ocupado = false;
+    if (r.ok) {
+      toast(r.posicion > 1 ? `Guardado ${r.codigo} en lista de espera (${r.posicion}°)` : `Cupo guardado ${r.codigo} por ${minutos} min ✓`, r.posicion > 1 ? 'warn' : '');
+      document.getElementById('g-min').value = '';
+      document.getElementById('g-nombre').value = '';
+      canchaSel = null;
+    } else if (r.motivo === 'ocupado') toast('Esa cancha ya está anotada en el Sheet', 'bad');
+    else toast('No se pudo guardar', 'bad');
+  } catch(e) { ocupado = false; toast('Sin conexión', 'bad'); }
+  btn.disabled = false; btn.textContent = 'Guardar cupo';
+  await cargar();
+}
+
+// ── INICIO ────────────────────────────────────────────────────
+(function init() {
+  let guardado = '';
+  try { guardado = localStorage.getItem('cdv_pin') || ''; } catch(e) {}
+  if (guardado) entrar(guardado);
+})();
+</script>
+</body>
+</html>
