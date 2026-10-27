@@ -565,11 +565,24 @@ function schoolTotal(schoolId, monthKey) {
 // mes (sin contar fechas excluidas, puntuales, ni editadas individualmente),
 // fusionando bloques consecutivos del mismo día y cancha en un solo rango.
 function horarioHabitualTexto(schoolId, monthKey) {
+  const school = state.schools[schoolId];
   const rows = rowsForSchool(schoolId, monthKey);
   const seen = new Set();
   const buckets = {}; // "dow|cancha" -> [{horaInicio,horaFin}]
   rows.forEach(r => {
-    if (r.isExtra || r.isEdited || r.excluded) return;
+    if (r.isExtra || r.excluded) return;
+    if (r.isEdited) {
+      // Una fecha "editada" solo deja de contar como patrón habitual si su
+      // contenido realmente difiere del horario base vigente para esa fecha.
+      // Si coincide exactamente (por ejemplo, quedó una edición puntual de
+      // cuando el horario base todavía no tenía ese día, y ya se actualizó),
+      // sí cuenta como habitual — así no hace falta "Restablecer" cada fecha
+      // a mano para que el resumen quede correcto.
+      const dowEdit = new Date(r.date + 'T00:00:00').getDay();
+      const vigentes = resolveBloques(school, r.date).filter(b => b.dia === dowEdit);
+      const coincideConBase = vigentes.length && JSON.stringify(normalizarBloques(r.blocks)) === JSON.stringify(normalizarBloques(vigentes));
+      if (!coincideConBase) return;
+    }
     const dow = new Date(r.date + 'T00:00:00').getDay();
     (r.blocks || []).forEach(b => {
       const key = `${dow}|${b.cancha}|${b.horaInicio}|${b.horaFin}`;
@@ -671,6 +684,66 @@ function renderMiniCalendarioSemana(weekStart, rows) {
   </div>`;
 }
 
+// Texto condensado "día horario cancha" para el resumen de una semana
+// (escuelas semanales): a diferencia del mensual no hay un "patrón habitual"
+// que abstraer (una semana no se repite), así que se listan directamente
+// todas las fechas no excluidas de esa semana, fusionando bloques
+// consecutivos del mismo día y cancha.
+function horarioSemanaTexto(rows) {
+  const activos = rows.filter(r => !r.excluded);
+  if (!activos.length) return 'Sin clases programadas esta semana.';
+  const items = [];
+  activos.forEach(r => {
+    const dow = new Date(r.date + 'T00:00:00').getDay();
+    (r.blocks || []).forEach(b => items.push({ dow, cancha: b.cancha, horaInicio: b.horaInicio, horaFin: b.horaFin }));
+  });
+  items.sort((a,b) => a.dow - b.dow || a.horaInicio.localeCompare(b.horaInicio));
+  const merged = [];
+  items.forEach(it => {
+    const last = merged[merged.length - 1];
+    if (last && last.dow === it.dow && last.cancha === it.cancha && last.horaFin === it.horaInicio) {
+      last.horaFin = it.horaFin;
+    } else {
+      merged.push({ ...it });
+    }
+  });
+  return merged.map(c => `${DIAS[c.dow].toLowerCase()} ${c.horaInicio}-${c.horaFin} ${c.cancha.replace('Cancha ','C')}`).join('; ');
+}
+
+// Líneas "día: suspendido por <motivo>" para las fechas excluidas con motivo
+// dentro de una semana.
+function motivosDeSemana(rows) {
+  const out = [];
+  rows.forEach(r => {
+    if (r.motivo) {
+      const dow = new Date(r.date + 'T00:00:00').getDay();
+      out.push(`${DIAS[dow].toLowerCase()} ${Number(r.date.slice(8,10))}: suspendido por ${(MOTIVO_LABELS[r.motivo] || r.motivo).toLowerCase()}`);
+    }
+  });
+  return out;
+}
+
+// Caja resumen de una semana (escuelas semanales), con el mismo estilo de
+// tarjeta verde que el resumen mensual: título, mini calendario, texto
+// condensado de la semana, motivos y total — sin las fechas con checkbox
+// (esas se muestran aparte, fuera de esta caja, para no salir en la imagen
+// compartida).
+function renderResumenSemanal(schoolId, weekStart, rows) {
+  const total = rows.filter(r => !r.excluded).reduce((s,r) => s + blocksTotal(r.blocks), 0);
+  const motivos = motivosDeSemana(rows);
+  const boxId = `week-box-${schoolId}-${weekStart}`;
+  const nombreArchivo = archivoSeguro(`semana-${state.schools[schoolId].nombre}-${weekStart}`);
+  return `
+  <div class="resumen-mensual-box" id="${boxId}">
+    <div class="resumen-mensual-title">${weekRangeLabel(weekStart)}</div>
+    ${renderMiniCalendarioSemana(weekStart, rows)}
+    <div class="resumen-mensual-patron">${horarioSemanaTexto(rows)}</div>
+    ${motivos.length ? `<div class="resumen-mensual-motivos">${motivos.join('<br>')}</div>` : ''}
+    <div class="resumen-mensual-total">Total a pagar: ${formatCLP(total)}</div>
+  </div>
+  <button class="btn-small ghost share-img-btn" onclick="compartirComoImagen('${boxId}','${nombreArchivo}.png','${weekRangeLabel(weekStart)}')">📤 Compartir como imagen</button>`;
+}
+
 function archivoSeguro(txt) {
   return (txt || 'resumen').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '').toLowerCase();
 }
@@ -756,23 +829,11 @@ function renderSchools() {
       rowsHtml = `<div class="empty-msg">No hay fechas este mes para esta escuela.</div>`;
     } else if (school.ciclo === 'semanal') {
       const weeks = groupRowsByWeek(rows);
-      rowsHtml = weeks.map(w => {
-        const weekTotal = w.rows.filter(r => !r.excluded).reduce((s,r) => s + blocksTotal(r.blocks), 0);
-        const boxId = `week-box-${id}-${w.weekStart}`;
-        const nombreArchivo = archivoSeguro(`semana-${school.nombre}-${w.weekStart}`);
-        return `
+      rowsHtml = weeks.map(w => `
         <div class="week-group">
-          <div class="week-group-box" id="${boxId}">
-            <div class="week-head">
-              <span>${weekRangeLabel(w.weekStart)}</span>
-              <span class="week-total">${formatCLP(weekTotal)}</span>
-            </div>
-            ${renderMiniCalendarioSemana(w.weekStart, w.rows)}
-            ${w.rows.map(r => renderDateRow(id, r)).join('')}
-          </div>
-          <button class="btn-small ghost share-img-btn" onclick="compartirComoImagen('${boxId}','${nombreArchivo}.png','${weekRangeLabel(w.weekStart)}')">📤 Compartir como imagen</button>
-        </div>`;
-      }).join('');
+          ${renderResumenSemanal(id, w.weekStart, w.rows)}
+          ${w.rows.map(r => renderDateRow(id, r)).join('')}
+        </div>`).join('');
     } else {
       rowsHtml = rows.map(r => renderDateRow(id, r)).join('');
     }
@@ -1234,9 +1295,14 @@ async function confirmarVigencia() {
   const datosBase = state.pendingSave;
   const anteriorData = state.schools[id];
   const existentes = getHorarios(anteriorData);
+  // Si ya existe una versión guardada con exactamente esa misma fecha de
+  // vigencia (en cualquier posición del historial, no solo la última), se
+  // reemplaza esa versión en vez de agregar una nueva — evita que queden
+  // varias versiones duplicadas con la misma fecha.
+  const idxExistente = existentes.findIndex(h => h.vigenteDesde === fecha);
   let horarios;
-  if (existentes.length && existentes[existentes.length - 1].vigenteDesde === fecha) {
-    horarios = existentes.slice(0, -1).concat([{ vigenteDesde: fecha, bloques: state.formBloques }]);
+  if (idxExistente !== -1) {
+    horarios = existentes.slice(0, idxExistente).concat(existentes.slice(idxExistente + 1)).concat([{ vigenteDesde: fecha, bloques: state.formBloques }]);
   } else {
     horarios = existentes.concat([{ vigenteDesde: fecha, bloques: state.formBloques }]);
   }
