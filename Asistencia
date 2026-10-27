@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asistencia CDV</title>
+<style>
+  :root { --bg:#f4f6f5; --card:#fff; --txt:#1c2a22; --muted:#5d6b63; --ok:#1f8a4c; --out:#c2571a; --err:#b3261e; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:var(--bg); color:var(--txt); }
+  main { max-width:420px; margin:0 auto; padding:24px 16px 40px; }
+  h1 { font-size:22px; margin:0 0 4px; }
+  p.sub { margin:0 0 20px; color:var(--muted); font-size:14px; }
+  .card { background:var(--card); border-radius:14px; padding:16px; box-shadow:0 1px 4px rgba(0,0,0,.08); }
+  label { display:block; font-size:13px; color:var(--muted); margin:12px 0 4px; }
+  label:first-child { margin-top:0; }
+  select, input { width:100%; font-size:18px; padding:12px; border:1px solid #cfd8d3; border-radius:10px; background:#fff; color:var(--txt); }
+  .btns { display:grid; gap:12px; margin-top:18px; }
+  button { font-size:20px; font-weight:600; padding:18px; border:0; border-radius:12px; color:#fff; cursor:pointer; }
+  button.in { background:var(--ok); }
+  button.outb { background:var(--out); }
+  button:disabled { opacity:.5; }
+  #msg { margin-top:16px; padding:14px; border-radius:10px; font-size:16px; display:none; line-height:1.4; }
+  #msg.ok { display:block; background:#e4f4ea; color:#14532d; }
+  #msg.err { display:block; background:#fdeceb; color:var(--err); }
+  #msg.info { display:block; background:#eef1ef; color:var(--muted); }
+  small { display:block; margin-top:6px; color:var(--muted); font-size:13px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Asistencia</h1>
+  <p class="sub">Marca tu entrada o salida estando en la cancha.</p>
+  <div class="card">
+    <label for="nombre">Trabajador</label>
+    <select id="nombre">
+      <option value="">Selecciona tu nombre</option>
+      <option>David</option>
+      <option>Bastian</option>
+    </select>
+    <label for="pin">PIN</label>
+    <input id="pin" type="password" inputmode="numeric" autocomplete="off" placeholder="Tu PIN">
+    <div class="btns">
+      <button class="in" id="bIn">Marcar entrada</button>
+      <button class="outb" id="bOut">Marcar salida</button>
+    </div>
+    <div id="msg"></div>
+  </div>
+</main>
+
+<script>
+// Pega aquí la URL de tu Web App de Apps Script (termina en /exec)
+var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwwY9EDv-lVjtdi9nct8dX1xQb0M2UCA9lJPD67-a8xX9QSLgDMjhwdORqlyJQwEcSq/exec';
+
+var $ = function (id) { return document.getElementById(id); };
+var busy = false;
+
+try { var guardado = localStorage.getItem('asistencia_nombre'); if (guardado) $('nombre').value = guardado; } catch (e) {}
+
+function mostrar(tipo, texto) { var m = $('msg'); m.className = tipo; m.textContent = texto; }
+function bloquear(b) { busy = b; $('bIn').disabled = b; $('bOut').disabled = b; }
+
+function marcar(tipo) {
+  if (busy) return;
+  var nombre = $('nombre').value, pin = $('pin').value.trim();
+  if (!nombre) return mostrar('err', 'Selecciona tu nombre.');
+  if (!pin) return mostrar('err', 'Ingresa tu PIN.');
+  if (SCRIPT_URL.indexOf('PEGAR') === 0) return mostrar('err', 'Falta configurar la URL del servidor en la página.');
+  if (!window.isSecureContext || !navigator.geolocation) {
+    return mostrar('err', 'Este navegador no permite obtener la ubicación. Abre la página desde Chrome o Safari.');
+  }
+  try { localStorage.setItem('asistencia_nombre', nombre); } catch (e) {}
+
+  bloquear(true);
+  mostrar('info', 'Obteniendo tu ubicación…');
+
+  navigator.geolocation.getCurrentPosition(function (pos) {
+    mostrar('info', 'Registrando…');
+    fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        trabajador: nombre, pin: pin, tipo: tipo,
+        lat: pos.coords.latitude, lng: pos.coords.longitude, precision: pos.coords.accuracy
+      })
+    }).then(function (r) { return r.json(); }).then(function (res) {
+      if (res.ok) {
+        var t = (res.tipo === 'entrada' ? 'Entrada' : 'Salida') + ' registrada a las ' + res.hora.slice(0, 5) + ' ✔';
+        if (res.aviso) t += '\nAviso: ' + res.aviso + '. Se lo informaremos a Romina para que lo revise.';
+        mostrar('ok', t);
+        $('msg').style.whiteSpace = 'pre-line';
+        $('pin').value = '';
+      } else {
+        mostrar('err', res.msg || 'No se pudo registrar.');
+      }
+    }).catch(function () {
+      mostrar('err', 'No se pudo conectar. Revisa tu internet e intenta de nuevo.');
+    }).then(function () { bloquear(false); });
+  }, function (err) {
+    bloquear(false);
+    if (err.code === 1) {
+      mostrar('err', 'No diste permiso de ubicación, así que no se puede marcar. Actívalo así:\n' +
+        'Android (Chrome): toca el candado junto a la dirección › Permisos › Ubicación › Permitir.\n' +
+        'iPhone: Ajustes › Privacidad › Localización › tu navegador › Al usar la app. Luego recarga la página.');
+      $('msg').style.whiteSpace = 'pre-line';
+    } else if (err.code === 3) {
+      mostrar('err', 'Se demoró demasiado en obtener la ubicación. Sal a un lugar abierto e intenta de nuevo.');
+    } else {
+      mostrar('err', 'No pudimos obtener tu ubicación. Activa el GPS del celular e intenta de nuevo.');
+    }
+  }, { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
+}
+
+$('bIn').addEventListener('click', function () { marcar('entrada'); });
+$('bOut').addEventListener('click', function () { marcar('salida'); });
+</script>
+</body>
+</html>
