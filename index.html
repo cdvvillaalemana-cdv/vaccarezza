@@ -162,6 +162,39 @@
   .cdv-menu-ranking:hover { opacity: 0.9; background: linear-gradient(135deg, #1a5c0e 0%, #4aab20 50%, #7ed43a 100%); }
 
 
+  /* SOLICITUD: botones y estado pendiente */
+  button.wa-slot-link { font-family: 'Barlow', sans-serif; cursor: pointer; }
+  .wa-slot-link.pend { background: #fff7e6; color: #9a5b00; border-color: #f5a623; }
+  .wa-slot-link.pend:hover { background: #ffecc7; }
+  .wa-slot-link.pend .pend-sub { font-size: 10px; font-weight: 500; color: #9a5b00; opacity: 0.85; }
+  .pend-wrap { display: inline-flex; flex-direction: column; align-items: flex-start; line-height: 1.15; }
+
+  /* MODAL DE SOLICITUD */
+  .sol-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 300; align-items: flex-end; justify-content: center; }
+  .sol-modal.open { display: flex; }
+  .sol-box { background: #fff; border-radius: 16px 16px 0 0; padding: 22px 20px 28px; max-width: 500px; width: 100%; max-height: 92vh; overflow-y: auto; }
+  @media (min-width: 600px) { .sol-modal { align-items: center; } .sol-box { border-radius: 16px; } }
+  .sol-title { font-size: 18px; font-weight: 700; margin-bottom: 14px; }
+  .sol-resumen { background: var(--gray-bg); border-radius: 10px; padding: 12px 14px; font-size: 15px; line-height: 1.9; margin-bottom: 14px; }
+  .sol-resumen b { font-weight: 700; }
+  .sol-label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .sol-input { width: 100%; padding: 12px; border: 2px solid var(--gray-mid); border-radius: 10px; font-family: 'Barlow', sans-serif; font-size: 16px; }
+  .sol-input:focus { outline: none; border-color: var(--green); }
+  .sol-hint { font-size: 12px; color: var(--gray-text); margin-top: 5px; }
+  .sol-error { font-size: 13px; color: var(--red); font-weight: 600; margin-top: 6px; display: none; }
+  .sol-nombre-guardado { font-size: 14px; color: #333; margin-bottom: 4px; }
+  .sol-nombre-guardado a { color: var(--green-dark); font-weight: 600; cursor: pointer; text-decoration: underline; margin-left: 4px; }
+  .sol-espera { background: #fff7e6; border: 1px solid #f5a623; border-radius: 10px; padding: 12px 14px; font-size: 14px; color: #6b4200; line-height: 1.55; margin-bottom: 14px; }
+  .sol-espera strong { color: #4a2d00; }
+  .sol-espera-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; color: #4a2d00; }
+  .sol-actions { display: flex; gap: 10px; margin-top: 18px; }
+  .sol-btn { flex: 1; padding: 13px 10px; border-radius: 10px; font-family: 'Barlow', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; border: none; }
+  .sol-btn.cancel { background: var(--gray-bg); color: var(--dark); flex: 0 0 34%; }
+  .sol-btn.go { background: #25d366; color: #fff; }
+  .sol-btn.go.espera { background: #f5a623; }
+  .sol-btn:disabled { opacity: 0.6; cursor: default; }
+  .sol-aviso { font-size: 12px; color: var(--gray-text); margin-top: 12px; text-align: center; line-height: 1.5; }
+
   @media (max-width: 480px) {
     .header-notice { display: none; }
     .slot-table th, .slot-row td { padding: 7px 7px; }
@@ -217,6 +250,7 @@
   <div class="legend">
     <div class="leg"><div class="leg-dot" style="background:var(--green)"></div> Disponible</div>
     <div class="leg"><div class="leg-dot" style="background:var(--red)"></div> Reservado</div>
+    <div class="leg"><div class="leg-dot" style="background:#f5a623;border-radius:3px"></div> ⏳ Pendiente (puedes quedar en lista de espera)</div>
     <div class="leg"><div class="leg-dot" style="background:#f5a623"></div> 🌅 Horario AM</div>
   </div>
 
@@ -274,6 +308,22 @@
   </div>
 </div>
 
+<!-- SOLICITUD MODAL -->
+<div class="sol-modal" id="sol-modal" onclick="if(event.target===this)cerrarSolicitud()">
+  <div class="sol-box" role="dialog" aria-modal="true" aria-labelledby="sol-title">
+    <div class="sol-title" id="sol-title">Solicitar cancha</div>
+    <div class="sol-resumen" id="sol-resumen"></div>
+    <div id="sol-espera"></div>
+    <div id="sol-nombre-zona"></div>
+    <div class="sol-error" id="sol-error"></div>
+    <div class="sol-actions">
+      <button class="sol-btn cancel" type="button" onclick="cerrarSolicitud()">Cancelar</button>
+      <button class="sol-btn go" type="button" id="sol-go" onclick="enviarSolicitud()">Enviar por WhatsApp</button>
+    </div>
+    <div class="sol-aviso">Se abrirá WhatsApp con tu solicitud lista. <strong>Recuerda enviar el mensaje</strong>; la cancha queda reservada solo cuando te respondemos.</div>
+  </div>
+</div>
+
 <!-- INSTALL MODAL -->
 <div class="install-modal" id="install-modal" onclick="hideInstall(event)">
   <div class="install-box" id="install-box">
@@ -292,11 +342,18 @@ const LON = -71.3736;
 const RAIN_PROB_MIN = 60;
 const RAIN_MM_MIN   = 5;
 const METEORED_URL  = 'https://www.meteored.cl/tiempo-en_Villa+Alemana-America+Sur-Chile-Valparaiso--1-18534.html';
+// URL de la aplicación web de Apps Script (termina en /exec). Pegar aquí al instalar.
+const API_URL = 'https://script.google.com/macros/s/AKfycbxsg_gAVK-mGQhVd40qQ62smpyrxGtcuile_vO7bn10HFb64cv_nO8nd1BKjfSY1vHZ/exec';
 
 // ── ESTADO ────────────────────────────────────────────────────
 let allData           = [];
 let weatherData       = {};
+let pendData          = {};   // "fecha|hora|cancha" -> cantidad de solicitudes pendientes
 let currentWeekOffset = 0;
+let solActual         = null; // solicitud abierta en el modal
+
+function nh(h) { return String(h).padStart(5, '0'); }
+function apiActiva() { return /^https:\/\/script\.google\.com\//.test(API_URL); }
 
 const DIAS  = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
@@ -334,11 +391,119 @@ function getWindowDates() {
 }
 
 // ── WA LINK ───────────────────────────────────────────────────
-function waLink(fecha, hora, cancha) {
+const CANCHA_LABEL = { 1: '1 (Muro)', 2: '2 (Estacionamiento)' };
+
+function diaLabel(fecha) {
   const d = new Date(fecha + 'T00:00:00');
-  const label = `${DIAS[d.getDay()]} ${d.getDate()} de ${MESES[d.getMonth()]}`;
-  const msg = `Hola, quiero reservar ${cancha} para el ${label} a las *${hora}*. Mi nombre y apellido es: `;
-  return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`;
+  return `${DIAS[d.getDay()]} ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
+function waLink({ fecha, hora, cancha, nombre, codigo, posicion }) {
+  const estado = posicion && posicion > 1
+    ? `⏳ Solicitud en lista de espera (posición ${posicion})`
+    : `⏳ Solicitud pendiente de confirmación`;
+  const lineas = [
+    'Hola! Quiero solicitar esta reserva:',
+    '',
+    `🏟️ Cancha: *${CANCHA_LABEL[cancha]}*`,
+    `📅 Día: *${diaLabel(fecha)}*`,
+    `🕗 Hora: *${hora}*`,
+    `👤 Nombre y apellido: ${nombre}`,
+    '',
+    estado
+  ];
+  if (codigo) lineas.push(`_Código de solicitud: ${codigo}_`);
+  return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(lineas.join('\n'))}`;
+}
+
+// ── NOMBRE GUARDADO EN EL CELULAR ─────────────────────────────
+function leerNombre() { try { return localStorage.getItem('cdv_nombre') || ''; } catch(e) { return ''; } }
+function guardarNombre(n) { try { localStorage.setItem('cdv_nombre', n); } catch(e) {} }
+function limpiarNombre(s) { return String(s || '').replace(/[*_~`]/g, '').replace(/\s+/g, ' ').trim().slice(0, 60); }
+function nombreValido(s) { return s.length >= 3 && s.split(' ').filter(Boolean).length >= 2; }
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// ── MODAL DE SOLICITUD ────────────────────────────────────────
+function abrirSolicitud(fecha, hora, cancha) {
+  const n = pendData[`${fecha}|${nh(hora)}|${cancha}`] || 0;
+  solActual = { fecha, hora, cancha, enEspera: n > 0, posicion: n + 1, editandoNombre: false };
+  document.getElementById('sol-resumen').innerHTML =
+    `🏟️ Cancha: <b>${CANCHA_LABEL[cancha]}</b><br>📅 Día: <b>${diaLabel(fecha)}</b><br>🕗 Hora: <b>${hora}</b>`;
+  document.getElementById('sol-espera').innerHTML = n > 0
+    ? `<div class="sol-espera"><div class="sol-espera-title">⏳ Este horario ya fue solicitado</div>
+        Alguien pidió esta cancha antes que tú. Si envías tu solicitud, quedarás <strong>en lista de espera (posición ${n + 1})</strong> y el cupo <strong>no</strong> queda asegurado. Te avisaremos si se libera.</div>`
+    : '';
+  const go = document.getElementById('sol-go');
+  go.textContent = n > 0 ? 'Entiendo, quedar en espera' : 'Enviar por WhatsApp';
+  go.classList.toggle('espera', n > 0);
+  go.disabled = false;
+  pintarNombre();
+  ocultarError();
+  document.getElementById('sol-modal').classList.add('open');
+}
+
+function pintarNombre() {
+  const guardado = leerNombre();
+  const zona = document.getElementById('sol-nombre-zona');
+  if (guardado && !solActual.editandoNombre) {
+    zona.innerHTML = `<div class="sol-nombre-guardado">👤 Solicitas como <strong>${esc(guardado)}</strong><a onclick="editarNombre()">Cambiar</a></div>`;
+  } else {
+    zona.innerHTML = `<label class="sol-label" for="sol-nombre">Nombre y apellido</label>
+      <input class="sol-input" id="sol-nombre" type="text" autocomplete="name" maxlength="60" placeholder="Ej: Juan Pérez" value="${esc(guardado)}">
+      <div class="sol-hint">Solo te lo pediremos esta vez; quedará guardado en este celular.</div>`;
+    setTimeout(() => { const i = document.getElementById('sol-nombre'); if (i && !guardado) i.focus(); }, 50);
+  }
+}
+
+function editarNombre() { solActual.editandoNombre = true; pintarNombre(); }
+
+function cerrarSolicitud() {
+  document.getElementById('sol-modal').classList.remove('open');
+  solActual = null;
+}
+
+function mostrarError(t) { const e = document.getElementById('sol-error'); e.textContent = t; e.style.display = 'block'; }
+function ocultarError() { const e = document.getElementById('sol-error'); e.textContent = ''; e.style.display = 'none'; }
+
+async function enviarSolicitud() {
+  if (!solActual) return;
+  const input = document.getElementById('sol-nombre');
+  const nombre = limpiarNombre(input ? input.value : leerNombre());
+  if (!nombreValido(nombre)) { mostrarError('Escribe tu nombre y apellido.'); if (input) input.focus(); return; }
+  ocultarError();
+  guardarNombre(nombre);
+
+  const go = document.getElementById('sol-go');
+  go.disabled = true; go.textContent = 'Registrando…';
+  const { fecha, hora, cancha } = solActual;
+  let codigo = '', posicion = solActual.posicion;
+
+  if (apiActiva()) {
+    try {
+      const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'solicitar', fecha, hora, cancha, nombre }) });
+      const r = await res.json();
+      if (r.ok) {
+        codigo = r.codigo; posicion = r.posicion;
+      } else if (r.motivo === 'ocupado') {
+        mostrarError('Este horario acaba de ser reservado. Actualizaremos la página.');
+        setTimeout(() => location.reload(), 2200); return;
+      } else if (r.motivo === 'pasado') {
+        mostrarError('Este horario ya pasó.'); go.disabled = false; go.textContent = 'Enviar por WhatsApp'; return;
+      } else if (r.motivo === 'limite') {
+        mostrarError('Ya tienes varias solicitudes pendientes. Espera nuestra respuesta o escríbenos por WhatsApp.');
+        go.disabled = false; go.textContent = 'Enviar por WhatsApp'; return;
+      } else if (r.motivo === 'nombre') {
+        mostrarError('Escribe tu nombre y apellido.'); go.disabled = false; go.textContent = 'Enviar por WhatsApp'; return;
+      }
+      // Cualquier otro error: se envía igual por WhatsApp, sin código.
+    } catch(e) { /* sin conexión con el registro: se envía igual por WhatsApp */ }
+  }
+
+  const url = waLink({ fecha, hora, cancha, nombre, codigo, posicion });
+  cerrarSolicitud();
+  window.location.href = url;
+  // Al volver a la página, refrescar el estado
+  setTimeout(() => { loadPendientes().then(render); }, 4000);
 }
 
 // ── CSV PARSER ────────────────────────────────────────────────
@@ -395,6 +560,18 @@ async function loadSheet() {
   } catch(e) {
     allData = [];
   }
+}
+
+// ── FETCH PENDIENTES (sin nombres) ────────────────────────────
+async function loadPendientes() {
+  if (!apiActiva()) { pendData = {}; return; }
+  try {
+    const res = await fetch(`${API_URL}?action=estado&t=${Date.now()}`);
+    const r = await res.json();
+    const map = {};
+    (r.pendientes || []).forEach(p => { map[`${p.fecha}|${nh(p.hora)}|${p.cancha}`] = p.n; });
+    pendData = map;
+  } catch(e) { pendData = {}; }
 }
 
 // ── FETCH WEATHER ─────────────────────────────────────────────
@@ -525,14 +702,18 @@ function render() {
       const ocp1  = slot.cancha1 && slot.cancha1.trim() !== '' && !isKeyword(slot.cancha1);
         const ocp2  = slot.cancha2 && slot.cancha2.trim() !== '' && !isKeyword(slot.cancha2);
 
-        const statusCell = (ocupado, fecha, hora, cancha) => ocupado
-          ? `<div class="status-cell ocupado"><div class="status-dot"></div><span class="status-text">Reservado</span></div>`
-          : `<a class="wa-slot-link" href="${waLink(fecha, hora, cancha)}" target="_blank">${waIconSVG} Solicitar</a>`;
+        const statusCell = (ocupado, fecha, hora, cancha) => {
+          if (ocupado) return `<div class="status-cell ocupado"><div class="status-dot"></div><span class="status-text">Reservado</span></div>`;
+          const n = pendData[`${fecha}|${nh(hora)}|${cancha}`] || 0;
+          const onclick = `abrirSolicitud('${fecha}','${hora}',${cancha})`;
+          if (n > 0) return `<button type="button" class="wa-slot-link pend" onclick="${onclick}"><span class="pend-wrap">⏳ Pendiente<span class="pend-sub">Lista de espera</span></span></button>`;
+          return `<button type="button" class="wa-slot-link" onclick="${onclick}">${waIconSVG} Solicitar</button>`;
+        };
 
         html += `<tr class="slot-row${am ? ' is-am' : ''} tier-${price.tier}">
           <td><span class="slot-hour">${am ? '🌅 ' : ''}${hora}${am ? ' <span class="badge-am">AM</span>' : ''}</span></td>
-          <td>${statusCell(ocp1, slot.fecha, hora, 'Cancha 1 (Muro)')}</td>
-          <td>${statusCell(ocp2, slot.fecha, hora, 'Cancha 2 (Estacionam.)')}</td>
+          <td>${statusCell(ocp1, slot.fecha, hora, 1)}</td>
+          <td>${statusCell(ocp2, slot.fecha, hora, 2)}</td>
           <td class="slot-price">${price.label}${parseInt(hora) === 23 ? '<span class="pago-previo">23 hrs: pago previo*</span>' : ''}</td>
         </tr>`;
       });
@@ -777,9 +958,15 @@ function setFraseDelDia() {
 async function init() {
   setFraseDelDia();
   initMenu();
-  await Promise.all([loadSheet(), loadWeather()]);
+  await Promise.all([loadSheet(), loadWeather(), loadPendientes()]);
   render();
 }
+
+// Al volver desde WhatsApp, refrescar los pendientes
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && allData.length) loadPendientes().then(render);
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarSolicitud(); });
 
 function initMenu() {
   var btn = document.getElementById('cdv-menu-btn');
