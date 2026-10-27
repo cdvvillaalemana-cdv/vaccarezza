@@ -48,9 +48,6 @@
   .totals-label { font-size: 13px; color: #bbb; }
   .totals-amount { font-family: 'Barlow Condensed', sans-serif; font-size: 26px; font-weight: 700; color: var(--gold); }
 
-  .copy-all-btn { width: 100%; padding: 11px; background: #fff; border: 2px solid var(--dark); border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; margin-bottom: 20px; font-family: 'Barlow', sans-serif; }
-  .copy-all-btn:hover { background: var(--gray-bg); }
-
   /* ── SCHOOL CARD ── */
   .school-card { background: #fff; border: 1px solid var(--gray-mid); border-radius: 12px; margin-bottom: 16px; overflow: hidden; }
   .school-head { padding: 14px 16px; background: var(--gray-bg); border-bottom: 1px solid var(--gray-mid); display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
@@ -82,6 +79,22 @@
   .date-link { font-size: 12px; color: var(--green-dark); background: none; border: none; cursor: pointer; font-weight: 600; padding: 0; text-decoration: underline; font-family: 'Barlow', sans-serif; }
   .date-link.del { color: var(--red); }
   .badge-mini { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; margin-left: 6px; background: #fff3cd; color: #856404; text-transform: none; }
+
+  .motivo-row { margin: 4px 0 2px 28px; font-size: 12px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .motivo-prompt { color: var(--gray-text); }
+  .motivo-tag { background: #fde8e8; color: #a33; font-weight: 600; padding: 2px 8px; border-radius: 4px; }
+
+  /* ── RESUMEN MENSUAL (caja con calendario) ── */
+  .resumen-mensual-box { background: var(--green-light); border: 1px solid var(--green); border-radius: 10px; padding: 12px 14px; margin: 6px 0 14px; }
+  .resumen-mensual-title { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--green-dark); margin-bottom: 8px; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-bottom: 10px; }
+  .cal-dow { font-size: 10px; font-weight: 700; text-align: center; color: var(--gray-text); padding-bottom: 2px; }
+  .cal-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 11px; border-radius: 6px; background: #fff; color: var(--gray-text); }
+  .cal-cell.cal-on { background: var(--green); color: #fff; font-weight: 700; }
+  .cal-cell.cal-blank { background: transparent; }
+  .resumen-mensual-patron { font-size: 13px; line-height: 1.5; margin-bottom: 6px; }
+  .resumen-mensual-motivos { font-size: 12px; color: var(--gray-text); font-style: italic; margin-bottom: 6px; }
+  .resumen-mensual-total { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 700; color: var(--green-dark); text-align: right; }
 
   .empty-msg { color: var(--gray-text); font-size: 13px; padding: 14px 0; text-align: center; }
 
@@ -155,7 +168,6 @@
     <div class="page-title">Facturación mensual de escuelas</div>
     <div class="month-tabs" id="month-tabs"></div>
     <div class="totals-banner" id="totals-banner"></div>
-    <button class="copy-all-btn" onclick="copiarResumenTodas()">📋 Copiar resumen de todas</button>
     <div id="schools-list"></div>
     <button class="add-escuela-btn" onclick="abrirModalEscuela(null)">+ Agregar escuela</button>
   </div>
@@ -203,11 +215,12 @@ const DB_BASE = 'https://cdv-vaccarezza-default-rtdb.firebaseio.com';
 const PIN = '3011';
 const DIAS  = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const MOTIVO_LABELS = { lluvia: 'Lluvia', profesor: 'Motivo del profesor' };
 
 // ── ESTADO ────────────────────────────────────────────────────
 let state = {
   schools: {},           // id -> {nombre, encargado, activa, bloques:[...]}
-  fact: {},              // monthKey -> schoolId -> {excluidas:[], ediciones:{}, extras:{}}
+  fact: {},              // monthKey -> schoolId -> {excluidas:{fecha: true|'lluvia'|'profesor'}, ediciones:{}, extras:{}}
   months: [],            // [currentKey, prevKey]
   activeMonth: null,
   editing: null,         // {schoolId, date, blocks, isExtra}
@@ -244,6 +257,12 @@ function daysInMonth(monthKey) {
 function parseTimeDecimal(t) {
   const [h, m] = t.split(':').map(Number);
   return h + (m||0)/60;
+}
+
+// Suma `horas` a un horario "HH:MM", sin pasar de las 23:59 (bloques de un solo día)
+function sumarHora(horaStr, horas) {
+  const totalMin = Math.min(Math.round(parseTimeDecimal(horaStr) * 60) + Math.round(horas * 60), 23*60 + 59);
+  return `${pad(Math.floor(totalMin/60))}:${pad(totalMin%60)}`;
 }
 
 function blockSubtotal(b) {
@@ -287,6 +306,26 @@ function groupRowsByWeek(rows) {
     (groups[wk] || (groups[wk] = [])).push(r);
   });
   return Object.keys(groups).sort().map(wk => ({ weekStart: wk, rows: groups[wk] }));
+}
+
+// Normaliza fact.excluidas a un mapa {fecha: true|'lluvia'|'profesor'}.
+// Compatible con el formato antiguo (array de fechas sin motivo).
+function excluidasMap(fact) {
+  const e = fact.excluidas;
+  if (!e) return {};
+  if (Array.isArray(e)) {
+    const map = {};
+    e.forEach(ds => { map[ds] = true; });
+    return map;
+  }
+  return e;
+}
+
+// Igual que excluidasMap, pero deja el resultado guardado en fact.excluidas
+// (convirtiendo el formato antiguo si corresponde) para poder modificarlo.
+function ensureExcluidasObj(fact) {
+  fact.excluidas = excluidasMap(fact);
+  return fact.excluidas;
 }
 
 function showToast(msg) {
@@ -431,7 +470,7 @@ function resolveBloques(school, dateStr) {
 function rowsForSchool(schoolId, monthKey) {
   const school = state.schools[schoolId];
   const fact = (state.fact[monthKey] && state.fact[monthKey][schoolId]) || {};
-  const excluidas = fact.excluidas || [];
+  const excluidas = excluidasMap(fact);
   const ediciones = fact.ediciones || {};
   const extras = fact.extras || {};
 
@@ -441,9 +480,11 @@ function rowsForSchool(schoolId, monthKey) {
     const dow = d.getDay();
     const vigentes = resolveBloques(school, ds).filter(b => b.dia === dow);
     if (vigentes.length) {
-      const excluded = excluidas.includes(ds);
+      const excluded = ds in excluidas;
+      const motivoVal = excluidas[ds];
+      const motivo = (motivoVal && motivoVal !== true) ? motivoVal : null;
       const edited = ediciones[ds];
-      rows.push({ date: ds, blocks: edited || vigentes, excluded, isEdited: !!edited, isExtra: false });
+      rows.push({ date: ds, blocks: edited || vigentes, excluded, motivo, isEdited: !!edited, isExtra: false });
     }
   });
   Object.keys(extras).forEach(ds => {
@@ -459,6 +500,82 @@ function schoolTotal(schoolId, monthKey) {
   return rowsForSchool(schoolId, monthKey)
     .filter(r => !r.excluded)
     .reduce((sum, r) => sum + blocksTotal(r.blocks), 0);
+}
+
+// ── RESUMEN MENSUAL (caja con calendario, para escuelas mensuales) ─
+
+// Horario habitual de la escuela para ese mes, como combinaciones únicas
+// {día, cancha, horaInicio, horaFin} tomadas de las fechas "normales" del
+// mes (sin contar fechas puntuales ni fechas editadas puntualmente).
+function horarioHabitualTexto(schoolId, monthKey) {
+  const rows = rowsForSchool(schoolId, monthKey);
+  const seen = new Set();
+  const combos = [];
+  rows.forEach(r => {
+    if (r.isExtra || r.isEdited) return;
+    const dow = new Date(r.date + 'T00:00:00').getDay();
+    (r.blocks || []).forEach(b => {
+      const key = `${dow}|${b.cancha}|${b.horaInicio}|${b.horaFin}`;
+      if (!seen.has(key)) { seen.add(key); combos.push({ dow, cancha: b.cancha, horaInicio: b.horaInicio, horaFin: b.horaFin }); }
+    });
+  });
+  if (!combos.length) return 'Sin horario habitual registrado este mes.';
+  combos.sort((a,b) => a.dow - b.dow || a.horaInicio.localeCompare(b.horaInicio));
+  return combos.map(c => `${DIAS[c.dow].toLowerCase()} ${c.horaInicio}-${c.horaFin} ${c.cancha.replace('Cancha ','C')}`).join('; ');
+}
+
+// Días del mes (número de día) en que efectivamente hay clase (ya
+// descontando fechas excluidas y sumando fechas puntuales).
+function diasConClase(schoolId, monthKey) {
+  const rows = rowsForSchool(schoolId, monthKey).filter(r => !r.excluded);
+  return new Set(rows.map(r => Number(r.date.slice(8,10))));
+}
+
+// Líneas "día: suspendido por <motivo>" para las fechas excluidas de ese
+// mes que tengan un motivo registrado.
+function motivosDelMes(schoolId, monthKey) {
+  const fact = (state.fact[monthKey] && state.fact[monthKey][schoolId]) || {};
+  const map = excluidasMap(fact);
+  const out = [];
+  Object.keys(map).sort().forEach(ds => {
+    if (ds.slice(0,7) !== monthKey) return;
+    const val = map[ds];
+    if (val && val !== true) {
+      const dow = new Date(ds + 'T00:00:00').getDay();
+      out.push(`${DIAS[dow].toLowerCase()} ${Number(ds.slice(8,10))}: suspendido por ${(MOTIVO_LABELS[val] || val).toLowerCase()}`);
+    }
+  });
+  return out;
+}
+
+function renderMiniCalendario(monthKey, diasSet) {
+  const [y, m] = monthKey.split('-').map(Number);
+  const firstDow = new Date(y, m-1, 1).getDay(); // 0=domingo
+  const totalDias = new Date(y, m, 0).getDate();
+  const leadBlank = (firstDow + 6) % 7; // grilla de lunes a domingo
+  let cells = '';
+  for (let i = 0; i < leadBlank; i++) cells += `<div class="cal-cell cal-blank"></div>`;
+  for (let d = 1; d <= totalDias; d++) {
+    cells += `<div class="cal-cell ${diasSet.has(d) ? 'cal-on' : ''}">${d}</div>`;
+  }
+  return `<div class="cal-grid">
+    <div class="cal-dow">L</div><div class="cal-dow">M</div><div class="cal-dow">M</div><div class="cal-dow">J</div><div class="cal-dow">V</div><div class="cal-dow">S</div><div class="cal-dow">D</div>
+    ${cells}
+  </div>`;
+}
+
+function renderResumenMensual(schoolId, monthKey) {
+  const total = schoolTotal(schoolId, monthKey);
+  const diasSet = diasConClase(schoolId, monthKey);
+  const motivos = motivosDelMes(schoolId, monthKey);
+  return `
+  <div class="resumen-mensual-box">
+    <div class="resumen-mensual-title">Resumen ${monthLabel(monthKey)}</div>
+    ${renderMiniCalendario(monthKey, diasSet)}
+    <div class="resumen-mensual-patron">${horarioHabitualTexto(schoolId, monthKey)}</div>
+    ${motivos.length ? `<div class="resumen-mensual-motivos">${motivos.join('<br>')}</div>` : ''}
+    <div class="resumen-mensual-total">Total a pagar: ${formatCLP(total)}</div>
+  </div>`;
 }
 
 // ── RENDER ────────────────────────────────────────────────────
@@ -524,7 +641,6 @@ function renderSchools() {
             <span class="week-total">${formatCLP(weekTotal)}</span>
           </div>
           ${w.rows.map(r => renderDateRow(id, r)).join('')}
-          <button class="btn-small ghost" style="margin-top:6px" onclick="copiarResumenSemana('${id}','${w.weekStart}')">📋 Copiar resumen de esta semana</button>
         </div>`;
       }).join('');
     } else {
@@ -544,10 +660,11 @@ function renderSchools() {
         </div>
       </div>
       <div class="school-body">
+        ${school.activa && school.ciclo !== 'semanal' ? renderResumenMensual(id, state.activeMonth) : ''}
         ${rowsHtml}
         ${school.activa ? `
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--gray-mid)">
-          <button class="btn-small ghost" onclick="copiarResumenEscuela('${id}')">📋 Copiar resumen ${school.ciclo==='semanal' ? 'del mes completo' : ''}</button>
+        <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--gray-mid)">
+          <span style="font-size:12px;color:var(--gray-text)">Total</span>
           <span class="school-total">${formatCLP(total)}</span>
         </div>
         <div class="add-extra-wrap">
@@ -576,6 +693,12 @@ function renderDateRow(schoolId, r) {
       </div>
       <div class="date-subtotal">${formatCLP(subtotal)}</div>
     </div>
+    ${(r.excluded && !r.isExtra) ? `
+    <div class="motivo-row">
+      ${r.motivo
+        ? `<span class="motivo-tag">Motivo: ${MOTIVO_LABELS[r.motivo] || r.motivo}</span><button class="date-link" onclick="setMotivo('${schoolId}','${r.date}', null)">Quitar motivo</button>`
+        : `<span class="motivo-prompt">¿Motivo de suspensión?</span><button class="date-link" onclick="setMotivo('${schoolId}','${r.date}','lluvia')">Lluvia</button><button class="date-link" onclick="setMotivo('${schoolId}','${r.date}','profesor')">Motivo del profesor</button>`}
+    </div>` : ''}
     <div class="date-row-links">
       <button class="date-link" onclick="editarFecha('${schoolId}','${r.date}', ${r.isExtra})">✏️ Editar horario</button>
       ${r.isEdited && !r.isExtra ? `<button class="date-link" onclick="restablecerFecha('${schoolId}','${r.date}')">↺ Restablecer</button>` : ''}
@@ -624,11 +747,19 @@ function renderEditPanel() {
 // ── ACCIONES: EXCLUIR / EDITAR FECHA ───────────────────────────
 async function toggleExcluir(schoolId, dateStr) {
   const fact = state.fact[state.activeMonth][schoolId] || (state.fact[state.activeMonth][schoolId] = {});
-  const arr = fact.excluidas || (fact.excluidas = []);
-  const idx = arr.indexOf(dateStr);
-  if (idx === -1) arr.push(dateStr); else arr.splice(idx, 1);
+  const map = ensureExcluidasObj(fact);
+  if (dateStr in map) delete map[dateStr]; else map[dateStr] = true;
   render();
-  await saveExcluidas(state.activeMonth, schoolId, arr);
+  await saveExcluidas(state.activeMonth, schoolId, map);
+}
+
+async function setMotivo(schoolId, dateStr, motivo) {
+  const fact = state.fact[state.activeMonth][schoolId] || (state.fact[state.activeMonth][schoolId] = {});
+  const map = ensureExcluidasObj(fact);
+  if (!(dateStr in map)) return; // la fecha ya no está excluida
+  map[dateStr] = motivo || true;
+  render();
+  await saveExcluidas(state.activeMonth, schoolId, map);
 }
 
 function editarFecha(schoolId, dateStr, isExtra) {
@@ -644,7 +775,11 @@ function editBlockField(i, field, value) {
   state.editing.blocks[i][field] = (field === 'tarifaHora') ? Number(value) : value;
 }
 function addEditBlock() {
-  state.editing.blocks.push({ cancha: 'Cancha 1', horaInicio: '10:00', horaFin: '11:00', tarifaHora: 16000 });
+  const blocks = state.editing.blocks;
+  const prev = blocks[blocks.length - 1];
+  blocks.push(prev
+    ? { cancha: prev.cancha, horaInicio: prev.horaFin, horaFin: sumarHora(prev.horaFin, 1), tarifaHora: prev.tarifaHora }
+    : { cancha: 'Cancha 1', horaInicio: '10:00', horaFin: '11:00', tarifaHora: 16000 });
   renderEditPanel();
 }
 function removeEditBlock(i) {
@@ -691,11 +826,25 @@ async function eliminarExtra(schoolId, dateStr) {
   await deleteExtra(state.activeMonth, schoolId, dateStr);
 }
 
+// Horario habitual de la escuela para usar como punto de partida al agregar
+// una fecha puntual: el bloque de ese mismo día de la semana si entrena ese
+// día, o si no, su primer bloque guardado.
+function horarioHabitualPara(school, dateStr) {
+  const bloques = resolveBloques(school, dateStr);
+  if (!bloques.length) return [{ cancha: 'Cancha 1', horaInicio: '10:00', horaFin: '11:00', tarifaHora: 16000 }];
+  const dow = new Date(dateStr + 'T00:00:00').getDay();
+  const delDia = bloques.filter(b => b.dia === dow);
+  const base = (delDia.length ? delDia : bloques)[0];
+  return [{ cancha: base.cancha, horaInicio: base.horaInicio, horaFin: base.horaFin, tarifaHora: base.tarifaHora }];
+}
+
 function agregarFechaExtra(schoolId) {
   const hoy = new Date();
   const [y,m] = state.activeMonth.split('-').map(Number);
   const base = (y===hoy.getFullYear() && m===hoy.getMonth()+1) ? hoy : new Date(y, m-1, 1);
-  state.editing = { schoolId, date: dateKey(base), isExtra: true, isNew: true, blocks: [{ cancha:'Cancha 1', horaInicio:'10:00', horaFin:'11:00', tarifaHora:16000 }] };
+  const dateStr = dateKey(base);
+  const school = state.schools[schoolId];
+  state.editing = { schoolId, date: dateStr, isExtra: true, isNew: true, blocks: horarioHabitualPara(school, dateStr) };
   renderSchools();
 }
 
@@ -742,7 +891,11 @@ function renderFormBloques() {
 }
 
 function addFormBloque() {
-  state.formBloques.push({ dia: 6, cancha:'Cancha 1', horaInicio:'10:00', horaFin:'11:00', tarifaHora:16000 });
+  const blocks = state.formBloques;
+  const prev = blocks[blocks.length - 1];
+  blocks.push(prev
+    ? { dia: prev.dia, cancha: prev.cancha, horaInicio: prev.horaFin, horaFin: sumarHora(prev.horaFin, 1), tarifaHora: prev.tarifaHora }
+    : { dia: 6, cancha:'Cancha 1', horaInicio:'10:00', horaFin:'11:00', tarifaHora:16000 });
   renderFormBloques();
 }
 function editFormBloque(i, field, value) {
@@ -802,86 +955,6 @@ async function eliminarEscuela() {
   render();
   await deleteEscuelaConfig(id);
 }
-
-// ── COPIAR RESUMEN ──────────────────────────────────────────────
-function firstName(fullName) {
-  return (fullName || '').trim().split(/\s+/)[0] || '';
-}
-
-function saludoTexto(encargado, ambito) {
-  return `Hola ${firstName(encargado)}, te dejo lo correspondiente a ${ambito}. Quedo atenta a cualquier duda o comentario. Saludos!\n\n`;
-}
-
-// Bloque de una escuela para un mes completo (sin saludo) — usado en "copiar resumen" y "copiar resumen de todas"
-function escuelaBloqueTexto(schoolId, monthKey) {
-  const school = state.schools[schoolId];
-  const rows = rowsForSchool(schoolId, monthKey).filter(r => !r.excluded);
-  const total = rows.reduce((s,r) => s + blocksTotal(r.blocks), 0);
-  let txt = `*${school.nombre} (${school.encargado || 'sin encargado'})* — Facturación ${monthLabel(monthKey)} — CDV\n\n`;
-  if (rows.length === 0) {
-    txt += 'Sin fechas registradas este mes.\n\n';
-  } else if (school.ciclo === 'semanal') {
-    const weeks = groupRowsByWeek(rows);
-    weeks.forEach(w => {
-      const weekTotal = w.rows.reduce((s,r) => s + blocksTotal(r.blocks), 0);
-      txt += `${weekRangeLabel(w.weekStart)}\n`;
-      txt += w.rows.map(r => `${dateLabel(r.date)} — ${blocksSummaryText(r.blocks)}`).join('\n');
-      txt += `\nSubtotal semana: ${formatCLP(weekTotal)}\n\n`;
-    });
-  } else {
-    txt += rows.map(r => dateLabel(r.date)).join('\n');
-    txt += '\n\n';
-  }
-  txt += `*Total*: ${rows.length} día${rows.length!==1?'s':''} — ${formatCLP(total)}`;
-  return txt;
-}
-
-// Bloque de una escuela semanal para una sola semana (con cancha/horas, sin precio por día)
-function resumenSemanaTexto(schoolId, weekStart) {
-  const school = state.schools[schoolId];
-  const rows = rowsForSchool(schoolId, state.activeMonth).filter(r => !r.excluded && weekStartOf(r.date) === weekStart);
-  const total = rows.reduce((s,r) => s + blocksTotal(r.blocks), 0);
-  let txt = `*${school.nombre} (${school.encargado || 'sin encargado'})* — Facturación ${weekRangeLabel(weekStart)} — CDV\n\n`;
-  if (rows.length === 0) {
-    txt += 'Sin fechas registradas esta semana.\n\n';
-  } else {
-    txt += rows.map(r => `${dateLabel(r.date)} — ${blocksSummaryText(r.blocks)}`).join('\n');
-    txt += '\n\n';
-  }
-  txt += `*Total*: ${rows.length} día${rows.length!==1?'s':''} — ${formatCLP(total)}`;
-  return txt;
-}
-
-function copyToClipboard(text) {
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(() => showToast('Copiado ✓')).catch(() => fallbackCopy(text));
-  } else fallbackCopy(text);
-}
-function fallbackCopy(text) {
-  const ta = document.createElement('textarea');
-  ta.value = text; document.body.appendChild(ta); ta.select();
-  try { document.execCommand('copy'); showToast('Copiado ✓'); } catch(e) { showToast('No se pudo copiar'); }
-  ta.remove();
-}
-
-function copiarResumenEscuela(schoolId) {
-  const school = state.schools[schoolId];
-  copyToClipboard(saludoTexto(school.encargado, 'este mes') + escuelaBloqueTexto(schoolId, state.activeMonth));
-}
-
-function copiarResumenSemana(schoolId, weekStart) {
-  const school = state.schools[schoolId];
-  copyToClipboard(saludoTexto(school.encargado, 'esta semana') + resumenSemanaTexto(schoolId, weekStart));
-}
-
-function copiarResumenTodas() {
-  const activeIds = Object.keys(state.schools).filter(id => state.schools[id].activa)
-    .sort((a,b) => (state.schools[a].nombre||'').localeCompare(state.schools[b].nombre||''));
-  if (activeIds.length === 0) { showToast('No hay escuelas activas'); return; }
-  const txt = activeIds.map(id => escuelaBloqueTexto(id, state.activeMonth)).join('\n\n');
-  copyToClipboard(txt);
-}
-
 
 // ── INIT ──────────────────────────────────────────────────────
 async function initApp() {
