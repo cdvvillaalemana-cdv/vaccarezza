@@ -68,7 +68,7 @@
   .week-total { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 700; color: var(--green-dark); }
   .ciclo-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; background: var(--am-bg, #eef6ff); color: var(--am-color, #2563eb); text-transform: uppercase; letter-spacing: 0.03em; margin-left: 6px; }
   .date-row:last-child { border-bottom: none; }
-  .date-row.excluded { opacity: 0.45; }
+  .date-row.excluded > .date-row-top, .date-row.excluded > .date-row-links { opacity: 0.45; }
   .date-row-top { display: flex; align-items: center; gap: 10px; }
   .date-row-top input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--green); flex-shrink: 0; cursor: pointer; }
   .date-info { flex: 1; min-width: 0; }
@@ -80,9 +80,9 @@
   .date-link.del { color: var(--red); }
   .badge-mini { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; margin-left: 6px; background: #fff3cd; color: #856404; text-transform: none; }
 
-  .motivo-row { margin: 4px 0 2px 28px; font-size: 12px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .motivo-prompt { color: var(--gray-text); }
-  .motivo-tag { background: #fde8e8; color: #a33; font-weight: 600; padding: 2px 8px; border-radius: 4px; }
+  .motivo-row { margin: 4px 0 2px 28px; font-size: 12.5px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .motivo-prompt { color: #9a5b00; font-weight: 600; }
+  .motivo-tag { background: #fde8e8; color: #a33; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
 
   /* ── RESUMEN MENSUAL (caja con calendario) ── */
   .resumen-mensual-box { background: var(--green-light); border: 1px solid var(--green); border-radius: 10px; padding: 12px 14px; margin: 6px 0 14px; }
@@ -95,13 +95,18 @@
   .resumen-mensual-patron { font-size: 13px; line-height: 1.5; margin-bottom: 6px; }
   .resumen-mensual-motivos { font-size: 12px; color: var(--gray-text); font-style: italic; margin-bottom: 6px; }
   .resumen-mensual-total { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 700; color: var(--green-dark); text-align: right; }
+  .share-img-btn { width: 100%; margin: 2px 0 14px; }
+
+  .week-group-box { }
+  .cal-grid-week { margin-bottom: 8px; }
 
   .empty-msg { color: var(--gray-text); font-size: 13px; padding: 14px 0; text-align: center; }
 
   /* ── EDIT PANEL (inline) ── */
   .edit-panel { background: var(--gray-bg); border-radius: 10px; padding: 12px; margin-top: 8px; }
   .edit-block-row { display: grid; grid-template-columns: 1fr 1fr 1fr 90px auto; gap: 6px; margin-bottom: 8px; align-items: center; }
-  .edit-block-row select, .edit-block-row input { padding: 7px 8px; border: 1px solid var(--gray-mid); border-radius: 6px; font-size: 13px; font-family: 'Barlow', sans-serif; width: 100%; }
+  .form-bloque-row { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 90px auto; gap: 6px; margin-bottom: 8px; align-items: center; }
+  .edit-block-row select, .edit-block-row input, .form-bloque-row select, .form-bloque-row input { padding: 7px 8px; border: 1px solid var(--gray-mid); border-radius: 6px; font-size: 13px; font-family: 'Barlow', sans-serif; width: 100%; min-width: 0; }
   .edit-block-remove { background: none; border: none; color: var(--red); font-size: 16px; cursor: pointer; }
   .edit-panel-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
   .btn-small { padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; font-family: 'Barlow', sans-serif; }
@@ -144,6 +149,7 @@
     .edit-block-row { grid-template-columns: 1fr 1fr; }
     .edit-block-row input[type=number] { grid-column: span 1; }
     .edit-block-remove { grid-column: 2; justify-self: end; }
+    .form-bloque-row { grid-template-columns: 1fr 1fr; }
   }
 </style>
 </head>
@@ -176,39 +182,56 @@
 <div class="modal-overlay" id="modal-escuela" onclick="if(event.target===this)cerrarModalEscuela()">
   <div class="modal-box">
     <div class="modal-title" id="modal-title">Agregar escuela</div>
-    <div class="field">
-      <label>Nombre de la escuela</label>
-      <input type="text" id="f-nombre">
+    <div id="modal-form-fields">
+      <div class="field">
+        <label>Nombre de la escuela</label>
+        <input type="text" id="f-nombre">
+      </div>
+      <div class="field">
+        <label>Encargado</label>
+        <input type="text" id="f-encargado">
+      </div>
+      <div class="field field-check">
+        <input type="checkbox" id="f-activa" checked>
+        <label style="margin:0;text-transform:none;font-size:14px">Escuela activa (aparece en el cálculo del mes)</label>
+      </div>
+      <div class="field">
+        <label>Ciclo de facturación</label>
+        <select id="f-ciclo" style="width:100%;padding:9px 10px;border:1px solid var(--gray-mid);border-radius:8px;font-size:14px;font-family:'Barlow',sans-serif">
+          <option value="mensual">Mensual</option>
+          <option value="semanal">Semanal (lunes a domingo)</option>
+        </select>
+      </div>
+      <div class="bloques-editor-title">Horario habitual</div>
+      <div id="f-bloques"></div>
+      <button class="add-block-link" onclick="addFormBloque()">+ Agregar bloque de horario</button>
+      <div class="modal-error" id="modal-error"></div>
+      <div class="modal-actions">
+        <button class="btn-small primary" onclick="guardarEscuela()">Guardar</button>
+        <button class="btn-small ghost" onclick="cerrarModalEscuela()">Cancelar</button>
+      </div>
+      <div class="modal-delete" id="modal-delete-wrap" style="display:none">
+        <button onclick="eliminarEscuela()">Eliminar esta escuela</button>
+      </div>
     </div>
-    <div class="field">
-      <label>Encargado</label>
-      <input type="text" id="f-encargado">
-    </div>
-    <div class="field field-check">
-      <input type="checkbox" id="f-activa" checked>
-      <label style="margin:0;text-transform:none;font-size:14px">Escuela activa (aparece en el cálculo del mes)</label>
-    </div>
-    <div class="field">
-      <label>Ciclo de facturación</label>
-      <select id="f-ciclo" style="width:100%;padding:9px 10px;border:1px solid var(--gray-mid);border-radius:8px;font-size:14px;font-family:'Barlow',sans-serif">
-        <option value="mensual">Mensual</option>
-        <option value="semanal">Semanal (lunes a domingo)</option>
-      </select>
-    </div>
-    <div class="bloques-editor-title">Horario habitual</div>
-    <div id="f-bloques"></div>
-    <button class="add-block-link" onclick="addFormBloque()">+ Agregar bloque de horario</button>
-    <div class="modal-error" id="modal-error"></div>
-    <div class="modal-actions">
-      <button class="btn-small primary" onclick="guardarEscuela()">Guardar</button>
-      <button class="btn-small ghost" onclick="cerrarModalEscuela()">Cancelar</button>
-    </div>
-    <div class="modal-delete" id="modal-delete-wrap" style="display:none">
-      <button onclick="eliminarEscuela()">Eliminar esta escuela</button>
+    <div id="modal-vigencia-step" style="display:none">
+      <div class="field">
+        <label>¿Desde cuándo rige este nuevo horario?</label>
+        <input type="date" id="modal-vigencia-fecha">
+      </div>
+      <div style="font-size:12.5px;color:var(--gray-text);margin-bottom:12px;line-height:1.5">
+        Las fechas de este mes anteriores a esa fecha se siguen calculando con el horario que tenía antes.
+      </div>
+      <div class="modal-error" id="modal-vigencia-error"></div>
+      <div class="modal-actions">
+        <button class="btn-small primary" onclick="confirmarVigencia()">Confirmar</button>
+        <button class="btn-small ghost" onclick="cancelarVigencia()">Volver</button>
+      </div>
     </div>
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 // ── CONFIGURACIÓN ─────────────────────────────────────────────
 const DB_BASE = 'https://cdv-vaccarezza-default-rtdb.firebaseio.com';
@@ -226,6 +249,7 @@ let state = {
   editing: null,         // {schoolId, date, blocks, isExtra}
   formBloques: [],       // bloques being edited in the escuela modal
   editingSchoolId: null, // null = adding new
+  pendingSave: null,     // {nombre,encargado,activa,ciclo} en espera de la fecha de vigencia
   loadError: null        // mensaje de error si falló la carga desde Firebase
 };
 
@@ -504,24 +528,44 @@ function schoolTotal(schoolId, monthKey) {
 
 // ── RESUMEN MENSUAL (caja con calendario, para escuelas mensuales) ─
 
-// Horario habitual de la escuela para ese mes, como combinaciones únicas
+// Horario habitual de la escuela para ese mes: combinaciones únicas
 // {día, cancha, horaInicio, horaFin} tomadas de las fechas "normales" del
-// mes (sin contar fechas puntuales ni fechas editadas puntualmente).
+// mes (sin contar fechas excluidas, puntuales, ni editadas individualmente),
+// fusionando bloques consecutivos del mismo día y cancha en un solo rango.
 function horarioHabitualTexto(schoolId, monthKey) {
   const rows = rowsForSchool(schoolId, monthKey);
   const seen = new Set();
-  const combos = [];
+  const buckets = {}; // "dow|cancha" -> [{horaInicio,horaFin}]
   rows.forEach(r => {
-    if (r.isExtra || r.isEdited) return;
+    if (r.isExtra || r.isEdited || r.excluded) return;
     const dow = new Date(r.date + 'T00:00:00').getDay();
     (r.blocks || []).forEach(b => {
       const key = `${dow}|${b.cancha}|${b.horaInicio}|${b.horaFin}`;
-      if (!seen.has(key)) { seen.add(key); combos.push({ dow, cancha: b.cancha, horaInicio: b.horaInicio, horaFin: b.horaFin }); }
+      if (seen.has(key)) return;
+      seen.add(key);
+      const bk = `${dow}|${b.cancha}`;
+      (buckets[bk] || (buckets[bk] = [])).push({ horaInicio: b.horaInicio, horaFin: b.horaFin });
     });
   });
-  if (!combos.length) return 'Sin horario habitual registrado este mes.';
-  combos.sort((a,b) => a.dow - b.dow || a.horaInicio.localeCompare(b.horaInicio));
-  return combos.map(c => `${DIAS[c.dow].toLowerCase()} ${c.horaInicio}-${c.horaFin} ${c.cancha.replace('Cancha ','C')}`).join('; ');
+
+  const merged = [];
+  Object.keys(buckets).forEach(bk => {
+    const [dowStr, cancha] = bk.split('|');
+    const dow = Number(dowStr);
+    const tramos = buckets[bk].slice().sort((a,b) => a.horaInicio.localeCompare(b.horaInicio));
+    tramos.forEach(t => {
+      const last = merged[merged.length - 1];
+      if (last && last.dow === dow && last.cancha === cancha && last.horaFin === t.horaInicio) {
+        last.horaFin = t.horaFin;
+      } else {
+        merged.push({ dow, cancha, horaInicio: t.horaInicio, horaFin: t.horaFin });
+      }
+    });
+  });
+
+  if (!merged.length) return 'Sin horario habitual registrado este mes.';
+  merged.sort((a,b) => a.dow - b.dow || a.horaInicio.localeCompare(b.horaInicio));
+  return merged.map(c => `${DIAS[c.dow].toLowerCase()} ${c.horaInicio}-${c.horaFin} ${c.cancha.replace('Cancha ','C')}`).join('; ');
 }
 
 // Días del mes (número de día) en que efectivamente hay clase (ya
@@ -568,14 +612,62 @@ function renderResumenMensual(schoolId, monthKey) {
   const total = schoolTotal(schoolId, monthKey);
   const diasSet = diasConClase(schoolId, monthKey);
   const motivos = motivosDelMes(schoolId, monthKey);
+  const boxId = `resumen-mensual-${schoolId}`;
+  const nombreArchivo = archivoSeguro(`resumen-${state.schools[schoolId].nombre}-${monthKey}`);
   return `
-  <div class="resumen-mensual-box">
+  <div class="resumen-mensual-box" id="${boxId}">
     <div class="resumen-mensual-title">Resumen ${monthLabel(monthKey)}</div>
     ${renderMiniCalendario(monthKey, diasSet)}
     <div class="resumen-mensual-patron">${horarioHabitualTexto(schoolId, monthKey)}</div>
     ${motivos.length ? `<div class="resumen-mensual-motivos">${motivos.join('<br>')}</div>` : ''}
     <div class="resumen-mensual-total">Total a pagar: ${formatCLP(total)}</div>
+  </div>
+  <button class="btn-small ghost share-img-btn" onclick="compartirComoImagen('${boxId}','${nombreArchivo}.png','Resumen ${monthLabel(monthKey)}')">📤 Compartir como imagen</button>`;
+}
+
+// Calendario de una sola semana (lunes a domingo) para escuelas semanales.
+function renderMiniCalendarioSemana(weekStart, rows) {
+  const diasSet = new Set(rows.filter(r => !r.excluded).map(r => (new Date(r.date + 'T00:00:00').getDay() + 6) % 7));
+  let cells = '';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(weekStart + 'T00:00:00'); d.setDate(d.getDate() + i);
+    cells += `<div class="cal-cell ${diasSet.has(i) ? 'cal-on' : ''}">${d.getDate()}</div>`;
+  }
+  return `<div class="cal-grid cal-grid-week">
+    <div class="cal-dow">L</div><div class="cal-dow">M</div><div class="cal-dow">M</div><div class="cal-dow">J</div><div class="cal-dow">V</div><div class="cal-dow">S</div><div class="cal-dow">D</div>
+    ${cells}
   </div>`;
+}
+
+function archivoSeguro(txt) {
+  return (txt || 'resumen').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '').toLowerCase();
+}
+
+// Genera una imagen PNG de la caja indicada y la comparte directo (WhatsApp,
+// etc.) si el navegador lo permite; si no, la descarga.
+async function compartirComoImagen(elementId, fileName, titulo) {
+  const el = document.getElementById(elementId);
+  if (!el || typeof html2canvas === 'undefined') { showToast('No se pudo generar la imagen'); return; }
+  showToast('Generando imagen…');
+  try {
+    const canvas = await html2canvas(el, { backgroundColor: '#ffffff', scale: 2 });
+    canvas.toBlob(async (blob) => {
+      if (!blob) { showToast('No se pudo generar la imagen'); return; }
+      const file = new File([blob], fileName, { type: 'image/png' });
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try { await navigator.share({ files: [file], title: titulo }); return; }
+        catch(e) { /* canceló o falló el share nativo: seguimos con la descarga */ }
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = fileName;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      showToast('Imagen descargada ✓');
+    }, 'image/png');
+  } catch(e) {
+    showToast('No se pudo generar la imagen');
+  }
 }
 
 // ── RENDER ────────────────────────────────────────────────────
@@ -634,13 +726,19 @@ function renderSchools() {
       const weeks = groupRowsByWeek(rows);
       rowsHtml = weeks.map(w => {
         const weekTotal = w.rows.filter(r => !r.excluded).reduce((s,r) => s + blocksTotal(r.blocks), 0);
+        const boxId = `week-box-${id}-${w.weekStart}`;
+        const nombreArchivo = archivoSeguro(`semana-${school.nombre}-${w.weekStart}`);
         return `
         <div class="week-group">
-          <div class="week-head">
-            <span>${weekRangeLabel(w.weekStart)}</span>
-            <span class="week-total">${formatCLP(weekTotal)}</span>
+          <div class="week-group-box" id="${boxId}">
+            <div class="week-head">
+              <span>${weekRangeLabel(w.weekStart)}</span>
+              <span class="week-total">${formatCLP(weekTotal)}</span>
+            </div>
+            ${renderMiniCalendarioSemana(w.weekStart, w.rows)}
+            ${w.rows.map(r => renderDateRow(id, r)).join('')}
           </div>
-          ${w.rows.map(r => renderDateRow(id, r)).join('')}
+          <button class="btn-small ghost share-img-btn" onclick="compartirComoImagen('${boxId}','${nombreArchivo}.png','${weekRangeLabel(w.weekStart)}')">📤 Compartir como imagen</button>
         </div>`;
       }).join('');
     } else {
@@ -772,7 +870,10 @@ function editarFecha(schoolId, dateStr, isExtra) {
 function cancelarEdicionFecha() { state.editing = null; renderSchools(); }
 
 function editBlockField(i, field, value) {
-  state.editing.blocks[i][field] = (field === 'tarifaHora') ? Number(value) : value;
+  const b = state.editing.blocks[i];
+  if (field === 'tarifaHora') { b.tarifaHora = Number(value); return; }
+  if (field === 'horaInicio') { b.horaInicio = value; b.horaFin = sumarHora(value, 1); renderEditPanel(); return; }
+  b[field] = value;
 }
 function addEditBlock() {
   const blocks = state.editing.blocks;
@@ -857,6 +958,7 @@ async function toggleActiva(id, activa) {
 // ── MODAL AGREGAR / EDITAR ESCUELA ─────────────────────────────
 function abrirModalEscuela(id) {
   state.editingSchoolId = id;
+  state.pendingSave = null;
   const school = id ? state.schools[id] : { nombre:'', encargado:'', activa:true, ciclo:'mensual', bloques:[] };
   $('modal-title').textContent = id ? 'Editar escuela' : 'Agregar escuela';
   $('f-nombre').value = school.nombre || '';
@@ -867,15 +969,20 @@ function abrirModalEscuela(id) {
   state.formBloques = JSON.parse(JSON.stringify(bloquesActuales));
   $('modal-delete-wrap').style.display = id ? 'block' : 'none';
   $('modal-error').textContent = '';
+  $('modal-form-fields').style.display = 'block';
+  $('modal-vigencia-step').style.display = 'none';
   renderFormBloques();
   $('modal-escuela').classList.add('open');
 }
 
-function cerrarModalEscuela() { $('modal-escuela').classList.remove('open'); }
+function cerrarModalEscuela() {
+  $('modal-escuela').classList.remove('open');
+  state.pendingSave = null;
+}
 
 function renderFormBloques() {
   $('f-bloques').innerHTML = state.formBloques.map((b, i) => `
-    <div class="edit-block-row" style="grid-template-columns:1fr 1fr 1fr 1fr 90px auto">
+    <div class="form-bloque-row">
       <select onchange="editFormBloque(${i},'dia',this.value)">
         ${DIAS.map((d,di) => `<option value="${di}" ${b.dia==di?'selected':''}>${d}</option>`).join('')}
       </select>
@@ -899,7 +1006,10 @@ function addFormBloque() {
   renderFormBloques();
 }
 function editFormBloque(i, field, value) {
-  state.formBloques[i][field] = (field==='dia'||field==='tarifaHora') ? Number(value) : value;
+  const b = state.formBloques[i];
+  if (field === 'dia' || field === 'tarifaHora') { b[field] = Number(value); return; }
+  if (field === 'horaInicio') { b.horaInicio = value; b.horaFin = sumarHora(value, 1); renderFormBloques(); return; }
+  b[field] = value;
 }
 function removeFormBloque(i) { state.formBloques.splice(i,1); renderFormBloques(); }
 
@@ -913,34 +1023,68 @@ async function guardarEscuela() {
   for (const b of state.formBloques) {
     if (parseTimeDecimal(b.horaFin) <= parseTimeDecimal(b.horaInicio)) { $('modal-error').textContent = 'Hay un bloque con hora de fin antes que la de inicio.'; return; }
   }
+  const datosBase = { nombre, encargado, activa, ciclo };
 
-  let horarios;
-  if (state.editingSchoolId) {
-    // Escuela existente: el cambio queda vigente desde hoy; lo de antes no se toca.
-    const todayKey = dateKey(new Date());
-    const existentes = getHorarios(state.schools[state.editingSchoolId]);
-    if (existentes.length && existentes[existentes.length-1].vigenteDesde === todayKey) {
-      horarios = existentes.slice(0, -1).concat([{ vigenteDesde: todayKey, bloques: state.formBloques }]);
-    } else {
-      horarios = existentes.concat([{ vigenteDesde: todayKey, bloques: state.formBloques }]);
-    }
-  } else {
-    // Escuela nueva: una sola versión, vigente desde siempre.
-    horarios = [{ vigenteDesde: '2000-01-01', bloques: state.formBloques }];
-  }
-
-  const data = { nombre, encargado, activa, ciclo, horarios };
-  if (state.editingSchoolId) {
-    state.schools[state.editingSchoolId] = data;
-    await saveEscuelaConfig(state.editingSchoolId, data);
-  } else {
+  if (!state.editingSchoolId) {
+    // Escuela nueva: una sola versión de horario, vigente desde siempre.
+    const data = { ...datosBase, horarios: [{ vigenteDesde: '2000-01-01', bloques: state.formBloques }] };
     const tempId = 'tmp-' + Date.now();
     state.schools[tempId] = data;
     render();
     const realId = await pushNuevaEscuela(data);
     delete state.schools[tempId];
     state.schools[realId] = data;
+    cerrarModalEscuela();
+    render();
+    showToast('Escuela guardada ✓');
+    return;
   }
+
+  // Escuela existente: si el horario no cambió, solo se actualizan los demás
+  // datos, sin tocar el historial ni preguntar vigencia.
+  const existentes = getHorarios(state.schools[state.editingSchoolId]);
+  const bloquesActuales = existentes.length ? existentes[existentes.length - 1].bloques : [];
+  const cambioHorario = JSON.stringify(bloquesActuales) !== JSON.stringify(state.formBloques);
+
+  if (!cambioHorario) {
+    const data = { ...state.schools[state.editingSchoolId], ...datosBase };
+    state.schools[state.editingSchoolId] = data;
+    await saveEscuelaConfig(state.editingSchoolId, data);
+    cerrarModalEscuela();
+    render();
+    showToast('Escuela guardada ✓');
+    return;
+  }
+
+  // El horario sí cambió: preguntar desde cuándo rige antes de guardar.
+  state.pendingSave = datosBase;
+  $('modal-vigencia-fecha').value = dateKey(new Date());
+  $('modal-vigencia-error').textContent = '';
+  $('modal-form-fields').style.display = 'none';
+  $('modal-vigencia-step').style.display = 'block';
+}
+
+function cancelarVigencia() {
+  state.pendingSave = null;
+  $('modal-vigencia-step').style.display = 'none';
+  $('modal-form-fields').style.display = 'block';
+}
+
+async function confirmarVigencia() {
+  const fecha = $('modal-vigencia-fecha').value;
+  if (!fecha) { $('modal-vigencia-error').textContent = 'Elige una fecha.'; return; }
+  const datosBase = state.pendingSave;
+  const existentes = getHorarios(state.schools[state.editingSchoolId]);
+  let horarios;
+  if (existentes.length && existentes[existentes.length - 1].vigenteDesde === fecha) {
+    horarios = existentes.slice(0, -1).concat([{ vigenteDesde: fecha, bloques: state.formBloques }]);
+  } else {
+    horarios = existentes.concat([{ vigenteDesde: fecha, bloques: state.formBloques }]);
+  }
+  const data = { ...state.schools[state.editingSchoolId], ...datosBase, horarios };
+  state.schools[state.editingSchoolId] = data;
+  await saveEscuelaConfig(state.editingSchoolId, data);
+  state.pendingSave = null;
   cerrarModalEscuela();
   render();
   showToast('Escuela guardada ✓');
