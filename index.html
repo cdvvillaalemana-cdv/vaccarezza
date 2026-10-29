@@ -674,13 +674,13 @@ function render() {
         <span class="day-date">${d.getDate()} de ${MESES[d.getMonth()]}</span>
         ${isToday ? '<span class="today-badge">HOY</span>' : ''}
         ${rain ? `<span class="rain-badge">🌧️ <a href="${METEORED_URL}" target="_blank" style="color:var(--gray-text);text-decoration:underline;text-underline-offset:2px;">Probabilidad de lluvia</a><span class="info-icon info-icon-dark" >i<div class="tooltip-box">Ante pronóstico de lluvia, solicitamos abono el día anterior para confirmar tu reserva. El estado de las canchas puede verse afectado si la lluvia es muy abundante. Si se inundan, nos comunicaremos contigo.</div></span></span>` : ''}
-        ${!rain && hasLightRain(dk) ? `<span class="rain-light-badge">🌦️ Lluvia leve prevista — las canchas estarán en buenas condiciones<span class="info-icon" style="background:rgba(37,99,235,0.15);color:#2563eb;border-color:#93c5fd;" >i<div class="tooltip-box">Se esperan lluvias leves que no afectarán el estado de las canchas. Los partidos se juegan con normalidad.</div></span></span>` : ''}
+        ${!rain && hasLightRain(dk) ? `<span class="rain-light-badge">🌦️ Lluvia leve prevista — las canchas estarán en buenas condiciones<span class="info-icon" style="background:rgba(37,99,235,0.15);color:#2563eb;border-color:#93c5fd;" >i<div class="tooltip-box">Se esperan lluvias leves que no afectarán el estado de las canchas. Pediremos abono para confirmar asistencia. Los partidos se juegan con normalidad.</div></span></span>` : ''}
       </div>`;
 
     if (feriadoDay) {
       let feriadoMsg = '';
-      if (dk === '2026-09-18') feriadoMsg = '🇨🇱 Tu familia te espera de vuelta. No manejes si bebes.';
-      else if (dk === '2026-09-19') feriadoMsg = '🇨🇱 Cuídate y cuida a los tuyos, pasa las llaves.';
+      if (dk === '2027-09-18') feriadoMsg = '🇨🇱 Tu familia te espera de vuelta. No manejes si bebes.';
+      else if (dk === '2027-09-19') feriadoMsg = '🇨🇱 Cuídate y cuida a los tuyos, pasa las llaves.';
       html += `<div class="feriado-block"><span>🚫</span>Cerrado — Feriado irrenunciable${feriadoMsg ? `<br><span style="font-size:13px;display:block;margin-top:6px;color:#666">${feriadoMsg}</span>` : ''}</div>`;
     } else if (lluviaIntensaDay) {
       html += `<div class="cerrado-clima"><span>⛈️</span>Cerrado por condiciones climáticas<br><span style="font-size:13px;display:block;margin-top:4px">Las canchas se encuentran inhabilitadas. Te contactaremos para reagendar o devolver tu abono.</span></div>`;
