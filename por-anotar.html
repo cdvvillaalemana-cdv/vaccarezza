@@ -89,6 +89,36 @@
   .seg button:disabled { color: #bbb; cursor: default; background: var(--gray-bg); }
   .form-note { font-size: 12px; color: var(--gray-text); margin-top: 8px; }
 
+  /* DESPLEGABLES */
+  details.help { background: #fff; border: 1px solid var(--gray-mid); border-radius: 10px; margin-bottom: 12px; }
+  details.help > summary { list-style: none; cursor: pointer; padding: 10px 14px; font-size: 14px; font-weight: 700; color: var(--green-dark); display: flex; align-items: center; gap: 6px; }
+  details.help > summary::-webkit-details-marker, details.section > summary::-webkit-details-marker { display: none; }
+  details.help > summary::after, details.section > summary::after { content: '▾'; margin-left: auto; transition: transform 0.15s; }
+  details[open].help > summary::after, details[open].section > summary::after { transform: rotate(180deg); }
+  .help-body { padding: 2px 16px 14px; font-size: 14px; line-height: 1.6; color: #333; border-top: 1px solid #f0f0ee; }
+  .help-body h4 { font-size: 14px; margin: 12px 0 4px; }
+  .help-body ol, .help-body ul { padding-left: 20px; }
+  .help-body li { margin-bottom: 6px; }
+  .help-body code { background: var(--gray-bg); border: 1px solid var(--gray-mid); border-radius: 4px; padding: 0 5px; font-size: 13px; }
+  .help-body .tip { background: var(--amber-bg); border-radius: 8px; padding: 8px 10px; margin-top: 10px; color: var(--amber-text); }
+  details.section { margin-top: 22px; }
+  details.section > summary { list-style: none; cursor: pointer; font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid var(--gray-mid); border-radius: 12px; padding: 12px 14px; }
+  details[open].section > summary { border-radius: 12px 12px 0 0; border-bottom-color: #f0f0ee; }
+  details.section .sec-sub { font-family: 'Barlow', sans-serif; font-size: 12px; font-weight: 500; color: var(--gray-text); text-transform: none; letter-spacing: 0; }
+  details.section .form-card { border-top: none; border-radius: 0 0 12px 12px; }
+  @media (max-width: 480px) { details.section .sec-sub { display: none; } }
+
+  /* MODAL WHATSAPP TRAS ANOTAR */
+  .wa-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 90; align-items: flex-end; justify-content: center; }
+  .wa-modal.open { display: flex; }
+  .wa-box { background: #fff; border-radius: 16px 16px 0 0; padding: 20px 18px 26px; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; }
+  @media (min-width: 600px) { .wa-modal { align-items: center; } .wa-box { border-radius: 16px; } }
+  .wa-box h3 { font-size: 17px; margin-bottom: 4px; }
+  .wa-box .sub { font-size: 13px; color: var(--gray-text); margin-bottom: 12px; }
+  .wa-preview { background: #e7fbe9; border-radius: 10px; padding: 10px 12px; font-size: 14px; line-height: 1.5; white-space: pre-wrap; color: #1a1a1a; }
+  .wa-go { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 14px; margin-top: 14px; background: #25d366; color: #fff; border-radius: 10px; font-size: 16px; font-weight: 700; text-decoration: none; }
+  .wa-next { font-size: 13px; background: var(--amber-bg); color: var(--amber-text); border-radius: 8px; padding: 8px 10px; margin-top: 12px; }
+
   .toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%) translateY(120px); background: var(--dark); color: #fff; padding: 12px 18px; border-radius: 10px; font-size: 14px; font-weight: 600; max-width: calc(100vw - 32px); box-shadow: 0 6px 20px rgba(0,0,0,0.25); transition: transform 0.25s; z-index: 100; }
   .toast.show { transform: translateX(-50%) translateY(0); }
   .toast.warn { background: #b45309; }
@@ -126,10 +156,58 @@
     <div id="avisar-zona"></div>
 
     <div class="section-title">📝 Por anotar <span class="count" id="c-pend">0</span></div>
+    <details class="help">
+      <summary>ℹ️ ¿Cómo funciona "Por anotar"?</summary>
+      <div class="help-body">
+        <h4>¿Qué es?</h4>
+        Cada vez que un cliente toca <b>Solicitar</b> en la página de disponibilidad, su solicitud aparece aquí con un <b>código</b> (ej. <code>#R7K</code>). Ese mismo código llega al final de su mensaje de WhatsApp como <i>"Código de solicitud"</i>. Mientras no se anote, en la página pública ese horario se ve como <b>⏳ Pendiente</b>.
+        <h4>Paso a paso</h4>
+        <ol>
+          <li>Llega un WhatsApp con <i>"Código de solicitud"</i>. Busca aquí la tarjeta con ese código (coinciden cancha, día y hora).</li>
+          <li>Revisa el nombre del recuadro. Puedes corregirlo antes de anotar: así quedará escrito en el Sheet.</li>
+          <li>Toca <b>✍️ Anotar</b>. El nombre se escribe solo en el Sheet y se abre WhatsApp con el mensaje listo. <b>Elige el chat del cliente y envía.</b></li>
+        </ol>
+        <h4>¿Qué mensaje se envía?</h4>
+        <ul>
+          <li><b>Reserva para 2 días o más:</b> el mensaje "✅ ¡Reservado!" con las condiciones de confirmación. Con eso queda listo.</li>
+          <li><b>Reserva para hoy o mañana:</b> no se envía el "Reservado". El mensaje pregunta si <b>ambos equipos están 100% confirmados</b>. Cuando el cliente responda que sí, envíale la respuesta rápida <code>/listohoy</code>.</li>
+        </ul>
+        <div class="tip">⚠️ En las reservas para hoy o mañana el nombre ya queda anotado en el Sheet. Si el cliente no confirma (para mañana: antes de las 17:00 de hoy), <b>borra su nombre del Sheet</b> para liberar la cancha.</div>
+        <h4>Otros casos</h4>
+        <ul>
+          <li><b>Varias solicitudes para el mismo horario:</b> se atiende primero al <b>"1° en la fila"</b>. Al anotarlo, los demás pasan a <b>📣 Avisar: cupo tomado</b>: escríbeles ofreciendo otro horario y toca <b>Ya avisé</b>.</li>
+          <li><b>Liberar:</b> úsalo si una solicitud nunca llegó por WhatsApp (el cliente no envió el mensaje) o si el cliente desistió.</li>
+          <li><b>Sin código:</b> si un mensaje llega sin "Código de solicitud", no quedó registrado aquí: anótalo directo en el Sheet.</li>
+          <li><b>Avisos al celular (Telegram):</b> si una solicitud lleva 30 min sin anotar dentro del horario de atención, llega un recordatorio. Lo que llega fuera de horario se resume al abrir (11:00 o 12:00).</li>
+        </ul>
+      </div>
+    </details>
     <div id="pend-zona"></div>
 
-    <div class="section-title">📌 Guardar cupo</div>
+    <details class="section" id="guardar-sec">
+    <summary>📌 Guardar cupo <span class="sec-sub">· apartar una cancha por unos minutos</span></summary>
     <div class="form-card">
+      <details class="help" style="margin-bottom:14px">
+        <summary>ℹ️ ¿Cómo funciona "Guardar cupo"?</summary>
+        <div class="help-body">
+          <h4>¿Para qué sirve?</h4>
+          Para apartar una cancha por un rato, sin anotarla todavía. Ejemplo: un equipo busca rival y le das 25 minutos para conseguirlo.
+          <h4>Paso a paso</h4>
+          <ol>
+            <li>Elige <b>día</b>, <b>hora</b> y <b>cancha</b> (las canchas ocupadas aparecen bloqueadas).</li>
+            <li>Escribe los <b>minutos</b> que quieres guardarla (el número que quieras, ej. 20, 35, 60).</li>
+            <li>Opcional: escribe un <b>nombre</b> para reconocerlo (ej. "Equipo Los Toros").</li>
+            <li>Toca <b>Guardar cupo</b>. En la página pública el horario se ve <b>⏳ Pendiente</b>, y el cupo aparece arriba en <b>Por anotar</b> con la etiqueta 📌 y el tiempo que le queda.</li>
+          </ol>
+          <h4>¿Y después?</h4>
+          <ul>
+            <li><b>Si consiguen rival:</b> busca el cupo en Por anotar, escribe el nombre y toca <b>Anotar</b>.</li>
+            <li><b>Si desisten:</b> toca <b>Liberar</b>.</li>
+            <li><b>Si no responden:</b> al cumplirse los minutos el cupo se libera solo y llega un aviso al celular: <i>"⏱️ Venció el cupo guardado"</i>.</li>
+          </ul>
+          <div class="tip">Si alguien solicita ese horario mientras está guardado, queda en lista de espera detrás de tu cupo.</div>
+        </div>
+      </details>
       <div class="form-grid">
         <div class="field">
           <label for="g-dia">Día</label>
@@ -156,12 +234,24 @@
         </div>
       </div>
       <button class="btn btn-primary btn-block" id="g-btn" onclick="guardarCupo()">Guardar cupo</button>
-      <div class="form-note">El cupo se muestra como "Pendiente" en la página y se libera solo al cumplirse los minutos. Si ya hay solicitudes en ese horario, queda en la lista de espera.</div>
+      <div class="form-note">El cupo se libera solo al cumplirse los minutos y te llega un aviso al celular.</div>
     </div>
+    </details>
 
     <div style="text-align:center;margin-top:26px;">
       <button class="icon-btn" onclick="salir()">Cerrar sesión</button>
     </div>
+  </div>
+</div>
+
+<div class="wa-modal" id="wa-modal" onclick="if(event.target===this)cerrarWA()">
+  <div class="wa-box" role="dialog" aria-modal="true">
+    <h3>✅ Anotado en el Sheet</h3>
+    <div class="sub" id="wa-sub"></div>
+    <div class="wa-preview" id="wa-preview"></div>
+    <a class="wa-go" id="wa-go" href="#" onclick="setTimeout(cerrarWA, 400)">Abrir WhatsApp y elegir el chat</a>
+    <div class="wa-next" id="wa-next"></div>
+    <button class="btn btn-ghost btn-block" onclick="cerrarWA()">Cerrar</button>
   </div>
 </div>
 
@@ -170,7 +260,7 @@
 <script>
 // ── CONFIGURACIÓN ─────────────────────────────────────────────
 // La misma URL de Apps Script que en index.html (termina en /exec)
-const API_URL = 'https://script.google.com/macros/s/AKfycbxsg_gAVK-mGQhVd40qQ62smpyrxGtcuile_vO7bn10HFb64cv_nO8nd1BKjfSY1vHZ/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwXdqRpJZMjHUgGJjBACUTDaLhUkX-U2lnGdbopklHhUx-anq76Ld8I5gjcvRPc99np/exec';
 const RECORDATORIO_MIN = 30;
 
 const DIAS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -341,8 +431,48 @@ function fila(x, borradores) {
   </div>`;
 }
 
+// ── MENSAJE DE WHATSAPP TRAS ANOTAR ───────────────────────────
+function hoyYMD() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function diasHasta(fecha) { return Math.round((new Date(fecha + 'T12:00:00') - new Date(hoyYMD() + 'T12:00:00')) / 86400000); }
+
+function mensajeAnotado(x, nombreAnotado) {
+  // Primer nombre del cliente; en cupos guardados se deja el espacio vacío para escribirlo
+  const pn = x.tipo === 'cliente' ? (nombreAnotado.trim().split(/\s+/)[0] || '') : '';
+  const d = diasHasta(x.fecha);
+  if (d >= 2) {
+    return `Hola ${pn} ✅ ¡Reservado!\n` +
+      `🤝 *Trabajamos con reserva sin abono*. Por eso, confirmar tu asistencia antes de las 17:00 hrs del día anterior es tu responsabilidad.\n` +
+      `⚠️ Si no confirmas, la reserva se da de baja automáticamente, aunque no te hayamos escrito.\n\n` +
+      `Gracias por reservar en CDV 🟢🟠`;
+  }
+  if (d === 1) return `Hola ${pn}\nOk! *Ambos equipos 100% confirmados* para mañana o me confirmas hoy antes de las 5 pm?`;
+  return `Hola ${pn}\nOk! ¿*Ambos equipos 100% confirmados* para hoy?`;
+}
+
+function abrirWA(x, nombre, inicioClick) {
+  const texto = mensajeAnotado(x, nombre);
+  const url = `https://wa.me/?text=${encodeURIComponent(texto)}`;
+  const d = diasHasta(x.fecha);
+  document.getElementById('wa-sub').textContent = `${nombre} · ${CANCHA[x.cancha]} · ${dia(x.fecha)} · ${x.hora}`;
+  document.getElementById('wa-preview').innerHTML = esc(texto).replace(/\*([^*\n]+)\*/g, '<b>$1</b>');
+  document.getElementById('wa-go').href = url;
+  const next = document.getElementById('wa-next');
+  next.style.display = d <= 1 ? 'block' : 'none';
+  next.innerHTML = d <= 1 ? 'Reserva para <b>' + (d === 1 ? 'mañana' : 'hoy') + '</b>: cuando el cliente confirme, envíale <b>/listohoy</b>. Si no confirma, borra su nombre del Sheet.' : '';
+  document.getElementById('wa-modal').classList.add('open');
+  // Abrir WhatsApp automáticamente si el toque fue reciente (los celulares bloquean aperturas tardías)
+  if (Date.now() - inicioClick < 4500) window.location.href = url;
+}
+
+// Si WhatsApp se abrió (la página quedó en segundo plano), cerrar la ventana para no verla al volver
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') cerrarWA(); });
+
+function cerrarWA() { document.getElementById('wa-modal').classList.remove('open'); }
+
 // ── ACCIONES ──────────────────────────────────────────────────
 async function anotar(codigo, btn) {
+  const inicio = Date.now();
+  const item = datos.items.find(i => i.codigo === codigo);
   const input = document.querySelector(`.name-input[data-cod="${CSS.escape(codigo)}"]`);
   const nombre = (input ? input.value : '').trim();
   if (nombre.length < 2) { toast('Escribe el nombre para anotar', 'warn'); if (input) input.focus(); return; }
@@ -351,7 +481,8 @@ async function anotar(codigo, btn) {
     const r = await api({ action: 'anotar', codigo, nombre });
     ocupado = false;
     if (r.ok) {
-      toast(r.avisar ? `Anotado ✓ · Hay ${r.avisar} en espera para avisar` : 'Anotado en el Sheet ✓', r.avisar ? 'warn' : '');
+      if (r.avisar) toast(`Hay ${r.avisar} en espera para avisar (cupo tomado)`, 'warn');
+      if (item) abrirWA(item, nombre, inicio);
     } else if (r.motivo === 'ocupada') {
       toast(`No se anotó: la celda ya dice "${r.actual}". Revisa el Sheet.`, 'bad');
     } else if (r.motivo === 'no_existe') {
