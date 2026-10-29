@@ -119,6 +119,14 @@
   .wa-go { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 14px; margin-top: 14px; background: #25d366; color: #fff; border-radius: 10px; font-size: 16px; font-weight: 700; text-decoration: none; }
   .wa-next { font-size: 13px; background: var(--amber-bg); color: var(--amber-text); border-radius: 8px; padding: 8px 10px; margin-top: 12px; }
 
+  .pos.subio { background: #fef3c7; color: #92400e; }
+  .btn-sm { padding: 3px 9px; font-size: 12px; border-radius: 20px; }
+  .lib-card { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 14px; border-top: 1px solid #f0f0ee; font-size: 14px; }
+  .lib-card:first-child { border-top: none; }
+  .lib-info { flex: 1; min-width: 170px; line-height: 1.45; }
+  .lib-info small { color: var(--gray-text); }
+  details.section .lib-list { background: #fff; border: 1px solid var(--gray-mid); border-top: none; border-radius: 0 0 12px 12px; }
+
   .toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%) translateY(120px); background: var(--dark); color: #fff; padding: 12px 18px; border-radius: 10px; font-size: 14px; font-weight: 600; max-width: calc(100vw - 32px); box-shadow: 0 6px 20px rgba(0,0,0,0.25); transition: transform 0.25s; z-index: 100; }
   .toast.show { transform: translateX(-50%) translateY(0); }
   .toast.warn { background: #b45309; }
@@ -176,13 +184,19 @@
         <h4>Otros casos</h4>
         <ul>
           <li><b>Varias solicitudes para el mismo horario:</b> se atiende primero al <b>"1° en la fila"</b>. Al anotarlo, los demás pasan a <b>📣 Avisar: cupo tomado</b>: escríbeles ofreciendo otro horario y toca <b>Ya avisé</b>.</li>
-          <li><b>Liberar:</b> úsalo si una solicitud nunca llegó por WhatsApp (el cliente no envió el mensaje) o si el cliente desistió.</li>
+          <li><b>Liberar:</b> úsalo si una solicitud nunca llegó por WhatsApp (el cliente no envió el mensaje) o si el cliente desistió. Si liberaste uno por error, ábrelo en <b>🗂️ Liberados hoy</b> (más abajo) y toca <b>Restaurar</b>: vuelve a su mismo lugar en la fila.</li>
+          <li><b>🔔 Subió a 1°:</b> si se libera el 1° de la fila (o vence un cupo guardado), el siguiente pasa a ser el 1° y llega un aviso por Telegram. Escríbele para avisarle que se liberó el cupo y toca <b>✓ Avisado</b>.</li>
           <li><b>Sin código:</b> si un mensaje llega sin "Código de solicitud", no quedó registrado aquí: anótalo directo en el Sheet.</li>
           <li><b>Avisos al celular (Telegram):</b> si una solicitud lleva 30 min sin anotar dentro del horario de atención, llega un recordatorio. Lo que llega fuera de horario se resume al abrir (11:00 o 12:00).</li>
         </ul>
       </div>
     </details>
     <div id="pend-zona"></div>
+
+    <details class="section hidden" id="lib-sec">
+      <summary>🗂️ Liberados hoy <span class="count" id="c-lib">0</span> <span class="sec-sub">· por si liberaste alguno por error</span></summary>
+      <div class="lib-list" id="lib-zona"></div>
+    </details>
 
     <details class="section" id="guardar-sec">
     <summary>📌 Guardar cupo <span class="sec-sub">· apartar una cancha por unos minutos</span></summary>
@@ -203,7 +217,7 @@
           <ul>
             <li><b>Si consiguen rival:</b> busca el cupo en Por anotar, escribe el nombre y toca <b>Anotar</b>.</li>
             <li><b>Si desisten:</b> toca <b>Liberar</b>.</li>
-            <li><b>Si no responden:</b> al cumplirse los minutos el cupo se libera solo y llega un aviso al celular: <i>"⏱️ Venció el cupo guardado"</i>.</li>
+            <li><b>Si no responden:</b> al cumplirse los minutos el cupo se libera solo y llega un aviso al celular: <i>"⏱️ Venció el cupo guardado"</i>. Si había alguien esperando ese horario, el aviso dice quién quedó 1° para que le escribas. Si venció antes de tiempo, puedes restaurarlo en <b>🗂️ Liberados hoy</b>.</li>
           </ul>
           <div class="tip">Si alguien solicita ese horario mientras está guardado, queda en lista de espera detrás de tu cupo.</div>
         </div>
@@ -267,6 +281,8 @@ const DIAS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const CANCHA = { 1: 'Cancha 1 · Muro', 2: 'Cancha 2 · Estacionamiento' };
 
 let PIN = '';
+let srvOffset = 0;   // diferencia entre el reloj de Google y el del celular
+function ahora() { return Date.now() + srvOffset; }
 let datos = { items: [], grilla: [], ahora: Date.now() };
 let canchaSel = null;
 let ocupado = false;
@@ -275,7 +291,7 @@ let ocupado = false;
 function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function dia(fecha) { const d = new Date(fecha + 'T00:00:00'); return `${DIAS[d.getDay()]} ${fecha.slice(8,10)}/${fecha.slice(5,7)}`; }
 function hace(ms) {
-  const m = Math.max(0, Math.round((Date.now() - ms) / 60000));
+  const m = Math.max(0, Math.round((ahora() - ms) / 60000));
   if (m < 1) return 'recién';
   if (m < 60) return `hace ${m} min`;
   const h = Math.floor(m / 60);
@@ -283,7 +299,7 @@ function hace(ms) {
   return `hace ${Math.floor(h / 24)} d`;
 }
 function falta(ms) {
-  const m = Math.max(0, Math.round((ms - Date.now()) / 60000));
+  const m = Math.max(0, Math.round((ms - ahora()) / 60000));
   return m < 60 ? `vence en ${m} min` : `vence en ${Math.floor(m/60)} h ${m%60} min`;
 }
 let toastT;
@@ -293,10 +309,31 @@ function toast(msg, tipo) {
   clearTimeout(toastT); toastT = setTimeout(() => t.className = 'toast', 3800);
 }
 
-async function api(body) {
-  const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ ...body, pin: PIN }) });
-  return res.json();
+// Llamada al servidor. Las lecturas se reintentan solas; las acciones no (se verifican después).
+async function api(body, intentos) {
+  intentos = intentos || (['listar', 'login'].includes(body.action) ? 3 : 1);
+  let ultimoError;
+  for (let i = 0; i < intentos; i++) {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 25000);
+    try {
+      const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ ...body, pin: PIN }), signal: ctrl.signal });
+      const r = await res.json();
+      clearTimeout(t);
+      if (r && r.ahora) srvOffset = r.ahora - Date.now();
+      if (r && r.lista && r.lista.ahora) srvOffset = r.lista.ahora - Date.now();
+      return r;
+    } catch (e) {
+      clearTimeout(t);
+      ultimoError = e;
+      if (i < intentos - 1) await new Promise(ok => setTimeout(ok, 1500));
+    }
+  }
+  const err = new Error(navigator.onLine === false ? 'red' : 'servidor');
+  err.causa = ultimoError;
+  throw err;
 }
+function msgError(e) { return e && e.message === 'red' ? 'Sin internet en el celular' : 'Google tardó en responder'; }
 
 // ── ACCESO ────────────────────────────────────────────────────
 async function entrar(pinGuardado) {
@@ -339,17 +376,28 @@ async function cargar(manual) {
   try {
     const r = await api({ action: 'listar' });
     if (!r.ok) { if (r.motivo === 'pin') salir(); return; }
-    // Conservar lo que se esté escribiendo en los nombres
-    const borradores = {};
-    document.querySelectorAll('.name-input[data-cod]').forEach(i => { if (i.dataset.dirty) borradores[i.dataset.cod] = i.value; });
-    datos = r;
-    render(borradores);
-    const d = new Date();
-    document.getElementById('updated').textContent = `Actualizado a las ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
+    aplicarLista(r);
     if (manual) toast('Actualizado');
   } catch(e) {
-    if (manual) toast('No se pudo actualizar', 'bad');
+    if (manual) toast(`No se pudo actualizar: ${msgError(e)}`, 'bad');
   }
+}
+
+// Pinta una lista nueva conservando lo que se esté escribiendo en los nombres
+function aplicarLista(lista) {
+  const borradores = {};
+  document.querySelectorAll('.name-input[data-cod]').forEach(i => { if (i.dataset.dirty) borradores[i.dataset.cod] = i.value; });
+  datos = lista;
+  render(borradores);
+  const d = new Date(ahora());
+  document.getElementById('updated').textContent = 'Actualizado a las ' +
+    d.toLocaleTimeString('es-CL', { timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+}
+
+// Después de una acción: usa la lista que viene en la respuesta (o la pide si no vino)
+async function refrescar(r) {
+  if (r && r.lista && r.lista.ok) aplicarLista(r.lista);
+  else await cargar();
 }
 
 function render(borradores = {}) {
@@ -402,6 +450,21 @@ function render(borradores = {}) {
     pz.querySelectorAll('.name-input').forEach(i => i.addEventListener('input', () => { i.dataset.dirty = '1'; }));
   }
 
+  // Historial de liberados hoy
+  const libs = datos.liberados || [];
+  document.getElementById('lib-sec').classList.toggle('hidden', !libs.length);
+  document.getElementById('c-lib').textContent = libs.length;
+  document.getElementById('lib-zona').innerHTML = libs.map(x => {
+    const hora = new Date(x.cerrado).toLocaleTimeString('es-CL', { timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+    const que = x.estado === 'vencido' ? `venció a las ${hora}` : `liberado a las ${hora}`;
+    return `<div class="lib-card">
+      <span class="code">${esc(x.codigo)}</span>
+      <div class="lib-info"><b>${esc(x.nombre)}</b>${x.tipo === 'guardado' ? ' · 📌' : ''}<br>
+        ${CANCHA[x.cancha]} · ${dia(x.fecha)} · ${esc(x.hora)}<br><small>${que}</small></div>
+      <button class="btn btn-ghost" onclick="restaurar('${esc(x.codigo)}',this)">↩️ Restaurar</button>
+    </div>`;
+  }).join('');
+
   llenarDias();
 }
 
@@ -410,7 +473,7 @@ function fila(x, borradores) {
   const pos = x.posicion === 1
     ? `<span class="pos p1">1° en la fila</span>`
     : `<span class="pos pn">En espera · ${x.posicion}°</span>`;
-  const late = !guardado && (Date.now() - x.creado) >= RECORDATORIO_MIN * 60000;
+  const late = !guardado && (ahora() - x.creado) >= RECORDATORIO_MIN * 60000;
   const tiempo = guardado
     ? `<span class="wait">${x.vence ? falta(x.vence) : ''}</span>`
     : `<span class="wait${late ? ' late' : ''}">${hace(x.creado)}</span>`;
@@ -421,6 +484,7 @@ function fila(x, borradores) {
       <span class="code">${esc(x.codigo)}</span>
       ${guardado ? '<span class="tag-guardado">📌 Cupo guardado</span>' : ''}
       ${pos}
+      ${x.subio && x.posicion === 1 ? `<span class="pos subio">🔔 Subió a 1° · avísale</span><button class="btn btn-ghost btn-sm" onclick="accion('avisado_subio','${esc(x.codigo)}',this)">✓ Avisado</button>` : ''}
       ${tiempo}
     </div>
     <div class="req-row">
@@ -432,7 +496,7 @@ function fila(x, borradores) {
 }
 
 // ── MENSAJE DE WHATSAPP TRAS ANOTAR ───────────────────────────
-function hoyYMD() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function hoyYMD() { return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(new Date(ahora())); }
 function diasHasta(fecha) { return Math.round((new Date(fecha + 'T12:00:00') - new Date(hoyYMD() + 'T12:00:00')) / 86400000); }
 
 function mensajeAnotado(x, nombreAnotado) {
@@ -441,7 +505,7 @@ function mensajeAnotado(x, nombreAnotado) {
   const d = diasHasta(x.fecha);
   if (d >= 2) {
     return `Hola ${pn} ✅ ¡Reservado!\n` +
-      `🤝 *Trabajamos con reserva sin abono*. Por eso, confirmar tu asistencia antes de las 17:00 hrs del día anterior es tu responsabilidad.\n\n` +
+      `🤝 *Trabajamos con reserva sin abono*. Por eso, confirmar tu asistencia antes de las 17:00 hrs del día anterior es tu responsabilidad.\n` +
       `⚠️ Si no confirmas, la reserva se da de baja automáticamente, aunque no te hayamos escrito.\n\n` +
       `Gracias por reservar en CDV 🟢🟠`;
   }
@@ -477,34 +541,53 @@ async function anotar(codigo, btn) {
   const nombre = (input ? input.value : '').trim();
   if (nombre.length < 2) { toast('Escribe el nombre para anotar', 'warn'); if (input) input.focus(); return; }
   btn.disabled = true; btn.textContent = 'Anotando…'; ocupado = true;
+  let r;
   try {
-    const r = await api({ action: 'anotar', codigo, nombre });
+    r = await api({ action: 'anotar', codigo, nombre });
+  } catch(e) {
+    // La respuesta no llegó: revisar si igual se anotó
     ocupado = false;
-    if (r.ok) {
-      if (r.avisar) toast(`Hay ${r.avisar} en espera para avisar (cupo tomado)`, 'warn');
-      if (item) abrirWA(item, nombre, inicio);
-    } else if (r.motivo === 'ocupada') {
-      toast(`No se anotó: la celda ya dice "${r.actual}". Revisa el Sheet.`, 'bad');
-    } else if (r.motivo === 'no_existe') {
-      toast('Esta solicitud ya no está pendiente', 'warn');
-    } else toast('No se pudo anotar', 'bad');
-  } catch(e) { ocupado = false; toast('Sin conexión. No se anotó.', 'bad'); }
-  await cargar();
+    await cargar();
+    const sigue = datos.items.some(i => i.codigo === codigo && i.estado === 'pendiente');
+    if (!sigue && item) { toast('Se anotó ✓ (Google tardó en responder)'); abrirWA(item, nombre, 0); }
+    else toast(`No se anotó: ${msgError(e)}. Intenta de nuevo.`, 'bad');
+    return;
+  }
+  ocupado = false;
+  if (r.ok) {
+    if (r.avisar) toast(`Hay ${r.avisar} en espera para avisar (cupo tomado)`, 'warn');
+    if (item) abrirWA(item, nombre, inicio);
+  } else if (r.motivo === 'ocupada') {
+    toast(`No se anotó: la celda ya dice "${r.actual}". Revisa el Sheet.`, 'bad');
+  } else if (r.motivo === 'no_existe') {
+    toast('Esta solicitud ya no está pendiente', 'warn');
+  } else toast('No se pudo anotar', 'bad');
+  await refrescar(r);
 }
 
-async function liberar(codigo, btn) {
-  if (!confirm(`¿Liberar la solicitud ${codigo}? Úsalo si nunca llegó su WhatsApp o si ya le avisaste.`)) return;
-  await accion('liberar', codigo, btn);
-}
+async function liberar(codigo, btn) { await accion('liberar', codigo, btn); }
+async function restaurar(codigo, btn) { await accion('restaurar', codigo, btn); }
 
 async function accion(action, codigo, btn) {
   btn.disabled = true; ocupado = true;
+  let r;
   try {
-    const r = await api({ action, codigo });
+    r = await api({ action, codigo });
+  } catch(e) {
     ocupado = false;
-    toast(r.ok ? (action === 'avisado' ? 'Listo ✓' : 'Liberado ✓') : 'Ya no estaba pendiente', r.ok ? '' : 'warn');
-  } catch(e) { ocupado = false; toast('Sin conexión', 'bad'); }
-  await cargar();
+    await cargar();
+    toast(`${msgError(e)}. Revisa si se aplicó el cambio.`, 'warn');
+    return;
+  }
+  ocupado = false;
+  if (!r.ok) {
+    toast(r.motivo === 'ocupada' ? `No se puede restaurar: la celda ya dice "${r.actual}"`
+        : r.motivo === 'pasado' ? 'Ese horario ya pasó' : 'Ya no estaba disponible para esta acción', 'warn');
+  } else if (action === 'liberar') {
+    toast(r.subio ? `Liberado ✓ · Ahora 1°: ${r.subio.nombre}. Avísale.` : 'Liberado ✓ · Si fue un error, está en "Liberados hoy"', r.subio ? 'warn' : '');
+  } else if (action === 'restaurar') toast('Restaurado ✓ · Volvió a su lugar en la fila');
+  else toast('Listo ✓');
+  await refrescar(r);
 }
 
 // ── GUARDAR CUPO ──────────────────────────────────────────────
@@ -567,7 +650,10 @@ async function guardarCupo() {
       canchaSel = null;
     } else if (r.motivo === 'ocupado') toast('Esa cancha ya está anotada en el Sheet', 'bad');
     else toast('No se pudo guardar', 'bad');
-  } catch(e) { ocupado = false; toast('Sin conexión', 'bad'); }
+    btn.disabled = false; btn.textContent = 'Guardar cupo';
+    await refrescar(r);
+    return;
+  } catch(e) { ocupado = false; toast(`${msgError(e)}. Revisa en "Por anotar" si quedó guardado.`, 'warn'); }
   btn.disabled = false; btn.textContent = 'Guardar cupo';
   await cargar();
 }
