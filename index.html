@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Disponibilidad – Complejo Deportivo Vaccarezza</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="dispo CDV">
+<meta name="application-name" content="dispo CDV">
+<meta name="theme-color" content="#2dbe82">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -169,6 +175,12 @@
   .wa-slot-link.pend .pend-sub { font-size: 10px; font-weight: 500; color: #9a5b00; opacity: 0.85; }
   .pend-wrap { display: inline-flex; flex-direction: column; align-items: flex-start; line-height: 1.15; }
 
+  .espera-link { display: inline-block; margin-top: 3px; background: none; border: none; padding: 0; font-family: 'Barlow', sans-serif; font-size: 11px; font-weight: 600; color: var(--gray-text); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+  .espera-link:hover { color: var(--dark); }
+  .espera-link .n { color: #9a5b00; text-decoration: none; }
+  .servicio { text-align: center; font-size: 12px; color: var(--gray-text); margin-top: 14px; line-height: 1.6; }
+  .servicio a { color: var(--green-dark); font-weight: 600; }
+
   /* MODAL DE SOLICITUD */
   .sol-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 300; align-items: flex-end; justify-content: center; }
   .sol-modal.open { display: flex; }
@@ -268,17 +280,11 @@
 
   <div class="bottom-section">
 
-    <a class="wa-btn" href="https://wa.me/56977937858" target="_blank">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-      Reservar por WhatsApp
-    </a>
-
     <div class="wa-sub">
-      Te responderemos a la brevedad · +56 9 7793 7858<br>
+      +56 9 7793 7858<br>
       <span class="wa-order">✅ Atendemos por orden de llegada de mensajes</span><br>
       <span class="wa-warning">⚠️ Para no perder tu lugar, escribe solo una vez. Atendemos los mensajes del más temprano al más reciente.</span><br>
-      <span style="font-size:13px;color:var(--gray-text)">Para consultar por otros horarios escríbenos por WhatsApp.</span><br>
-      <span style="font-size:12px;color:var(--gray-text)">* Las reservas de las 23 hrs deben quedar pagadas antes de jugar, ya sea en el establecimiento o por transferencia (solicita los datos por WhatsApp).</span>
+      <span style="font-size:12px;color:var(--gray-text)">* Las reservas de las 23 hrs deben quedar pagadas antes de jugar.</span>
     </div>
 
     <div class="group-btns">
@@ -303,6 +309,10 @@
     </button>
     <div style="text-align:center;margin-top:10px;">
       <a onclick="location.reload()" style="font-size:12px;color:var(--gray-text);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px;">↻ Actualizar página</a>
+    </div>
+    <div class="servicio">
+      💻 ¿Te gustaría una página como esta para tu recinto o negocio?<br>
+      <a id="link-servicio" href="#" target="_blank">Escríbeme y conversemos</a>
     </div>
 
   </div>
@@ -349,6 +359,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwXdqRpJZMjHUgGJjBACUTD
 let allData           = [];
 let weatherData       = {};
 let pendData          = {};   // "fecha|hora|cancha" -> cantidad de solicitudes pendientes
+let anotData          = {};   // "fecha|hora|cancha" -> personas en lista de espera de una reserva anotada sin confirmar
 let currentWeekOffset = 0;
 let solActual         = null; // solicitud abierta en el modal
 
@@ -398,16 +409,24 @@ function diaLabel(fecha) {
   return `${DIAS[d.getDay()]} ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
 }
 
-function waLink({ fecha, hora, cancha, nombre, codigo, posicion }) {
-  const estado = posicion && posicion > 1
-    ? `⏳ Solicitud en lista de espera (posición ${posicion})`
-    : `⏳ Solicitud pendiente de confirmación`;
+function hoyChile() { return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(new Date()); }
+function etiquetaDia(fecha) {
+  const d = Math.round((new Date(fecha + 'T12:00:00') - new Date(hoyChile() + 'T12:00:00')) / 86400000);
+  return (d === 0 ? 'HOY · ' : d === 1 ? 'MAÑANA · ' : '') + diaLabel(fecha);
+}
+
+function waLink({ fecha, hora, cancha, nombre, codigo, posicion, tipo }) {
+  const espera = tipo === 'espera';
+  const estado = espera
+    ? `📋 Lista de espera de una reserva ya anotada (posición ${posicion || 1}). Solo me avisan si se libera.`
+    : posicion && posicion > 1
+      ? `⏳ Solicitud en lista de espera (posición ${posicion})`
+      : `⏳ Solicitud pendiente de confirmación`;
   const lineas = [
-    'Hola! Quiero solicitar esta reserva:',
-    '',
-    `🏟️ Cancha: *${CANCHA_LABEL[cancha]}*`,
-    `📅 Día: *${diaLabel(fecha)}*`,
+    espera ? 'Hola! Quiero quedar en lista de espera para:' : 'Hola! Quiero solicitar esta reserva:',
+    `📅 Día: *${etiquetaDia(fecha)}*`,
     `🕗 Hora: *${hora}*`,
+    `🏟️ Cancha: *${CANCHA_LABEL[cancha]}*`,
     `👤 Nombre y apellido: ${nombre}`,
     '',
     estado
@@ -424,18 +443,28 @@ function nombreValido(s) { return s.length >= 3 && s.split(' ').filter(Boolean).
 function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 // ── MODAL DE SOLICITUD ────────────────────────────────────────
-function abrirSolicitud(fecha, hora, cancha) {
-  const n = pendData[`${fecha}|${nh(hora)}|${cancha}`] || 0;
-  solActual = { fecha, hora, cancha, enEspera: n > 0, posicion: n + 1, editandoNombre: false };
+function abrirSolicitud(fecha, hora, cancha, tipo) {
+  const espera = tipo === 'espera';
+  const k = `${fecha}|${nh(hora)}|${cancha}`;
+  const n = espera ? (anotData[k] || 0) : (pendData[k] || 0);
+  solActual = { fecha, hora, cancha, tipo: espera ? 'espera' : 'cliente', enEspera: espera || n > 0, posicion: n + 1, editandoNombre: false };
+  document.getElementById('sol-title').textContent = espera ? 'Lista de espera' : 'Solicitar cancha';
   document.getElementById('sol-resumen').innerHTML =
-    `🏟️ Cancha: <b>${CANCHA_LABEL[cancha]}</b><br>📅 Día: <b>${diaLabel(fecha)}</b><br>🕗 Hora: <b>${hora}</b>`;
-  document.getElementById('sol-espera').innerHTML = n > 0
-    ? `<div class="sol-espera"><div class="sol-espera-title">⏳ Este horario ya fue solicitado</div>
-        Alguien pidió esta cancha antes que tú. Si envías tu solicitud, quedarás <strong>en lista de espera (posición ${n + 1})</strong> y el cupo <strong>no</strong> queda asegurado. Te avisaremos si se libera.</div>`
-    : '';
+    `📅 Día: <b>${etiquetaDia(fecha)}</b><br>🕗 Hora: <b>${hora}</b><br>🏟️ Cancha: <b>${CANCHA_LABEL[cancha]}</b>`;
+  let aviso = '';
+  if (espera) {
+    aviso = `<div class="sol-espera"><div class="sol-espera-title">📋 Esta cancha ya está reservada</div>
+      Estamos esperando la confirmación de quien la reservó. Puedes quedar <strong>en lista de espera${n ? ` (posición ${n + 1})` : ''}</strong>.<br>
+      <strong>Solo te avisaremos si el cupo se libera.</strong> Si no se libera, no te contactaremos.</div>`;
+  } else if (n > 0) {
+    aviso = `<div class="sol-espera"><div class="sol-espera-title">⏳ Este horario ya fue solicitado</div>
+      Alguien pidió esta cancha antes que tú y estamos esperando su confirmación. Si envías tu solicitud, quedarás <strong>en lista de espera (posición ${n + 1})</strong> y el cupo <strong>no</strong> queda asegurado.<br>
+      <strong>Solo te avisaremos si el cupo se libera.</strong> Si no se libera, no te contactaremos.</div>`;
+  }
+  document.getElementById('sol-espera').innerHTML = aviso;
   const go = document.getElementById('sol-go');
-  go.textContent = n > 0 ? 'Entiendo, quedar en espera' : 'Enviar por WhatsApp';
-  go.classList.toggle('espera', n > 0);
+  go.textContent = solActual.enEspera ? 'Entiendo, quedar en espera' : 'Enviar por WhatsApp';
+  go.classList.toggle('espera', solActual.enEspera);
   go.disabled = false;
   pintarNombre();
   ocultarError();
@@ -475,31 +504,38 @@ async function enviarSolicitud() {
 
   const go = document.getElementById('sol-go');
   go.disabled = true; go.textContent = 'Registrando…';
-  const { fecha, hora, cancha } = solActual;
+  const { fecha, hora, cancha, tipo } = solActual;
   let codigo = '', posicion = solActual.posicion;
+  const textoBoton = solActual.enEspera ? 'Entiendo, quedar en espera' : 'Enviar por WhatsApp';
 
   if (apiActiva()) {
     try {
-      const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'solicitar', fecha, hora, cancha, nombre }) });
+      const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'solicitar', fecha, hora, cancha, nombre, tipo }) });
       const r = await res.json();
       if (r.ok) {
         codigo = r.codigo; posicion = r.posicion;
       } else if (r.motivo === 'ocupado') {
         mostrarError('Este horario acaba de ser reservado. Actualizaremos la página.');
         setTimeout(() => location.reload(), 2200); return;
+      } else if (r.motivo === 'libre') {
+        mostrarError('¡Este horario se acaba de liberar! Actualizaremos la página para que lo solicites.');
+        setTimeout(() => location.reload(), 2200); return;
+      } else if (r.motivo === 'confirmada') {
+        mostrarError('Esta reserva ya fue confirmada, así que no tiene lista de espera.');
+        setTimeout(() => location.reload(), 2500); return;
       } else if (r.motivo === 'pasado') {
-        mostrarError('Este horario ya pasó.'); go.disabled = false; go.textContent = 'Enviar por WhatsApp'; return;
+        mostrarError('Este horario ya pasó.'); go.disabled = false; go.textContent = textoBoton; return;
       } else if (r.motivo === 'limite') {
         mostrarError('Ya tienes varias solicitudes pendientes. Espera nuestra respuesta o escríbenos por WhatsApp.');
-        go.disabled = false; go.textContent = 'Enviar por WhatsApp'; return;
+        go.disabled = false; go.textContent = textoBoton; return;
       } else if (r.motivo === 'nombre') {
-        mostrarError('Escribe tu nombre y apellido.'); go.disabled = false; go.textContent = 'Enviar por WhatsApp'; return;
+        mostrarError('Escribe tu nombre y apellido.'); go.disabled = false; go.textContent = textoBoton; return;
       }
       // Cualquier otro error: se envía igual por WhatsApp, sin código.
     } catch(e) { /* sin conexión con el registro: se envía igual por WhatsApp */ }
   }
 
-  const url = waLink({ fecha, hora, cancha, nombre, codigo, posicion });
+  const url = waLink({ fecha, hora, cancha, nombre, codigo, posicion, tipo });
   cerrarSolicitud();
   window.location.href = url;
   // Al volver a la página, refrescar el estado
@@ -571,7 +607,10 @@ async function loadPendientes() {
     const map = {};
     (r.pendientes || []).forEach(p => { map[`${p.fecha}|${nh(p.hora)}|${p.cancha}`] = p.n; });
     pendData = map;
-  } catch(e) { pendData = {}; }
+    const an = {};
+    (r.anotadas || []).forEach(p => { an[`${p.fecha}|${nh(p.hora)}|${p.cancha}`] = p.n; });
+    anotData = an;
+  } catch(e) { pendData = {}; anotData = {}; }
 }
 
 // ── FETCH WEATHER ─────────────────────────────────────────────
@@ -703,7 +742,13 @@ function render() {
         const ocp2  = slot.cancha2 && slot.cancha2.trim() !== '' && !isKeyword(slot.cancha2);
 
         const statusCell = (ocupado, fecha, hora, cancha) => {
-          if (ocupado) return `<div class="status-cell ocupado"><div class="status-dot"></div><span class="status-text">Reservado</span></div>`;
+          if (ocupado) {
+            const k = `${fecha}|${nh(hora)}|${cancha}`;
+            const reservado = `<div class="status-cell ocupado"><div class="status-dot"></div><span class="status-text">Reservado</span></div>`;
+            if (!(k in anotData)) return reservado;
+            const n = anotData[k];
+            return reservado + `<button type="button" class="espera-link" onclick="abrirSolicitud('${fecha}','${hora}',${cancha},'espera')">+ lista de espera${n ? ` <span class="n">(${n})</span>` : ''}</button>`;
+          }
           const n = pendData[`${fecha}|${nh(hora)}|${cancha}`] || 0;
           const onclick = `abrirSolicitud('${fecha}','${hora}',${cancha})`;
           if (n > 0) return `<button type="button" class="wa-slot-link pend" onclick="${onclick}"><span class="pend-wrap">⏳ Pendiente<span class="pend-sub">Lista de espera</span></span></button>`;
@@ -961,6 +1006,10 @@ async function init() {
   await Promise.all([loadSheet(), loadWeather(), loadPendientes()]);
   render();
 }
+
+// Frase de servicio: WhatsApp con mensaje para cotizar una página
+document.getElementById('link-servicio').href = `https://wa.me/${WA_NUMBER}?text=` +
+  encodeURIComponent('Hola, me gustaría hablar con Romina para cotizar la construcción de una página web. [Entregar más detalles de lo que busca]');
 
 // Al volver desde WhatsApp, refrescar los pendientes
 document.addEventListener('visibilitychange', () => {
