@@ -120,6 +120,12 @@
   .wa-next { font-size: 13px; background: var(--amber-bg); color: var(--amber-text); border-radius: 8px; padding: 8px 10px; margin-top: 12px; }
 
   .pos.subio { background: #fef3c7; color: #92400e; }
+  .cli-card .slot-head { background: #eef6ff; }
+  .cli-slot { font-size: 14px; font-weight: 700; }
+  .cli-foot { padding: 12px 14px; background: #fafaf8; border-top: 1px solid #f0f0ee; }
+  .cli-foot .name-input { width: 100%; margin-bottom: 8px; }
+  .cli-note { font-size: 12px; color: var(--gray-text); margin-top: 6px; }
+  .req-row.mini { justify-content: flex-end; }
   .btn-sm { padding: 3px 9px; font-size: 12px; border-radius: 20px; }
   .lib-card { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 14px; border-top: 1px solid #f0f0ee; font-size: 14px; }
   .lib-card:first-child { border-top: none; }
@@ -184,7 +190,10 @@
         <h4>Otros casos</h4>
         <ul>
           <li><b>Varias solicitudes para el mismo horario:</b> se atiende primero al <b>"1° en la fila"</b>. Al anotarlo, los demás pasan a <b>📣 Avisar: cupo tomado</b>: escríbeles ofreciendo otro horario y toca <b>Ya avisé</b>.</li>
-          <li><b>Liberar:</b> úsalo si una solicitud nunca llegó por WhatsApp (el cliente no envió el mensaje) o si el cliente desistió. Si liberaste uno por error, ábrelo en <b>🗂️ Liberados hoy</b> (más abajo) y toca <b>Restaurar</b>: vuelve a su mismo lugar en la fila.</li>
+          <li><b>Liberar:</b> úsalo si una solicitud nunca llegó por WhatsApp (el cliente no envió el mensaje) o si el cliente desistió. Si liberaste uno por error, ábrelo en <b>🗂️ Liberados</b> (más abajo) y toca <b>Restaurar</b>: vuelve a su mismo lugar en la fila.</li>
+          <li><b>👤 Mismo cliente con varias solicitudes:</b> aparecen juntas en una tarjeta azul. Toca <b>Anotar todas</b>: se anotan de una vez y se abre <b>un solo WhatsApp</b> con todas sus reservas. Si quieres anotar solo algunas, usa el botón Anotar de cada una.</li>
+          <li><b>📋 Lista de espera de reservas anotadas:</b> clientes que pidieron quedar en espera de una reserva que ya está anotada pero sin confirmar (celda en blanco). No hay que hacer nada con ellos. Si borras esa reserva del Sheet, llega un aviso por Telegram y pasan solos a "Por anotar", con el 1° marcado <b>🔔 Subió a 1°</b>. Si la reserva se confirma, no se les avisa.</li>
+          <li><b>✅ Anotados:</b> las reservas anotadas en las últimas 24 h. Si se te olvidó enviar el mensaje, toca <b>Abrir WhatsApp de nuevo</b>.</li>
           <li><b>🔔 Subió a 1°:</b> si se libera el 1° de la fila (o vence un cupo guardado), el siguiente pasa a ser el 1° y llega un aviso por Telegram. Escríbele para avisarle que se liberó el cupo y toca <b>✓ Avisado</b>.</li>
           <li><b>Sin código:</b> si un mensaje llega sin "Código de solicitud", no quedó registrado aquí: anótalo directo en el Sheet.</li>
           <li><b>Avisos al celular (Telegram):</b> si una solicitud lleva 30 min sin anotar dentro del horario de atención, llega un recordatorio. Lo que llega fuera de horario se resume al abrir (11:00 o 12:00).</li>
@@ -193,8 +202,18 @@
     </details>
     <div id="pend-zona"></div>
 
+    <details class="section hidden" id="esp-sec">
+      <summary>📋 Lista de espera de reservas anotadas <span class="count" id="c-esp">0</span></summary>
+      <div class="lib-list" id="esp-zona"></div>
+    </details>
+
+    <details class="section hidden" id="anot-sec">
+      <summary>✅ Anotados <span class="count" id="c-anot">0</span> <span class="sec-sub">· últimas 24 h</span></summary>
+      <div class="lib-list" id="anot-zona"></div>
+    </details>
+
     <details class="section hidden" id="lib-sec">
-      <summary>🗂️ Liberados hoy <span class="count" id="c-lib">0</span> <span class="sec-sub">· por si liberaste alguno por error</span></summary>
+      <summary>🗂️ Liberados <span class="count" id="c-lib">0</span> <span class="sec-sub">· últimas 24 h, por si liberaste alguno por error</span></summary>
       <div class="lib-list" id="lib-zona"></div>
     </details>
 
@@ -217,7 +236,7 @@
           <ul>
             <li><b>Si consiguen rival:</b> busca el cupo en Por anotar, escribe el nombre y toca <b>Anotar</b>.</li>
             <li><b>Si desisten:</b> toca <b>Liberar</b>.</li>
-            <li><b>Si no responden:</b> al cumplirse los minutos el cupo se libera solo y llega un aviso al celular: <i>"⏱️ Venció el cupo guardado"</i>. Si había alguien esperando ese horario, el aviso dice quién quedó 1° para que le escribas. Si venció antes de tiempo, puedes restaurarlo en <b>🗂️ Liberados hoy</b>.</li>
+            <li><b>Si no responden:</b> al cumplirse los minutos el cupo se libera solo y llega un aviso al celular: <i>"⏱️ Venció el cupo guardado"</i>. Si había alguien esperando ese horario, el aviso dice quién quedó 1° para que le escribas. Si venció antes de tiempo, puedes restaurarlo en <b>🗂️ Liberados</b>.</li>
           </ul>
           <div class="tip">Si alguien solicita ese horario mientras está guardado, queda en lista de espera detrás de tu cupo.</div>
         </div>
@@ -387,6 +406,7 @@ async function cargar(manual) {
 function aplicarLista(lista) {
   const borradores = {};
   document.querySelectorAll('.name-input[data-cod]').forEach(i => { if (i.dataset.dirty) borradores[i.dataset.cod] = i.value; });
+  document.querySelectorAll('.name-input[data-grupo]').forEach(i => { if (i.dataset.dirty) borradores['grupo:' + i.dataset.grupo] = i.value; });
   datos = lista;
   render(borradores);
   const d = new Date(ahora());
@@ -402,6 +422,7 @@ async function refrescar(r) {
 
 function render(borradores = {}) {
   const pend = datos.items.filter(x => x.estado === 'pendiente');
+  const esperas = datos.items.filter(x => x.estado === 'espera');
   const avisar = datos.items.filter(x => x.estado === 'cupo_tomado');
   const clientes = pend.filter(x => x.tipo === 'cliente').length;
 
@@ -427,18 +448,24 @@ function render(borradores = {}) {
         </div>`).join('');
   } else az.innerHTML = '';
 
-  // Por anotar, agrupado por horario
+  // Por anotar: primero los clientes con varias solicitudes, luego el resto agrupado por horario
   const pz = document.getElementById('pend-zona');
   if (!pend.length) {
     pz.innerHTML = `<div class="empty">🎉 No hay solicitudes por anotar.</div>`;
   } else {
+    const porCliente = {};
+    pend.filter(x => x.tipo === 'cliente').forEach(x => { const k = claveNombre(x.nombre); (porCliente[k] = porCliente[k] || []).push(x); });
+    const multi = Object.keys(porCliente).filter(k => porCliente[k].length >= 2);
+    const enGrupo = new Set(multi.flatMap(k => porCliente[k].map(x => x.codigo)));
+    let html = multi.map(k => tarjetaCliente(k, porCliente[k], borradores)).join('');
+
     const grupos = {};
-    pend.forEach(x => { const k = `${x.fecha}|${x.hora}|${x.cancha}`; (grupos[k] = grupos[k] || []).push(x); });
+    pend.filter(x => !enGrupo.has(x.codigo)).forEach(x => { const k = `${x.fecha}|${x.hora}|${x.cancha}`; (grupos[k] = grupos[k] || []).push(x); });
     const claves = Object.keys(grupos).sort((a, b) => {
       const ma = Math.min(...grupos[a].map(x => x.creado)), mb = Math.min(...grupos[b].map(x => x.creado));
       return ma - mb;
     });
-    pz.innerHTML = claves.map(k => {
+    html += claves.map(k => {
       const lista = grupos[k].sort((a, b) => a.posicion - b.posicion);
       const g = lista[0];
       const warn = g.celda ? `<div class="slot-warn">⚠️ En el Sheet esta celda ya dice "<b>${esc(g.celda)}</b>". Revisa antes de anotar.</div>` : '';
@@ -447,15 +474,40 @@ function render(borradores = {}) {
         ${lista.map(x => fila(x, borradores)).join('')}
       </div>`;
     }).join('');
+    pz.innerHTML = html;
     pz.querySelectorAll('.name-input').forEach(i => i.addEventListener('input', () => { i.dataset.dirty = '1'; }));
   }
 
-  // Historial de liberados hoy
+  // Lista de espera de reservas anotadas
+  document.getElementById('esp-sec').classList.toggle('hidden', !esperas.length);
+  document.getElementById('c-esp').textContent = esperas.length;
+  document.getElementById('esp-zona').innerHTML = esperas
+    .sort((a, b) => (a.fecha + a.hora + a.cancha).localeCompare(b.fecha + b.hora + b.cancha) || a.posicion - b.posicion)
+    .map(x => `<div class="lib-card">
+      <span class="code">${esc(x.codigo)}</span>
+      <div class="lib-info"><b>${esc(x.nombre)}</b> · ${x.posicion}° en espera<br>
+        ${CANCHA[x.cancha]} · ${dia(x.fecha)} · ${esc(x.hora)}<br>
+        <small>Reserva actual: ${esc(x.celda || '—')} · pidió ${hace(x.creado)}</small></div>
+      <button class="btn btn-ghost" onclick="liberar('${esc(x.codigo)}',this)">Liberar</button>
+    </div>`).join('');
+
+  // Historial de anotados (24 h)
+  const anots = datos.anotados || [];
+  document.getElementById('anot-sec').classList.toggle('hidden', !anots.length);
+  document.getElementById('c-anot').textContent = anots.length;
+  document.getElementById('anot-zona').innerHTML = anots.map(x => `<div class="lib-card">
+      <span class="code">${esc(x.codigo)}</span>
+      <div class="lib-info"><b>${esc(x.nombre)}</b><br>
+        ${CANCHA[x.cancha]} · ${dia(x.fecha)} · ${esc(x.hora)}<br><small>anotado a las ${horaCL(x.cerrado)}</small></div>
+      <button class="btn btn-ghost" onclick="reabrirWA('${esc(x.codigo)}')">💬 Abrir WhatsApp de nuevo</button>
+    </div>`).join('');
+
+  // Historial de liberados (24 h)
   const libs = datos.liberados || [];
   document.getElementById('lib-sec').classList.toggle('hidden', !libs.length);
   document.getElementById('c-lib').textContent = libs.length;
   document.getElementById('lib-zona').innerHTML = libs.map(x => {
-    const hora = new Date(x.cerrado).toLocaleTimeString('es-CL', { timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+    const hora = horaCL(x.cerrado);
     const que = x.estado === 'vencido' ? `venció a las ${hora}` : `liberado a las ${hora}`;
     return `<div class="lib-card">
       <span class="code">${esc(x.codigo)}</span>
@@ -466,6 +518,45 @@ function render(borradores = {}) {
   }).join('');
 
   llenarDias();
+}
+
+function horaCL(ms) { return new Date(ms).toLocaleTimeString('es-CL', { timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }); }
+function claveNombre(s) { return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim(); }
+
+// Tarjeta de un cliente con varias solicitudes
+function tarjetaCliente(k, lista, borradores) {
+  lista.sort((a, b) => (a.fecha + a.hora).localeCompare(b.fecha + b.hora) || a.cancha - b.cancha);
+  const cods = lista.map(x => x.codigo);
+  const primeros = lista.filter(x => x.posicion === 1);
+  const atras = lista.filter(x => x.posicion !== 1);
+  const valor = borradores['grupo:' + k] !== undefined ? borradores['grupo:' + k] : lista[0].nombre;
+  const lineas = lista.map(x => {
+    const late = (ahora() - x.creado) >= RECORDATORIO_MIN * 60000;
+    const pos = x.posicion === 1 ? `<span class="pos p1">1° en la fila</span>` : `<span class="pos pn">En espera · ${x.posicion}°</span>`;
+    return `<div class="req">
+      <div class="req-top">
+        <span class="code">${esc(x.codigo)}</span>
+        <span class="cli-slot">${dia(x.fecha)} · ${esc(x.hora)} · C${x.cancha}</span>
+        ${pos}
+        ${x.subio && x.posicion === 1 ? `<span class="pos subio">🔔 Subió a 1° · avísale</span><button class="btn btn-ghost btn-sm" onclick="accion('avisado_subio','${esc(x.codigo)}',this)">✓ Avisado</button>` : ''}
+        <span class="wait${late ? ' late' : ''}">${hace(x.creado)}</span>
+      </div>
+      ${x.celda ? `<div class="slot-warn">⚠️ En el Sheet esta celda ya dice "<b>${esc(x.celda)}</b>".</div>` : ''}
+      <div class="req-row mini">
+        <button class="btn btn-ghost btn-sm" onclick="anotar('${esc(x.codigo)}',this)">✍️ Anotar solo esta</button>
+        <button class="btn btn-ghost btn-sm" onclick="liberar('${esc(x.codigo)}',this)">Liberar</button>
+      </div>
+    </div>`;
+  }).join('');
+  return `<div class="slot-card cli-card">
+    <div class="slot-head"><span class="slot-cancha">👤 ${esc(lista[0].nombre)}</span><span class="slot-when">${lista.length} solicitudes</span></div>
+    ${lineas}
+    <div class="cli-foot">
+      <input class="name-input" data-grupo="${esc(k)}" data-cods="${esc(cods.join(' '))}" value="${esc(valor)}" placeholder="Nombre para anotar" maxlength="60" aria-label="Nombre para anotar">
+      <button class="btn btn-primary btn-block" style="margin-top:0" ${primeros.length ? '' : 'disabled'} onclick="anotarTodas('${esc(k)}',this)">✍️ Anotar todas (${primeros.length})</button>
+      ${atras.length ? `<div class="cli-note">No se incluye${atras.length > 1 ? 'n' : ''} ${atras.map(x => x.codigo).join(', ')}: está${atras.length > 1 ? 'n' : ''} en espera detrás de otra solicitud.</div>` : ''}
+    </div>
+  </div>`;
 }
 
 function fila(x, borradores) {
@@ -513,19 +604,53 @@ function mensajeAnotado(x, nombreAnotado) {
   return `Hola ${pn}\nOk! ¿*Ambos equipos 100% confirmados* para hoy?`;
 }
 
-function abrirWA(x, nombre, inicioClick) {
-  const texto = mensajeAnotado(x, nombre);
+// Mensaje para varias reservas del mismo cliente
+function mensajeVarios(lista, nombreAnotado) {
+  const pn = nombreAnotado.trim().split(/\s+/)[0] || '';
+  const orden = lista.slice().sort((a, b) => (a.fecha + a.hora).localeCompare(b.fecha + b.hora) || a.cancha - b.cancha);
+  const linea = x => `📅 ${dia(x.fecha)} · ${x.hora} · Cancha ${x.cancha}`;
+  const lejos = orden.filter(x => diasHasta(x.fecha) >= 2);
+  const cerca = orden.filter(x => diasHasta(x.fecha) <= 1);
+  const partes = [];
+  if (lejos.length) {
+    partes.push(`Hola ${pn} ✅ ¡Reservado!\n` + lejos.map(linea).join('\n') + '\n' +
+      `🤝 *Trabajamos con reserva sin abono*. Por eso, confirmar tu asistencia antes de las 17:00 hrs del día anterior es tu responsabilidad.\n` +
+      `⚠️ Si no confirmas, la reserva se da de baja automáticamente, aunque no te hayamos escrito.\n\n` +
+      `Gracias por reservar en CDV 🟢🟠`);
+  }
+  if (cerca.length) {
+    const manana = cerca.every(x => diasHasta(x.fecha) === 1), hoy = cerca.every(x => diasHasta(x.fecha) <= 0);
+    const pregunta = manana ? 'Ok! *Ambos equipos 100% confirmados* para mañana o me confirmas hoy antes de las 5 pm?'
+                   : hoy ? 'Ok! ¿*Ambos equipos 100% confirmados* para hoy?'
+                   : 'Ok! ¿*Ambos equipos 100% confirmados* para hoy y mañana?';
+    partes.push((lejos.length ? '📌 Además:\n' : `Hola ${pn}\n`) + cerca.map(linea).join('\n') + '\n' + pregunta);
+  }
+  return partes.join('\n\n');
+}
+
+function abrirWA(x, nombre, inicioClick) { abrirWAlista([x], nombre, inicioClick); }
+
+function abrirWAlista(lista, nombre, inicioClick) {
+  const texto = lista.length === 1 ? mensajeAnotado(lista[0], nombre) : mensajeVarios(lista, nombre);
   const url = `https://wa.me/?text=${encodeURIComponent(texto)}`;
-  const d = diasHasta(x.fecha);
-  document.getElementById('wa-sub').textContent = `${nombre} · ${CANCHA[x.cancha]} · ${dia(x.fecha)} · ${x.hora}`;
+  const x = lista[0];
+  document.getElementById('wa-sub').textContent = lista.length === 1
+    ? `${nombre} · ${CANCHA[x.cancha]} · ${dia(x.fecha)} · ${x.hora}`
+    : `${nombre} · ${lista.length} reservas`;
   document.getElementById('wa-preview').innerHTML = esc(texto).replace(/\*([^*\n]+)\*/g, '<b>$1</b>');
   document.getElementById('wa-go').href = url;
+  const cerca = lista.filter(i => diasHasta(i.fecha) <= 1);
   const next = document.getElementById('wa-next');
-  next.style.display = d <= 1 ? 'block' : 'none';
-  next.innerHTML = d <= 1 ? 'Reserva para <b>' + (d === 1 ? 'mañana' : 'hoy') + '</b>: cuando el cliente confirme, envíale <b>/listohoy</b>. Si no confirma, borra su nombre del Sheet.' : '';
+  next.style.display = cerca.length ? 'block' : 'none';
+  next.innerHTML = cerca.length ? 'Reserva para <b>hoy o mañana</b>: cuando el cliente confirme, envíale <b>/listohoy</b>. Si no confirma, borra su nombre del Sheet.' : '';
   document.getElementById('wa-modal').classList.add('open');
   // Abrir WhatsApp automáticamente si el toque fue reciente (los celulares bloquean aperturas tardías)
   if (Date.now() - inicioClick < 4500) window.location.href = url;
+}
+
+function reabrirWA(codigo) {
+  const x = (datos.anotados || []).find(i => i.codigo === codigo);
+  if (x) abrirWAlista([x], x.nombre, 0);
 }
 
 // Si WhatsApp se abrió (la página quedó en segundo plano), cerrar la ventana para no verla al volver
@@ -537,7 +662,8 @@ function cerrarWA() { document.getElementById('wa-modal').classList.remove('open
 async function anotar(codigo, btn) {
   const inicio = Date.now();
   const item = datos.items.find(i => i.codigo === codigo);
-  const input = document.querySelector(`.name-input[data-cod="${CSS.escape(codigo)}"]`);
+  const input = document.querySelector(`.name-input[data-cod="${CSS.escape(codigo)}"]`) ||
+                document.querySelector(`.name-input[data-cods~="${CSS.escape(codigo)}"]`);
   const nombre = (input ? input.value : '').trim();
   if (nombre.length < 2) { toast('Escribe el nombre para anotar', 'warn'); if (input) input.focus(); return; }
   btn.disabled = true; btn.textContent = 'Anotando…'; ocupado = true;
@@ -565,6 +691,36 @@ async function anotar(codigo, btn) {
   await refrescar(r);
 }
 
+async function anotarTodas(k, btn) {
+  const inicio = Date.now();
+  const input = document.querySelector(`.name-input[data-grupo="${CSS.escape(k)}"]`);
+  const nombre = (input ? input.value : '').trim();
+  if (nombre.length < 2) { toast('Escribe el nombre para anotar', 'warn'); if (input) input.focus(); return; }
+  const lista = datos.items.filter(x => x.estado === 'pendiente' && x.tipo === 'cliente' && x.posicion === 1 && claveNombre(x.nombre) === k);
+  if (!lista.length) return;
+  btn.disabled = true; btn.textContent = 'Anotando…'; ocupado = true;
+  let r;
+  try {
+    r = await api({ action: 'anotar_varios', nombre, codigos: lista.map(x => x.codigo) });
+  } catch(e) {
+    // La respuesta no llegó: revisar cuáles igual se anotaron
+    ocupado = false;
+    await cargar();
+    const hechas = lista.filter(x => !datos.items.some(i => i.codigo === x.codigo && i.estado === 'pendiente'));
+    if (hechas.length) { toast(`Se anotaron ${hechas.length} ✓ (Google tardó en responder)`); abrirWAlista(hechas, nombre, 0); }
+    else toast(`No se anotó: ${msgError(e)}. Intenta de nuevo.`, 'bad');
+    return;
+  }
+  ocupado = false;
+  const okCods = new Set((r.resultados || []).filter(x => x.ok).map(x => x.codigo));
+  const hechas = lista.filter(x => okCods.has(x.codigo));
+  const fallas = (r.resultados || []).filter(x => !x.ok);
+  if (fallas.length) toast(`No se anotaron: ${fallas.map(f => f.codigo + (f.motivo === 'ocupada' ? ` (celda: ${f.actual})` : '')).join(', ')}`, 'bad');
+  else if (r.avisar) toast(`Hay ${r.avisar} en espera para avisar (cupo tomado)`, 'warn');
+  if (hechas.length) abrirWAlista(hechas, nombre, inicio);
+  await refrescar(r);
+}
+
 async function liberar(codigo, btn) { await accion('liberar', codigo, btn); }
 async function restaurar(codigo, btn) { await accion('restaurar', codigo, btn); }
 
@@ -584,7 +740,7 @@ async function accion(action, codigo, btn) {
     toast(r.motivo === 'ocupada' ? `No se puede restaurar: la celda ya dice "${r.actual}"`
         : r.motivo === 'pasado' ? 'Ese horario ya pasó' : 'Ya no estaba disponible para esta acción', 'warn');
   } else if (action === 'liberar') {
-    toast(r.subio ? `Liberado ✓ · Ahora 1°: ${r.subio.nombre}. Avísale.` : 'Liberado ✓ · Si fue un error, está en "Liberados hoy"', r.subio ? 'warn' : '');
+    toast(r.subio ? `Liberado ✓ · Ahora 1°: ${r.subio.nombre}. Avísale.` : 'Liberado ✓ · Si fue un error, está en "Liberados"', r.subio ? 'warn' : '');
   } else if (action === 'restaurar') toast('Restaurado ✓ · Volvió a su lugar en la fila');
   else toast('Listo ✓');
   await refrescar(r);
