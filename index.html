@@ -198,6 +198,17 @@
   .sol-dup { background: #fdeeee; border: 1px solid #f3b4b4; border-radius: 10px; padding: 12px 14px; font-size: 14px; color: #7f1d1d; line-height: 1.55; margin-bottom: 14px; }
   .sol-dup.info { background: #eef6ff; border-color: #bfdbfe; color: #1e3a8a; }
 
+  .mine-pill { display: inline-block; font-size: 13px; font-weight: 700; border-radius: 6px; padding: 4px 9px; white-space: nowrap; }
+  .mine-pill.anotado { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+  .mine-pill.confirmado { background: #1d4ed8; color: #fff; border: 1px solid #1d4ed8; }
+  .mine-pill.pendiente { background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
+  .mine-pill.espera { background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd; }
+  .conf-btn { display: block; margin-top: 5px; background: #1d4ed8; color: #fff; border: none; border-radius: 6px; padding: 5px 9px; font-family: 'Barlow', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; }
+  .conf-venc { display: block; margin-top: 4px; font-size: 11px; font-weight: 600; color: #9b2c2c; }
+  .conf-aviso { background: #fff7e6; border: 1px solid #f5a623; border-radius: 10px; padding: 12px 14px; font-size: 14px; color: #4a2d00; line-height: 1.55; margin-bottom: 14px; }
+  .conf-check { display: flex; gap: 10px; align-items: flex-start; font-size: 15px; font-weight: 700; margin: 4px 0 2px; cursor: pointer; }
+  .conf-check input { width: 22px; height: 22px; flex-shrink: 0; margin-top: 1px; accent-color: #1d4ed8; }
+
   /* MODAL DE SOLICITUD */
   .sol-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 300; align-items: flex-end; justify-content: center; }
   .sol-modal.open { display: flex; }
@@ -268,10 +279,6 @@
     <div class="attention-note">⚠️ Los mensajes recibidos fuera de horario se atienden al día siguiente a partir de las 11:00.</div>
   </div>
 
-  <div class="mis-wrap" id="mis-wrap" style="display:none">
-    <button class="mis-btn" type="button" onclick="abrirMis()">📋 Mis reservas</button>
-  </div>
-
   <div class="date-nav">
     <div class="date-nav-label" id="week-label">Cargando...</div>
     <div class="nav-buttons">
@@ -285,6 +292,12 @@
     <div class="leg"><div class="leg-dot" style="background:var(--red)"></div> Reservado</div>
     <div class="leg"><div class="leg-dot" style="background:#f5a623;border-radius:3px"></div> ⏳ Pendiente (puedes quedar en lista de espera)</div>
     <div class="leg"><div class="leg-dot" style="background:#f5a623"></div> 🌅 Horario AM</div>
+  </div>
+  <div class="legend" id="leg-mine" style="display:none">
+    <div class="leg"><div class="leg-dot" style="background:#3b82f6"></div> ✅ Anotado/a</div>
+    <div class="leg"><div class="leg-dot" style="background:#eab308"></div> ⏳ Tu solicitud</div>
+    <div class="leg"><div class="leg-dot" style="background:#8b5cf6"></div> 📋 En espera</div>
+    <div class="leg" style="font-size:12px">· Solo tú ves tus reservas, en este celular</div>
   </div>
 
   <div class="last-updated" id="last-updated"></div>
@@ -305,7 +318,8 @@
       +56 9 7793 7858<br>
       <span class="wa-order">✅ Atendemos por orden de llegada de mensajes</span><br>
       <span class="wa-warning">⚠️ Para no perder tu lugar, escribe solo una vez. Atendemos los mensajes del más temprano al más reciente.</span><br>
-      <span style="font-size:12px;color:var(--gray-text)">* Las reservas de las 23 hrs deben quedar pagadas antes de jugar.</span>
+      <span style="font-size:12px;color:var(--gray-text)">* Las reservas de las 23 hrs deben quedar pagadas antes de jugar.</span><br>
+      <span style="font-size:12px;color:var(--gray-text)">¿No ves tu reserva? <a id="link-noveo" href="#" target="_blank" style="color:var(--green-dark);font-weight:600">Escríbenos por WhatsApp</a> con el código asignado y te ayudamos a resolverlo.</span>
     </div>
 
     <div class="group-btns">
@@ -356,13 +370,20 @@
   </div>
 </div>
 
-<!-- MIS RESERVAS MODAL -->
-<div class="sol-modal" id="mis-modal" onclick="if(event.target===this)cerrarMis()">
-  <div class="sol-box" role="dialog" aria-modal="true" aria-labelledby="mis-title">
-    <div class="sol-title" id="mis-title">📋 Mis reservas</div>
-    <div id="mis-lista"></div>
-    <div class="mis-pie">Aquí aparecen las solicitudes hechas <b>desde este celular</b> con el botón Solicitar. Si reservaste por WhatsApp directo o desde otro celular, no aparecerán aquí.</div>
-    <div class="sol-actions"><button class="sol-btn cancel" style="flex:1" type="button" onclick="cerrarMis()">Cerrar</button></div>
+<!-- CONFIRMAR ASISTENCIA MODAL -->
+<div class="sol-modal" id="conf-modal" onclick="if(event.target===this)cerrarConf()">
+  <div class="sol-box" role="dialog" aria-modal="true" aria-labelledby="conf-title">
+    <div class="sol-title" id="conf-title">Confirmar asistencia</div>
+    <div class="sol-resumen" id="conf-resumen"></div>
+    <div class="conf-aviso">⚠️ <b>Antes de confirmar</b><br>
+      Confirma solo si ya hablaste con <b>todos los jugadores de ambos equipos</b> y es <b>100% seguro</b> que asistirán.<br>
+      <b>Si confirmas y luego no asisten, quedará registrado en tu historial.</b></div>
+    <label class="conf-check"><input type="checkbox" id="conf-check" onchange="document.getElementById('conf-go').disabled=!this.checked"> Confirmo que ambos equipos asistirán</label>
+    <div class="sol-error" id="conf-error"></div>
+    <div class="sol-actions">
+      <button class="sol-btn cancel" type="button" onclick="cerrarConf()">Cancelar</button>
+      <button class="sol-btn go" type="button" id="conf-go" onclick="enviarConfirmacion()" disabled>Confirmar por WhatsApp</button>
+    </div>
   </div>
 </div>
 
@@ -391,6 +412,9 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwXdqRpJZMjHUgGJjBACUTD
 let allData           = [];
 let weatherData       = {};
 let pendData          = {};   // "fecha|hora|cancha" -> cantidad de solicitudes pendientes
+let misData           = {};   // reservas de ESTE celular: "fecha|hora|cancha" -> {codigo, estado, posicion}
+let misSrv            = null; // hora del servidor (Chile) para saber si se puede confirmar
+let confActual        = null;
 let anotData          = {};   // "fecha|hora|cancha" -> personas en lista de espera de una reserva anotada sin confirmar
 let currentWeekOffset = 0;
 let solActual         = null; // solicitud abierta en el modal
@@ -486,8 +510,7 @@ function leerMis() {
   return Array.isArray(l) ? l.filter(x => x && x.codigo && !slotPasadoLocal(x.fecha, x.hora)) : [];
 }
 function guardarMis(l) { try { localStorage.setItem('cdv_mis', JSON.stringify(l.slice(-40))); } catch(e) {} }
-function agregarMis(item) { const l = leerMis().filter(x => x.codigo !== item.codigo); l.push(item); guardarMis(l); actualizarBotonMis(); }
-function actualizarBotonMis() { document.getElementById('mis-wrap').style.display = leerMis().length ? 'flex' : 'none'; }
+function agregarMis(item) { const l = leerMis().filter(x => x.codigo !== item.codigo); l.push(item); guardarMis(l); }
 
 async function estadosMis(codigos) {
   if (!apiActiva() || !codigos.length) throw new Error('sin api');
@@ -496,6 +519,7 @@ async function estadosMis(codigos) {
     const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'mis', codigos }), signal: ctrl.signal });
     const r = await res.json();
     if (!r.ok) throw new Error('error');
+    misSrv = { hoy: r.hoy, hora: r.hora, limite: r.limite || '17:00' };
     return r.reservas || [];
   } finally { clearTimeout(t); }
 }
@@ -504,40 +528,6 @@ function linkConsulta(x) {
   const txt = `Hola! Quiero confirmar mi reserva del ${etiquetaDia(x.fecha)} a las ${x.hora}, Cancha ${CANCHA_LABEL[x.cancha]} (código ${x.codigo}).`;
   return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(txt)}`;
 }
-
-async function abrirMis() {
-  const zona = document.getElementById('mis-lista');
-  zona.innerHTML = '<div class="mis-nota">⏳ Buscando tus reservas…</div>';
-  document.getElementById('mis-modal').classList.add('open');
-  const locales = leerMis();
-  let lista;
-  try {
-    lista = await estadosMis(locales.map(x => x.codigo));
-    // Olvidar en este celular los códigos que ya no existen
-    const vivos = new Set(lista.map(x => x.codigo));
-    guardarMis(locales.filter(x => vivos.has(x.codigo))); actualizarBotonMis();
-  } catch(e) {
-    zona.innerHTML = '<div class="mis-nota">No pudimos consultar tus reservas en este momento. Intenta de nuevo en unos minutos.</div>';
-    return;
-  }
-  if (!lista.length) { zona.innerHTML = '<div class="mis-nota">No tienes solicitudes próximas hechas desde este celular.</div>'; return; }
-  const ETQ = { reservada: '✅ Reservada', pendiente: '⏳ Pendiente de confirmación', espera: '📋 En lista de espera', no_disponible: '❌ No disponible' };
-  zona.innerHTML = lista.map(x => {
-    let est = ETQ[x.estado] || x.estado, nota = '';
-    if (x.estado === 'pendiente' && x.posicion > 1) est += ` · ${x.posicion}° en la fila`;
-    if (x.estado === 'espera') { est += x.posicion ? ` · ${x.posicion}°` : ''; nota = 'Solo te avisaremos si el cupo se libera.'; }
-    if (x.estado === 'reservada') nota = 'Recuerda confirmar tu asistencia antes de las 17:00 del día anterior.';
-    if (x.estado === 'pendiente') nota = 'Aún no está confirmada: te responderemos por WhatsApp.';
-    if (x.estado === 'no_disponible') nota = `No la encontramos con este código. Puede que la hayamos anotado con otro nombre o que se haya liberado. <a href="${linkConsulta(x)}" target="_blank">Escríbenos para confirmar</a>.`;
-    return `<div class="mis-item">
-      <div class="mis-top"><span>📅 ${etiquetaDia(x.fecha)} · ${x.hora}</span><span class="mis-cod">${esc(x.codigo)}</span></div>
-      🏟️ Cancha ${CANCHA_LABEL[x.cancha]}<br>
-      <span class="mis-est ${x.estado}">${est}</span>
-      ${nota ? `<div class="mis-nota">${nota}</div>` : ''}
-    </div>`;
-  }).join('');
-}
-function cerrarMis() { document.getElementById('mis-modal').classList.remove('open'); }
 
 // Aviso si este celular ya pidió ese día (otra cancha a la misma hora, u otro horario)
 async function revisarDuplicados(sol) {
@@ -667,7 +657,7 @@ async function enviarSolicitud() {
   cerrarSolicitud();
   window.location.href = url;
   // Al volver a la página, refrescar el estado
-  setTimeout(() => { loadPendientes().then(render); }, 4000);
+  setTimeout(() => { Promise.all([loadPendientes(), loadMis()]).then(render); }, 4000);
 }
 
 // ── CSV PARSER ────────────────────────────────────────────────
@@ -724,6 +714,87 @@ async function loadSheet() {
   } catch(e) {
     allData = [];
   }
+}
+
+// ── MIS RESERVAS (solo las pedidas desde este celular) ────────
+async function loadMis() {
+  const locales = leerMis();
+  if (!locales.length) { misData = {}; return; }
+  try {
+    const lista = await estadosMis(locales.map(x => x.codigo));
+    const vivos = new Set(lista.map(x => x.codigo));
+    guardarMis(locales.filter(x => vivos.has(x.codigo)));   // olvidar códigos que ya no existen
+    const m = {};
+    lista.forEach(x => { m[`${x.fecha}|${nh(x.hora)}|${x.cancha}`] = x; });
+    misData = m;
+  } catch(e) { /* sin conexión: se mantiene lo último que se supo */ }
+}
+
+function sumarDiasYMD(ymd, n) { const d = new Date(ymd + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
+function estadoConfirmar(x) {
+  // 'boton' = se puede confirmar ahora; 'vencido' = pasó el plazo; '' = aún no corresponde
+  if (!misSrv || x.estado !== 'reservada') return '';
+  if (x.fecha === sumarDiasYMD(misSrv.hoy, 1)) return misSrv.hora < misSrv.limite ? 'boton' : 'vencido';
+  if (x.fecha === misSrv.hoy) return 'vencido';
+  return '';
+}
+
+function celdaPropia(x) {
+  if (x.estado === 'reservada' || x.estado === 'confirmada') {
+    const conf = x.estado === 'confirmada';
+    let extra = '';
+    const ec = estadoConfirmar(x);
+    if (ec === 'boton') extra = `<button type="button" class="conf-btn" onclick="abrirConfirmar('${x.codigo}')">Confirmar asistencia</button>`;
+    else if (ec === 'vencido') extra = `<a class="conf-venc" href="https://wa.me/${WA_NUMBER}" target="_blank">Plazo de confirmación vencido: escríbenos</a>`;
+    return `<span class="mine-pill ${conf ? 'confirmado' : 'anotado'}">✅ ${conf ? 'Confirmado/a' : 'Anotado/a'}</span>${extra}`;
+  }
+  if (x.estado === 'pendiente') return `<span class="mine-pill pendiente">⏳ Tu solicitud${x.posicion > 1 ? ` · ${x.posicion}°` : ''}</span>`;
+  if (x.estado === 'espera') return `<span class="mine-pill espera">📋 En espera${x.posicion ? ` · ${x.posicion}°` : ''}</span>`;
+  return '';
+}
+
+// ── CONFIRMAR ASISTENCIA ──────────────────────────────────────
+function abrirConfirmar(codigo) {
+  const x = Object.values(misData).find(i => i.codigo === codigo);
+  if (!x) return;
+  confActual = x;
+  document.getElementById('conf-resumen').innerHTML =
+    `📅 Día: <b>${etiquetaDia(x.fecha)}</b><br>🕗 Hora: <b>${x.hora}</b><br>🏟️ Cancha: <b>${CANCHA_LABEL[x.cancha]}</b>`;
+  const chk = document.getElementById('conf-check'); chk.checked = false;
+  const go = document.getElementById('conf-go'); go.disabled = true; go.textContent = 'Confirmar por WhatsApp';
+  document.getElementById('conf-error').style.display = 'none';
+  document.getElementById('conf-modal').classList.add('open');
+}
+function cerrarConf() { document.getElementById('conf-modal').classList.remove('open'); confActual = null; }
+
+async function enviarConfirmacion() {
+  const x = confActual;
+  if (!x || !document.getElementById('conf-check').checked) return;
+  const go = document.getElementById('conf-go'); go.disabled = true; go.textContent = 'Confirmando…';
+  const err = document.getElementById('conf-error');
+  try {
+    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'confirmar', codigo: x.codigo }) });
+    const r = await res.json();
+    if (!r.ok) {
+      err.textContent = r.motivo === 'plazo_vencido' ? 'El plazo para confirmar (17:00 del día anterior) ya pasó. Escríbenos por WhatsApp.'
+                      : 'No pudimos confirmar esta reserva desde la página. Escríbenos por WhatsApp.';
+      err.style.display = 'block'; go.textContent = 'Confirmar por WhatsApp';
+      return;
+    }
+    x.estado = 'confirmada';
+  } catch(e) { /* si falla el registro, igual se envía la confirmación por WhatsApp */ }
+  const lineas = [
+    'Hola! Confirmo asistencia ✅',
+    `📅 Día: *${etiquetaDia(x.fecha)}*`,
+    `🕗 Hora: *${x.hora}*`,
+    `🏟️ Cancha: *${CANCHA_LABEL[x.cancha]}*`,
+    `👤 Nombre y apellido: ${leerNombre()}`,
+    '*Ambos equipos 100% confirmados*',
+    `_Código de solicitud: ${x.codigo}_`
+  ];
+  cerrarConf();
+  render();
+  window.location.href = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(lineas.join('\n'))}`;
 }
 
 // ── FETCH PENDIENTES (sin nombres) ────────────────────────────
@@ -793,6 +864,7 @@ function isSujetoClima(slots) {
 
 // ── RENDER ────────────────────────────────────────────────────
 function render() {
+  document.getElementById('leg-mine').style.display = Object.keys(misData).length ? 'flex' : 'none';
   const { dates, today } = getWindowDates();
   const todayKey = dateKey(today);
 
@@ -870,6 +942,9 @@ function render() {
         const ocp2  = slot.cancha2 && slot.cancha2.trim() !== '' && !isKeyword(slot.cancha2);
 
         const statusCell = (ocupado, fecha, hora, cancha) => {
+          const mio = misData[`${fecha}|${nh(hora)}|${cancha}`];
+          const propio = mio ? celdaPropia(mio) : '';
+          if (propio) return propio;
           if (ocupado) {
             const k = `${fecha}|${nh(hora)}|${cancha}`;
             const reservado = `<div class="status-cell ocupado"><div class="status-dot"></div><span class="status-text">Reservado</span></div>`;
@@ -1131,10 +1206,12 @@ function setFraseDelDia() {
 async function init() {
   setFraseDelDia();
   initMenu();
-  actualizarBotonMis();
-  await Promise.all([loadSheet(), loadWeather(), loadPendientes()]);
+  await Promise.all([loadSheet(), loadWeather(), loadPendientes(), loadMis()]);
   render();
 }
+
+document.getElementById('link-noveo').href = `https://wa.me/${WA_NUMBER}?text=` +
+  encodeURIComponent('Hola! No veo mi reserva en la página. Mi código de solicitud es: ');
 
 // Frase de servicio: WhatsApp con mensaje para cotizar una página
 document.getElementById('link-servicio').href = `https://wa.me/${WA_NUMBER}?text=` +
@@ -1142,9 +1219,9 @@ document.getElementById('link-servicio').href = `https://wa.me/${WA_NUMBER}?text
 
 // Al volver desde WhatsApp, refrescar los pendientes
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && allData.length) loadPendientes().then(render);
+  if (document.visibilityState === 'visible' && allData.length) Promise.all([loadPendientes(), loadMis()]).then(render);
 });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { cerrarSolicitud(); cerrarMis(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { cerrarSolicitud(); cerrarConf(); } });
 
 function initMenu() {
   var btn = document.getElementById('cdv-menu-btn');
