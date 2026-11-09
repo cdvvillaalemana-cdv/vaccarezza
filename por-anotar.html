@@ -196,6 +196,7 @@
           <li><b>👤 Mismo cliente con varias solicitudes:</b> aparecen juntas en una tarjeta azul. Toca <b>Anotar todas</b>: se anotan de una vez y se abre <b>un solo WhatsApp</b> con todas sus reservas. Si quieres anotar solo algunas, usa el botón Anotar de cada una.</li>
           <li><b>📋 Lista de espera de reservas anotadas:</b> clientes que pidieron quedar en espera de una reserva que ya está anotada pero sin confirmar (celda en blanco). No hay que hacer nada con ellos. Si borras esa reserva del Sheet, llega un aviso por Telegram y pasan solos a "Por anotar", con el 1° marcado <b>🔔 Subió a 1°</b>. Si la reserva se confirma, no se les avisa.</li>
           <li><b>⚠️ Pidió ambas canchas / ℹ️ Pidió más de un horario este día:</b> el mismo nombre tiene otra solicitud (o reserva anotada en las últimas 24 h) ese mismo día. Confirma con el cliente si de verdad quiere todas antes de anotar.</li>
+          <li><b>Confirmación desde la página:</b> el día anterior (hasta las 17:00) el cliente puede tocar <b>Confirmar asistencia</b> en su reserva. La celda se pinta sola de <b>verde claro</b>, llega un aviso por Telegram y también te llega su WhatsApp de confirmación.</li>
           <li><b>✅ Anotados:</b> las reservas anotadas en las últimas 24 h. Si se te olvidó enviar el mensaje, toca <b>Abrir WhatsApp de nuevo</b>.</li>
           <li><b>🔔 Subió a 1°:</b> si se libera el 1° de la fila (o vence un cupo guardado), el siguiente pasa a ser el 1° y llega un aviso por Telegram. Escríbele para avisarle que se liberó el cupo y toca <b>✓ Avisado</b>.</li>
           <li><b>Sin código:</b> si un mensaje llega sin "Código de solicitud", no quedó registrado aquí: anótalo directo en el Sheet.</li>
@@ -614,6 +615,7 @@ function mensajeAnotado(x, nombreAnotado) {
     return `Hola ${pn} ✅ ¡Reservado!\n` +
       `🤝 *Trabajamos con reserva sin abono*. Por eso, confirmar tu asistencia antes de las 17:00 hrs del día anterior es tu responsabilidad.\n` +
       `⚠️ Si no confirmas, la reserva se da de baja automáticamente, aunque no te hayamos escrito.\n\n` +
+      (x.tipo === 'cliente' ? `📲 Puedes ver tu reserva y confirmar tu asistencia desde la página de disponibilidad, en el mismo celular desde donde la pediste\n\n` : '') +
       `Gracias por reservar en CDV 🟢🟠`;
   }
   if (d === 1) return `Hola ${pn}\nOk! *Ambos equipos 100% confirmados* para mañana o me confirmas hoy antes de las 5 pm?`;
@@ -632,6 +634,7 @@ function mensajeVarios(lista, nombreAnotado) {
     partes.push(`Hola ${pn} ✅ ¡Reservado!\n` + lejos.map(linea).join('\n') + '\n' +
       `🤝 *Trabajamos con reserva sin abono*. Por eso, confirmar tu asistencia antes de las 17:00 hrs del día anterior es tu responsabilidad.\n` +
       `⚠️ Si no confirmas, la reserva se da de baja automáticamente, aunque no te hayamos escrito.\n\n` +
+      `📲 Puedes ver tu reserva y confirmar tu asistencia desde la página de disponibilidad, en el mismo celular desde donde la pediste\n\n` +
       `Gracias por reservar en CDV 🟢🟠`);
   }
   if (cerca.length) {
