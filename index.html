@@ -181,6 +181,23 @@
   .servicio { text-align: center; font-size: 12px; color: var(--gray-text); margin-top: 14px; line-height: 1.6; }
   .servicio a { color: var(--green-dark); font-weight: 600; }
 
+  .mis-wrap { display: flex; justify-content: flex-end; margin: -6px 0 14px; }
+  .mis-btn { background: #fff; border: 2px solid var(--green); color: var(--green-dark); border-radius: 20px; padding: 7px 14px; font-family: 'Barlow', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .mis-btn:hover { background: var(--green-light); }
+  .mis-item { border: 1px solid var(--gray-mid); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; font-size: 14px; line-height: 1.5; }
+  .mis-top { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-weight: 700; }
+  .mis-cod { font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: var(--gray-text); font-weight: 600; }
+  .mis-est { display: inline-block; margin-top: 4px; font-size: 13px; font-weight: 700; border-radius: 20px; padding: 2px 10px; }
+  .mis-est.reservada { background: var(--green-light); color: var(--green-dark); }
+  .mis-est.pendiente { background: #fff7e6; color: #9a5b00; }
+  .mis-est.espera { background: #eef2ff; color: #3730a3; }
+  .mis-est.no_disponible { background: #fdeeee; color: #9b2c2c; }
+  .mis-nota { font-size: 12px; color: #555; margin-top: 4px; }
+  .mis-nota a { color: var(--green-dark); font-weight: 700; }
+  .mis-pie { font-size: 12px; color: var(--gray-text); margin-top: 6px; line-height: 1.5; }
+  .sol-dup { background: #fdeeee; border: 1px solid #f3b4b4; border-radius: 10px; padding: 12px 14px; font-size: 14px; color: #7f1d1d; line-height: 1.55; margin-bottom: 14px; }
+  .sol-dup.info { background: #eef6ff; border-color: #bfdbfe; color: #1e3a8a; }
+
   /* MODAL DE SOLICITUD */
   .sol-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 300; align-items: flex-end; justify-content: center; }
   .sol-modal.open { display: flex; }
@@ -249,6 +266,10 @@
       <strong>Lunes a viernes:</strong> 11:00–23:00 &nbsp;·&nbsp; <strong>Sábado, domingo y feriados:</strong> 12:00–22:00 &nbsp;·&nbsp; <strong>Feriado irrenunciable:</strong> no se atiende
     </div>
     <div class="attention-note">⚠️ Los mensajes recibidos fuera de horario se atienden al día siguiente a partir de las 11:00.</div>
+  </div>
+
+  <div class="mis-wrap" id="mis-wrap" style="display:none">
+    <button class="mis-btn" type="button" onclick="abrirMis()">📋 Mis reservas</button>
   </div>
 
   <div class="date-nav">
@@ -323,14 +344,25 @@
   <div class="sol-box" role="dialog" aria-modal="true" aria-labelledby="sol-title">
     <div class="sol-title" id="sol-title">Solicitar cancha</div>
     <div class="sol-resumen" id="sol-resumen"></div>
+    <div id="sol-dup"></div>
     <div id="sol-espera"></div>
     <div id="sol-nombre-zona"></div>
     <div class="sol-error" id="sol-error"></div>
     <div class="sol-actions">
-      <button class="sol-btn cancel" type="button" onclick="cerrarSolicitud()">Cancelar</button>
+      <button class="sol-btn cancel" type="button" id="sol-cancel" onclick="cerrarSolicitud()">Cancelar</button>
       <button class="sol-btn go" type="button" id="sol-go" onclick="enviarSolicitud()">Enviar por WhatsApp</button>
     </div>
     <div class="sol-aviso">Se abrirá WhatsApp con tu solicitud lista. <strong>Recuerda enviar el mensaje</strong>; la cancha queda reservada solo cuando te respondemos.</div>
+  </div>
+</div>
+
+<!-- MIS RESERVAS MODAL -->
+<div class="sol-modal" id="mis-modal" onclick="if(event.target===this)cerrarMis()">
+  <div class="sol-box" role="dialog" aria-modal="true" aria-labelledby="mis-title">
+    <div class="sol-title" id="mis-title">📋 Mis reservas</div>
+    <div id="mis-lista"></div>
+    <div class="mis-pie">Aquí aparecen las solicitudes hechas <b>desde este celular</b> con el botón Solicitar. Si reservaste por WhatsApp directo o desde otro celular, no aparecerán aquí.</div>
+    <div class="sol-actions"><button class="sol-btn cancel" style="flex:1" type="button" onclick="cerrarMis()">Cerrar</button></div>
   </div>
 </div>
 
@@ -442,6 +474,98 @@ function limpiarNombre(s) { return String(s || '').replace(/[*_~`]/g, '').replac
 function nombreValido(s) { return s.length >= 3 && s.split(' ').filter(Boolean).length >= 2; }
 function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
+// ── MIS SOLICITUDES (guardadas en este celular) ───────────────
+function slotPasadoLocal(fecha, hora) {
+  const p = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago', year: 'numeric', month: '2-digit',
+    day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date()).map(x => [x.type, x.value]));
+  return `${fecha} ${nh(hora)}` <= `${p.year}-${p.month}-${p.day} ${p.hour}:${p.minute}`;
+}
+function leerMis() {
+  let l = [];
+  try { l = JSON.parse(localStorage.getItem('cdv_mis') || '[]'); } catch(e) {}
+  return Array.isArray(l) ? l.filter(x => x && x.codigo && !slotPasadoLocal(x.fecha, x.hora)) : [];
+}
+function guardarMis(l) { try { localStorage.setItem('cdv_mis', JSON.stringify(l.slice(-40))); } catch(e) {} }
+function agregarMis(item) { const l = leerMis().filter(x => x.codigo !== item.codigo); l.push(item); guardarMis(l); actualizarBotonMis(); }
+function actualizarBotonMis() { document.getElementById('mis-wrap').style.display = leerMis().length ? 'flex' : 'none'; }
+
+async function estadosMis(codigos) {
+  if (!apiActiva() || !codigos.length) throw new Error('sin api');
+  const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 12000);
+  try {
+    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'mis', codigos }), signal: ctrl.signal });
+    const r = await res.json();
+    if (!r.ok) throw new Error('error');
+    return r.reservas || [];
+  } finally { clearTimeout(t); }
+}
+
+function linkConsulta(x) {
+  const txt = `Hola! Quiero confirmar mi reserva del ${etiquetaDia(x.fecha)} a las ${x.hora}, Cancha ${CANCHA_LABEL[x.cancha]} (código ${x.codigo}).`;
+  return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(txt)}`;
+}
+
+async function abrirMis() {
+  const zona = document.getElementById('mis-lista');
+  zona.innerHTML = '<div class="mis-nota">⏳ Buscando tus reservas…</div>';
+  document.getElementById('mis-modal').classList.add('open');
+  const locales = leerMis();
+  let lista;
+  try {
+    lista = await estadosMis(locales.map(x => x.codigo));
+    // Olvidar en este celular los códigos que ya no existen
+    const vivos = new Set(lista.map(x => x.codigo));
+    guardarMis(locales.filter(x => vivos.has(x.codigo))); actualizarBotonMis();
+  } catch(e) {
+    zona.innerHTML = '<div class="mis-nota">No pudimos consultar tus reservas en este momento. Intenta de nuevo en unos minutos.</div>';
+    return;
+  }
+  if (!lista.length) { zona.innerHTML = '<div class="mis-nota">No tienes solicitudes próximas hechas desde este celular.</div>'; return; }
+  const ETQ = { reservada: '✅ Reservada', pendiente: '⏳ Pendiente de confirmación', espera: '📋 En lista de espera', no_disponible: '❌ No disponible' };
+  zona.innerHTML = lista.map(x => {
+    let est = ETQ[x.estado] || x.estado, nota = '';
+    if (x.estado === 'pendiente' && x.posicion > 1) est += ` · ${x.posicion}° en la fila`;
+    if (x.estado === 'espera') { est += x.posicion ? ` · ${x.posicion}°` : ''; nota = 'Solo te avisaremos si el cupo se libera.'; }
+    if (x.estado === 'reservada') nota = 'Recuerda confirmar tu asistencia antes de las 17:00 del día anterior.';
+    if (x.estado === 'pendiente') nota = 'Aún no está confirmada: te responderemos por WhatsApp.';
+    if (x.estado === 'no_disponible') nota = `No la encontramos con este código. Puede que la hayamos anotado con otro nombre o que se haya liberado. <a href="${linkConsulta(x)}" target="_blank">Escríbenos para confirmar</a>.`;
+    return `<div class="mis-item">
+      <div class="mis-top"><span>📅 ${etiquetaDia(x.fecha)} · ${x.hora}</span><span class="mis-cod">${esc(x.codigo)}</span></div>
+      🏟️ Cancha ${CANCHA_LABEL[x.cancha]}<br>
+      <span class="mis-est ${x.estado}">${est}</span>
+      ${nota ? `<div class="mis-nota">${nota}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+function cerrarMis() { document.getElementById('mis-modal').classList.remove('open'); }
+
+// Aviso si este celular ya pidió ese día (otra cancha a la misma hora, u otro horario)
+async function revisarDuplicados(sol) {
+  const zona = document.getElementById('sol-dup');
+  zona.innerHTML = '';
+  const mismos = leerMis().filter(x => x.fecha === sol.fecha && !(nh(x.hora) === nh(sol.hora) && Number(x.cancha) === Number(sol.cancha)));
+  if (!mismos.length) return;
+  let vigentes = mismos;
+  try {
+    const est = await estadosMis(mismos.map(x => x.codigo));
+    vigentes = est.filter(x => ['pendiente', 'reservada', 'espera'].includes(x.estado));
+  } catch(e) { /* sin conexión: avisamos igual con lo guardado */ }
+  if (solActual !== sol || !vigentes.length) return;
+  const ambas = vigentes.filter(x => nh(x.hora) === nh(sol.hora));
+  const otras = vigentes.filter(x => nh(x.hora) !== nh(sol.hora));
+  let html = '';
+  if (ambas.length) {
+    html += `<div class="sol-dup">⚠️ <b>Ya pediste la Cancha ${CANCHA_LABEL[ambas[0].cancha]} para este mismo día y hora.</b><br>¿Seguro que quieres reservar <b>ambas canchas</b>?</div>`;
+  }
+  if (otras.length) {
+    const txt = otras.sort((a, b) => nh(a.hora).localeCompare(nh(b.hora))).map(x => `${x.hora} (Cancha ${x.cancha})`).join(', ');
+    html += `<div class="sol-dup info">ℹ️ <b>Ya tienes ${otras.length > 1 ? 'solicitudes' : 'una solicitud'} para este día:</b> ${txt}.<br>¿Quieres pedir también las <b>${sol.hora}</b>?</div>`;
+  }
+  zona.innerHTML = html;
+  if (!sol.enEspera) document.getElementById('sol-go').textContent = ambas.length ? 'Sí, quiero ambas canchas' : 'Sí, pedir también';
+  document.getElementById('sol-cancel').textContent = 'No, cancelar';
+}
+
 // ── MODAL DE SOLICITUD ────────────────────────────────────────
 function abrirSolicitud(fecha, hora, cancha, tipo) {
   const espera = tipo === 'espera';
@@ -466,9 +590,12 @@ function abrirSolicitud(fecha, hora, cancha, tipo) {
   go.textContent = solActual.enEspera ? 'Entiendo, quedar en espera' : 'Enviar por WhatsApp';
   go.classList.toggle('espera', solActual.enEspera);
   go.disabled = false;
+  document.getElementById('sol-cancel').textContent = 'Cancelar';
+  document.getElementById('sol-dup').innerHTML = '';
   pintarNombre();
   ocultarError();
   document.getElementById('sol-modal').classList.add('open');
+  revisarDuplicados(solActual);
 }
 
 function pintarNombre() {
@@ -514,6 +641,7 @@ async function enviarSolicitud() {
       const r = await res.json();
       if (r.ok) {
         codigo = r.codigo; posicion = r.posicion;
+        agregarMis({ codigo, fecha, hora, cancha, tipo, t: Date.now() });
       } else if (r.motivo === 'ocupado') {
         mostrarError('Este horario acaba de ser reservado. Actualizaremos la página.');
         setTimeout(() => location.reload(), 2200); return;
@@ -1003,6 +1131,7 @@ function setFraseDelDia() {
 async function init() {
   setFraseDelDia();
   initMenu();
+  actualizarBotonMis();
   await Promise.all([loadSheet(), loadWeather(), loadPendientes()]);
   render();
 }
@@ -1015,7 +1144,7 @@ document.getElementById('link-servicio').href = `https://wa.me/${WA_NUMBER}?text
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && allData.length) loadPendientes().then(render);
 });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarSolicitud(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { cerrarSolicitud(); cerrarMis(); } });
 
 function initMenu() {
   var btn = document.getElementById('cdv-menu-btn');
