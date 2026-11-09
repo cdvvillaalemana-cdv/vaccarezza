@@ -121,6 +121,8 @@
 
   .pos.subio { background: #fef3c7; color: #92400e; }
   .cli-card .slot-head { background: #eef6ff; }
+  .pos.dup { background: #fdeeee; color: #9b2c2c; }
+  .pos.dia { background: #eef6ff; color: #1e3a8a; }
   .cli-slot { font-size: 14px; font-weight: 700; }
   .cli-foot { padding: 12px 14px; background: #fafaf8; border-top: 1px solid #f0f0ee; }
   .cli-foot .name-input { width: 100%; margin-bottom: 8px; }
@@ -193,6 +195,7 @@
           <li><b>Liberar:</b> úsalo si una solicitud nunca llegó por WhatsApp (el cliente no envió el mensaje) o si el cliente desistió. Si liberaste uno por error, ábrelo en <b>🗂️ Liberados</b> (más abajo) y toca <b>Restaurar</b>: vuelve a su mismo lugar en la fila.</li>
           <li><b>👤 Mismo cliente con varias solicitudes:</b> aparecen juntas en una tarjeta azul. Toca <b>Anotar todas</b>: se anotan de una vez y se abre <b>un solo WhatsApp</b> con todas sus reservas. Si quieres anotar solo algunas, usa el botón Anotar de cada una.</li>
           <li><b>📋 Lista de espera de reservas anotadas:</b> clientes que pidieron quedar en espera de una reserva que ya está anotada pero sin confirmar (celda en blanco). No hay que hacer nada con ellos. Si borras esa reserva del Sheet, llega un aviso por Telegram y pasan solos a "Por anotar", con el 1° marcado <b>🔔 Subió a 1°</b>. Si la reserva se confirma, no se les avisa.</li>
+          <li><b>⚠️ Pidió ambas canchas / ℹ️ Pidió más de un horario este día:</b> el mismo nombre tiene otra solicitud (o reserva anotada en las últimas 24 h) ese mismo día. Confirma con el cliente si de verdad quiere todas antes de anotar.</li>
           <li><b>✅ Anotados:</b> las reservas anotadas en las últimas 24 h. Si se te olvidó enviar el mensaje, toca <b>Abrir WhatsApp de nuevo</b>.</li>
           <li><b>🔔 Subió a 1°:</b> si se libera el 1° de la fila (o vence un cupo guardado), el siguiente pasa a ser el 1° y llega un aviso por Telegram. Escríbele para avisarle que se liberó el cupo y toca <b>✓ Avisado</b>.</li>
           <li><b>Sin código:</b> si un mensaje llega sin "Código de solicitud", no quedó registrado aquí: anótalo directo en el Sheet.</li>
@@ -520,6 +523,17 @@ function render(borradores = {}) {
   llenarDias();
 }
 
+// Marcas: el mismo cliente pidió ambas canchas a la misma hora, o más de un horario ese día
+function marcasDia(x) {
+  if (x.tipo === 'guardado') return '';
+  const pool = datos.items.filter(i => ['pendiente', 'espera'].includes(i.estado) && i.tipo !== 'guardado').concat(datos.anotados || []);
+  const otros = pool.filter(o => o.codigo !== x.codigo && o.fecha === x.fecha && claveNombre(o.nombre) === claveNombre(x.nombre));
+  let html = '';
+  if (otros.some(o => o.hora === x.hora && Number(o.cancha) !== Number(x.cancha))) html += '<span class="pos dup">⚠️ Pidió ambas canchas</span>';
+  if (otros.some(o => o.hora !== x.hora)) html += '<span class="pos dia">ℹ️ Pidió más de un horario este día</span>';
+  return html;
+}
+
 function horaCL(ms) { return new Date(ms).toLocaleTimeString('es-CL', { timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }); }
 function claveNombre(s) { return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim(); }
 
@@ -538,6 +552,7 @@ function tarjetaCliente(k, lista, borradores) {
         <span class="code">${esc(x.codigo)}</span>
         <span class="cli-slot">${dia(x.fecha)} · ${esc(x.hora)} · C${x.cancha}</span>
         ${pos}
+        ${marcasDia(x)}
         ${x.subio && x.posicion === 1 ? `<span class="pos subio">🔔 Subió a 1° · avísale</span><button class="btn btn-ghost btn-sm" onclick="accion('avisado_subio','${esc(x.codigo)}',this)">✓ Avisado</button>` : ''}
         <span class="wait${late ? ' late' : ''}">${hace(x.creado)}</span>
       </div>
@@ -575,6 +590,7 @@ function fila(x, borradores) {
       <span class="code">${esc(x.codigo)}</span>
       ${guardado ? '<span class="tag-guardado">📌 Cupo guardado</span>' : ''}
       ${pos}
+      ${marcasDia(x)}
       ${x.subio && x.posicion === 1 ? `<span class="pos subio">🔔 Subió a 1° · avísale</span><button class="btn btn-ghost btn-sm" onclick="accion('avisado_subio','${esc(x.codigo)}',this)">✓ Avisado</button>` : ''}
       ${tiempo}
     </div>
