@@ -197,6 +197,8 @@
           <li><b>📋 Lista de espera de reservas anotadas:</b> clientes que pidieron quedar en espera de una reserva que ya está anotada pero sin confirmar (celda en blanco). No hay que hacer nada con ellos. Si borras esa reserva del Sheet, llega un aviso por Telegram y pasan solos a "Por anotar", con el 1° marcado <b>🔔 Subió a 1°</b>. Si la reserva se confirma, no se les avisa.</li>
           <li><b>⚠️ Pidió ambas canchas / ℹ️ Pidió más de un horario este día:</b> el mismo nombre tiene otra solicitud (o reserva anotada en las últimas 24 h) ese mismo día. Confirma con el cliente si de verdad quiere todas antes de anotar.</li>
           <li><b>Confirmación desde la página:</b> el día anterior (hasta las 17:00) el cliente puede tocar <b>Confirmar asistencia</b> en su reserva. La celda se pinta sola de <b>verde claro</b>, llega un aviso por Telegram y también te llega su WhatsApp de confirmación.</li>
+          <li><b>Liberación desde la página:</b> hasta 5 horas antes, el cliente puede tocar <b>Liberar</b> en su reserva o solicitud. Se libera sola (si estaba anotada, se borra del Sheet y sube la lista de espera), llega un aviso por Telegram y también su WhatsApp. En <b>🗂️ Liberados</b> aparece como "(liberó el cliente)".</li>
+          <li><b>Confirmación con lluvia:</b> si ese día hay pronóstico de lluvia, la celda <b>no</b> se pinta sola: llega un aviso por Telegram y su WhatsApp pregunta si corresponde abono. Píntala tú cuando corresponda.</li>
           <li><b>✅ Anotados:</b> las reservas anotadas en las últimas 24 h. Si se te olvidó enviar el mensaje, toca <b>Abrir WhatsApp de nuevo</b>.</li>
           <li><b>🔔 Subió a 1°:</b> si se libera el 1° de la fila (o vence un cupo guardado), el siguiente pasa a ser el 1° y llega un aviso por Telegram. Escríbele para avisarle que se liberó el cupo y toca <b>✓ Avisado</b>.</li>
           <li><b>Sin código:</b> si un mensaje llega sin "Código de solicitud", no quedó registrado aquí: anótalo directo en el Sheet.</li>
@@ -512,7 +514,7 @@ function render(borradores = {}) {
   document.getElementById('c-lib').textContent = libs.length;
   document.getElementById('lib-zona').innerHTML = libs.map(x => {
     const hora = horaCL(x.cerrado);
-    const que = x.estado === 'vencido' ? `venció a las ${hora}` : `liberado a las ${hora}`;
+    const que = x.estado === 'vencido' ? `venció a las ${hora}` : `liberado a las ${hora}${x.por === 'cliente' ? ' · <b>(liberó el cliente)</b>' : ''}`;
     return `<div class="lib-card">
       <span class="code">${esc(x.codigo)}</span>
       <div class="lib-info"><b>${esc(x.nombre)}</b>${x.tipo === 'guardado' ? ' · 📌' : ''}<br>
