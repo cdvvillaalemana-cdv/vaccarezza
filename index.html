@@ -204,6 +204,8 @@
   .mine-pill.pendiente { background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
   .mine-pill.espera { background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd; }
   .conf-btn { display: block; margin-top: 5px; background: #1d4ed8; color: #fff; border: none; border-radius: 6px; padding: 5px 9px; font-family: 'Barlow', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; }
+  .lib-link { display: block; margin-top: 4px; background: none; border: none; padding: 0; font-family: 'Barlow', sans-serif; font-size: 11px; font-weight: 600; color: #9b2c2c; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+  .conf-env { display: block; margin-top: 4px; font-size: 11px; font-weight: 700; color: #1e40af; }
   .conf-venc { display: block; margin-top: 4px; font-size: 11px; font-weight: 600; color: #9b2c2c; }
   .conf-aviso { background: #fff7e6; border: 1px solid #f5a623; border-radius: 10px; padding: 12px 14px; font-size: 14px; color: #4a2d00; line-height: 1.55; margin-bottom: 14px; }
   .conf-check { display: flex; gap: 10px; align-items: flex-start; font-size: 15px; font-weight: 700; margin: 4px 0 2px; cursor: pointer; }
@@ -378,12 +380,28 @@
     <div class="conf-aviso">⚠️ <b>Antes de confirmar</b><br>
       Confirma solo si ya hablaste con <b>todos los jugadores de ambos equipos</b> y es <b>100% seguro</b> que asistirán.<br>
       <b>Si confirmas y luego no asisten, quedará registrado en tu historial.</b></div>
+    <div class="conf-aviso" id="conf-lluvia" style="display:none;background:#eef6ff;border-color:#93c5fd;color:#1e3a8a">🌧️ <b>Hay pronóstico de lluvia para mañana.</b> Al recibir tu confirmación te diremos por WhatsApp si es necesario un abono.</div>
     <label class="conf-check"><input type="checkbox" id="conf-check" onchange="document.getElementById('conf-go').disabled=!this.checked"> Confirmo que ambos equipos asistirán</label>
     <div class="sol-error" id="conf-error"></div>
     <div class="sol-actions">
       <button class="sol-btn cancel" type="button" onclick="cerrarConf()">Cancelar</button>
       <button class="sol-btn go" type="button" id="conf-go" onclick="enviarConfirmacion()" disabled>Confirmar por WhatsApp</button>
     </div>
+  </div>
+</div>
+
+<!-- LIBERAR MODAL -->
+<div class="sol-modal" id="lib-modal" onclick="if(event.target===this)cerrarLiberar()">
+  <div class="sol-box" role="dialog" aria-modal="true" aria-labelledby="lib-title">
+    <div class="sol-title" id="lib-title">Liberar reserva</div>
+    <div class="sol-resumen" id="lib-resumen"></div>
+    <div class="conf-aviso" id="lib-texto"></div>
+    <div class="sol-error" id="lib-error"></div>
+    <div class="sol-actions">
+      <button class="sol-btn cancel" type="button" onclick="cerrarLiberar()">No, mantener</button>
+      <button class="sol-btn go" type="button" id="lib-go" style="background:#e05555" onclick="enviarLiberar()">Sí, liberar</button>
+    </div>
+    <div class="sol-aviso">Se abrirá WhatsApp para avisarnos. Se puede liberar desde aquí hasta 5 horas antes.</div>
   </div>
 </div>
 
@@ -739,18 +757,77 @@ function estadoConfirmar(x) {
   return '';
 }
 
+function leerConfEnviadas() { try { return JSON.parse(localStorage.getItem('cdv_conf') || '[]'); } catch(e) { return []; } }
+function marcarConfEnviada(codigo) { try { const l = leerConfEnviadas(); if (!l.includes(codigo)) l.push(codigo); localStorage.setItem('cdv_conf', JSON.stringify(l.slice(-40))); } catch(e) {} }
+
+function msgWA(titulo, x, extras) {
+  const lineas = [titulo, `📅 Día: *${etiquetaDia(x.fecha)}*`, `🕗 Hora: *${x.hora}*`, `🏟️ Cancha: *${CANCHA_LABEL[x.cancha]}*`,
+                  `👤 Nombre y apellido: ${leerNombre()}`].concat(extras || []);
+  return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(lineas.join('\n'))}`;
+}
+function linkLiberarWA(x) {
+  const anotada = ['reservada', 'confirmada'].includes(x.estado);
+  return msgWA(`Hola! Quiero liberar mi ${anotada ? 'reserva' : 'solicitud'} 🙏`, x, [`_Código de solicitud: ${x.codigo}_`]);
+}
+
+function accionLiberar(x) {
+  if (x.liberable) return `<button type="button" class="lib-link" onclick="abrirLiberar('${x.codigo}')">Liberar</button>`;
+  return `<a class="lib-link" href="${linkLiberarWA(x)}" target="_blank">Para liberar ahora, escríbenos</a>`;
+}
+
 function celdaPropia(x) {
   if (x.estado === 'reservada' || x.estado === 'confirmada') {
+    const enviada = x.estado === 'reservada' && leerConfEnviadas().includes(x.codigo);
     const conf = x.estado === 'confirmada';
     let extra = '';
     const ec = estadoConfirmar(x);
-    if (ec === 'boton') extra = `<button type="button" class="conf-btn" onclick="abrirConfirmar('${x.codigo}')">Confirmar asistencia</button>`;
+    if (enviada) extra = `<span class="conf-env">📨 Confirmación enviada</span>`;
+    else if (ec === 'boton') extra = `<button type="button" class="conf-btn" onclick="abrirConfirmar('${x.codigo}')">Confirmar asistencia</button>`;
     else if (ec === 'vencido') extra = `<a class="conf-venc" href="https://wa.me/${WA_NUMBER}" target="_blank">Plazo de confirmación vencido: escríbenos</a>`;
-    return `<span class="mine-pill ${conf ? 'confirmado' : 'anotado'}">✅ ${conf ? 'Confirmado/a' : 'Anotado/a'}</span>${extra}`;
+    return `<span class="mine-pill ${conf ? 'confirmado' : 'anotado'}">✅ ${conf ? 'Confirmado/a' : 'Anotado/a'}</span>${extra}${accionLiberar(x)}`;
   }
-  if (x.estado === 'pendiente') return `<span class="mine-pill pendiente">⏳ Tu solicitud${x.posicion > 1 ? ` · ${x.posicion}°` : ''}</span>`;
-  if (x.estado === 'espera') return `<span class="mine-pill espera">📋 En espera${x.posicion ? ` · ${x.posicion}°` : ''}</span>`;
+  if (x.estado === 'pendiente') return `<span class="mine-pill pendiente">⏳ Tu solicitud${x.posicion > 1 ? ` · ${x.posicion}°` : ''}</span>${accionLiberar(x)}`;
+  if (x.estado === 'espera') return `<span class="mine-pill espera">📋 En espera${x.posicion ? ` · ${x.posicion}°` : ''}</span>${accionLiberar(x)}`;
   return '';
+}
+
+// ── LIBERAR DESDE LA PÁGINA ───────────────────────────────────
+let libActual = null;
+function abrirLiberar(codigo) {
+  const x = Object.values(misData).find(i => i.codigo === codigo);
+  if (!x) return;
+  libActual = x;
+  const anotada = ['reservada', 'confirmada'].includes(x.estado);
+  document.getElementById('lib-title').textContent = anotada ? 'Liberar reserva' : 'Liberar solicitud';
+  document.getElementById('lib-resumen').innerHTML =
+    `📅 Día: <b>${etiquetaDia(x.fecha)}</b><br>🕗 Hora: <b>${x.hora}</b><br>🏟️ Cancha: <b>${CANCHA_LABEL[x.cancha]}</b>`;
+  document.getElementById('lib-texto').innerHTML = `¿Seguro que quieres liberar esta ${anotada ? 'reserva' : 'solicitud'}? <b>El cupo quedará disponible para otras personas.</b>`;
+  document.getElementById('lib-error').style.display = 'none';
+  const go = document.getElementById('lib-go'); go.disabled = false; go.textContent = 'Sí, liberar';
+  document.getElementById('lib-modal').classList.add('open');
+}
+function cerrarLiberar() { document.getElementById('lib-modal').classList.remove('open'); libActual = null; }
+
+async function enviarLiberar() {
+  const x = libActual;
+  if (!x) return;
+  const go = document.getElementById('lib-go'); go.disabled = true; go.textContent = 'Liberando…';
+  const err = document.getElementById('lib-error');
+  try {
+    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'liberar_cliente', codigo: x.codigo }) });
+    const r = await res.json();
+    if (!r.ok && r.motivo === 'plazo') {
+      err.innerHTML = `Faltan menos de 5 horas: para liberar ahora, <a href="${linkLiberarWA(x)}" target="_blank">escríbenos por WhatsApp</a>.`;
+      err.style.display = 'block'; go.textContent = 'Sí, liberar';
+      return;
+    }
+    if (r.ok) delete misData[`${x.fecha}|${nh(x.hora)}|${x.cancha}`];
+  } catch(e) { /* si falla, igual se avisa por WhatsApp */ }
+  const url = linkLiberarWA(x);
+  cerrarLiberar();
+  render();
+  window.location.href = url;
+  setTimeout(() => { Promise.all([loadPendientes(), loadMis()]).then(render); }, 4000);
 }
 
 // ── CONFIRMAR ASISTENCIA ──────────────────────────────────────
@@ -763,6 +840,7 @@ function abrirConfirmar(codigo) {
   const chk = document.getElementById('conf-check'); chk.checked = false;
   const go = document.getElementById('conf-go'); go.disabled = true; go.textContent = 'Confirmar por WhatsApp';
   document.getElementById('conf-error').style.display = 'none';
+  document.getElementById('conf-lluvia').style.display = hasRain(x.fecha) ? 'block' : 'none';
   document.getElementById('conf-modal').classList.add('open');
 }
 function cerrarConf() { document.getElementById('conf-modal').classList.remove('open'); confActual = null; }
@@ -771,9 +849,10 @@ async function enviarConfirmacion() {
   const x = confActual;
   if (!x || !document.getElementById('conf-check').checked) return;
   const go = document.getElementById('conf-go'); go.disabled = true; go.textContent = 'Confirmando…';
+  const lluvia = hasRain(x.fecha);
   const err = document.getElementById('conf-error');
   try {
-    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'confirmar', codigo: x.codigo }) });
+    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'confirmar', codigo: x.codigo, lluvia }) });
     const r = await res.json();
     if (!r.ok) {
       err.textContent = r.motivo === 'plazo_vencido' ? 'El plazo para confirmar (17:00 del día anterior) ya pasó. Escríbenos por WhatsApp.'
@@ -781,8 +860,8 @@ async function enviarConfirmacion() {
       err.style.display = 'block'; go.textContent = 'Confirmar por WhatsApp';
       return;
     }
-    x.estado = 'confirmada';
-  } catch(e) { /* si falla el registro, igual se envía la confirmación por WhatsApp */ }
+    if (r.pintada === false) marcarConfEnviada(x.codigo); else x.estado = 'confirmada';
+  } catch(e) { marcarConfEnviada(x.codigo); /* si falla el registro, igual se envía la confirmación por WhatsApp */ }
   const lineas = [
     'Hola! Confirmo asistencia ✅',
     `📅 Día: *${etiquetaDia(x.fecha)}*`,
@@ -792,6 +871,7 @@ async function enviarConfirmacion() {
     '*Ambos equipos 100% confirmados*',
     `_Código de solicitud: ${x.codigo}_`
   ];
+  if (lluvia) lineas.push('🌧️ Ya que hay pronóstico de lluvia, ¿debo abonar para confirmar?');
   cerrarConf();
   render();
   window.location.href = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(lineas.join('\n'))}`;
@@ -1221,7 +1301,7 @@ document.getElementById('link-servicio').href = `https://wa.me/${WA_NUMBER}?text
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && allData.length) Promise.all([loadPendientes(), loadMis()]).then(render);
 });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { cerrarSolicitud(); cerrarConf(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { cerrarSolicitud(); cerrarConf(); cerrarLiberar(); } });
 
 function initMenu() {
   var btn = document.getElementById('cdv-menu-btn');
