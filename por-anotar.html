@@ -197,7 +197,8 @@
           <li><b>📋 Lista de espera de reservas anotadas:</b> clientes que pidieron quedar en espera de una reserva que ya está anotada pero sin confirmar (celda en blanco). No hay que hacer nada con ellos. Si borras esa reserva del Sheet, llega un aviso por Telegram y pasan solos a "Por anotar", con el 1° marcado <b>🔔 Subió a 1°</b>. Si la reserva se confirma, no se les avisa.</li>
           <li><b>⚠️ Pidió ambas canchas / ℹ️ Pidió más de un horario este día:</b> el mismo nombre tiene otra solicitud (o reserva anotada en las últimas 24 h) ese mismo día. Confirma con el cliente si de verdad quiere todas antes de anotar.</li>
           <li><b>Confirmación desde la página:</b> el día anterior (hasta las 17:00) el cliente puede tocar <b>Confirmar asistencia</b> en su reserva. La celda se pinta sola de <b>verde claro</b>, llega un aviso por Telegram y también te llega su WhatsApp de confirmación.</li>
-          <li><b>Liberación desde la página:</b> hasta 5 horas antes, el cliente puede tocar <b>Liberar</b> en su reserva o solicitud. Se libera sola (si estaba anotada, se borra del Sheet y sube la lista de espera), llega un aviso por Telegram y también su WhatsApp. En <b>🗂️ Liberados</b> aparece como "(liberó el cliente)".</li>
+          <li><b>Liberación desde la página:</b> hasta 5 horas antes, el cliente puede tocar <b>Liberar</b> en su reserva o solicitud. Se libera sola (si estaba anotada, se borra del Sheet y sube la lista de espera), llega un aviso por Telegram y también su WhatsApp. En <b>🗂️ Liberados</b> aparece como "(liberó el cliente)". Durante 30 minutos el cliente puede <b>Deshacer</b> desde su celular (llega un aviso). Si el WhatsApp nunca llegó, pudo ser un error: puedes restaurarla tú en Liberados.</li>
+          <li><b>"Además, tienes las siguientes reservas":</b> el mensaje "¡Reservado!" agrega las otras reservas de los próximos 16 días que estén en el Sheet con el mismo nombre y apellido. Revisa la lista antes de enviar: si en el Sheet lo anotaron distinto no aparece, y si hay alguien con el mismo nombre puede salir una ajena.</li>
           <li><b>Confirmación con lluvia:</b> si ese día hay pronóstico de lluvia, la celda <b>no</b> se pinta sola: llega un aviso por Telegram y su WhatsApp pregunta si corresponde abono. Píntala tú cuando corresponda.</li>
           <li><b>✅ Anotados:</b> las reservas anotadas en las últimas 24 h. Si se te olvidó enviar el mensaje, toca <b>Abrir WhatsApp de nuevo</b>.</li>
           <li><b>🔔 Subió a 1°:</b> si se libera el 1° de la fila (o vence un cupo guardado), el siguiente pasa a ser el 1° y llega un aviso por Telegram. Escríbele para avisarle que se liberó el cupo y toca <b>✓ Avisado</b>.</li>
@@ -514,7 +515,7 @@ function render(borradores = {}) {
   document.getElementById('c-lib').textContent = libs.length;
   document.getElementById('lib-zona').innerHTML = libs.map(x => {
     const hora = horaCL(x.cerrado);
-    const que = x.estado === 'vencido' ? `venció a las ${hora}` : `liberado a las ${hora}${x.por === 'cliente' ? ' · <b>(liberó el cliente)</b>' : ''}`;
+    const que = x.estado === 'vencido' ? `venció a las ${hora}` : `liberado a las ${hora}${String(x.por || '').indexOf('cliente') === 0 ? ' · <b>(liberó el cliente)</b>' : ''}`;
     return `<div class="lib-card">
       <span class="code">${esc(x.codigo)}</span>
       <div class="lib-info"><b>${esc(x.nombre)}</b>${x.tipo === 'guardado' ? ' · 📌' : ''}<br>
@@ -617,11 +618,27 @@ function mensajeAnotado(x, nombreAnotado) {
     return `Hola ${pn} ✅ ¡Reservado!\n` +
       `🤝 *Trabajamos con reserva sin abono*. Por eso, confirmar tu asistencia antes de las 17:00 hrs del día anterior es tu responsabilidad.\n` +
       `⚠️ Si no confirmas, la reserva se da de baja automáticamente, aunque no te hayamos escrito.\n\n` +
+      (x.tipo === 'cliente' ? bloqueOtras(nombreAnotado, [x]) : '') +
       (x.tipo === 'cliente' ? `📲 Puedes ver tu reserva y confirmar tu asistencia desde la página de disponibilidad, en el mismo celular desde donde la pediste\n\n` : '') +
       `Gracias por reservar en CDV 🟢🟠`;
   }
   if (d === 1) return `Hola ${pn}\nOk! *Ambos equipos 100% confirmados* para mañana o me confirmas hoy antes de las 5 pm?`;
   return `Hola ${pn}\nOk! ¿*Ambos equipos 100% confirmados* para hoy?`;
+}
+
+// Otras reservas del mismo cliente en el Sheet (próximos 16 días), por nombre y apellido
+function mismoNombreCli(a, b) {
+  const ta = claveNombre(a).replace(/[^a-zñ0-9 ]/g, ' ').split(' ').filter(Boolean);
+  const tb = claveNombre(b).replace(/[^a-zñ0-9 ]/g, ' ').split(' ').filter(Boolean);
+  return ta.length >= 2 && tb.length >= 2 && ta[0] === tb[0] && ta[1] === tb[1];
+}
+function bloqueOtras(nombre, excluir) {
+  const fuera = new Set(excluir.map(x => `${x.fecha}|${x.hora}|${x.cancha}`));
+  const otras = (datos.reservasProx || [])
+    .filter(r => mismoNombreCli(r.texto, nombre) && !fuera.has(`${r.fecha}|${r.hora}|${r.cancha}`))
+    .sort((a, b) => (a.fecha + a.hora).localeCompare(b.fecha + b.hora) || a.cancha - b.cancha);
+  if (!otras.length) return '';
+  return '📋 Además, tienes las siguientes reservas:\n' + otras.map(r => `📅 ${dia(r.fecha)} · ${r.hora} · Cancha ${r.cancha}`).join('\n') + '\n\n';
 }
 
 // Mensaje para varias reservas del mismo cliente
@@ -636,6 +653,7 @@ function mensajeVarios(lista, nombreAnotado) {
     partes.push(`Hola ${pn} ✅ ¡Reservado!\n` + lejos.map(linea).join('\n') + '\n' +
       `🤝 *Trabajamos con reserva sin abono*. Por eso, confirmar tu asistencia antes de las 17:00 hrs del día anterior es tu responsabilidad.\n` +
       `⚠️ Si no confirmas, la reserva se da de baja automáticamente, aunque no te hayamos escrito.\n\n` +
+      bloqueOtras(nombreAnotado, lista) +
       `📲 Puedes ver tu reserva y confirmar tu asistencia desde la página de disponibilidad, en el mismo celular desde donde la pediste\n\n` +
       `Gracias por reservar en CDV 🟢🟠`);
   }
