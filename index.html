@@ -204,6 +204,9 @@
   .mine-pill.pendiente { background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
   .mine-pill.espera { background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd; }
   .conf-btn { display: block; margin-top: 5px; background: #1d4ed8; color: #fff; border: none; border-radius: 6px; padding: 5px 9px; font-family: 'Barlow', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; }
+  .mine-pill.liberada { background: #f3f4f6; color: #4b5563; border: 1px dashed #9ca3af; font-weight: 600; font-size: 12px; }
+  .deshacer-btn { display: block; margin-top: 5px; background: #374151; color: #fff; border: none; border-radius: 6px; padding: 5px 9px; font-family: 'Barlow', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; }
+  .deshacer-nota { display: block; margin-top: 3px; font-size: 10px; color: var(--gray-text); }
   .lib-link { display: block; margin-top: 4px; background: none; border: none; padding: 0; font-family: 'Barlow', sans-serif; font-size: 11px; font-weight: 600; color: #9b2c2c; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
   .conf-env { display: block; margin-top: 4px; font-size: 11px; font-weight: 700; color: #1e40af; }
   .conf-venc { display: block; margin-top: 4px; font-size: 11px; font-weight: 600; color: #9b2c2c; }
@@ -435,6 +438,8 @@ let misSrv            = null; // hora del servidor (Chile) para saber si se pued
 let confActual        = null;
 let anotData          = {};   // "fecha|hora|cancha" -> personas en lista de espera de una reserva anotada sin confirmar
 let currentWeekOffset = 0;
+const DIAS_VISIBLES   = 16;   // hoy + 15 días
+const MAX_OFFSET      = Math.floor((DIAS_VISIBLES - 1) / 7);
 let solActual         = null; // solicitud abierta en el modal
 
 function nh(h) { return String(h).padStart(5, '0'); }
@@ -465,7 +470,7 @@ function getToday() {
 
 function getWindowDates() {
   const today = getToday();
-  const maxDate = new Date(today); maxDate.setDate(today.getDate() + 13);
+  const maxDate = new Date(today); maxDate.setDate(today.getDate() + DIAS_VISIBLES - 1);
   const start = new Date(today); start.setDate(today.getDate() + currentWeekOffset * 7);
   const dates = [];
   for (let i = 0; i < 7; i++) {
@@ -537,7 +542,7 @@ async function estadosMis(codigos) {
     const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'mis', codigos }), signal: ctrl.signal });
     const r = await res.json();
     if (!r.ok) throw new Error('error');
-    misSrv = { hoy: r.hoy, hora: r.hora, limite: r.limite || '17:00' };
+    misSrv = { hoy: r.hoy, hora: r.hora, limite: r.limite || '17:00', ahora: r.ahora, recibido: Date.now() };
     return r.reservas || [];
   } finally { clearTimeout(t); }
 }
@@ -786,9 +791,29 @@ function celdaPropia(x) {
     else if (ec === 'vencido') extra = `<a class="conf-venc" href="https://wa.me/${WA_NUMBER}" target="_blank">Plazo de confirmación vencido: escríbenos</a>`;
     return `<span class="mine-pill ${conf ? 'confirmado' : 'anotado'}">✅ ${conf ? 'Confirmado/a' : 'Anotado/a'}</span>${extra}${accionLiberar(x)}`;
   }
+  if (x.estado === 'liberada_cliente') {
+    const min = Math.max(1, Math.ceil((x.deshacerHasta - (misSrv && misSrv.ahora ? misSrv.ahora + (Date.now() - misSrv.recibido) : Date.now())) / 60000));
+    return `<span class="mine-pill liberada">Liberaste esta ${x.anotadaAntes ? 'reserva' : 'solicitud'}</span>` +
+      `<button type="button" class="deshacer-btn" onclick="deshacer('${x.codigo}', this)">↩️ Deshacer</button>` +
+      `<span class="deshacer-nota">${desErr[x.codigo] ? desErr[x.codigo] : `Disponible por ${min} min más`}</span>`;
+  }
   if (x.estado === 'pendiente') return `<span class="mine-pill pendiente">⏳ Tu solicitud${x.posicion > 1 ? ` · ${x.posicion}°` : ''}</span>${accionLiberar(x)}`;
   if (x.estado === 'espera') return `<span class="mine-pill espera">📋 En espera${x.posicion ? ` · ${x.posicion}°` : ''}</span>${accionLiberar(x)}`;
   return '';
+}
+
+// ── DESHACER UNA LIBERACIÓN (30 min) ──────────────────────────
+const desErr = {};
+async function deshacer(codigo, btn) {
+  btn.disabled = true; btn.textContent = 'Deshaciendo…';
+  try {
+    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'deshacer_cliente', codigo }) });
+    const r = await res.json();
+    if (!r.ok) desErr[codigo] = r.motivo === 'plazo' ? 'Ya pasaron los 30 minutos: escríbenos por WhatsApp.'
+                              : 'El cupo ya fue tomado: escríbenos por WhatsApp.';
+  } catch(e) { desErr[codigo] = 'No se pudo conectar. Intenta de nuevo.'; }
+  await Promise.all([loadPendientes(), loadMis()]);
+  render();
 }
 
 // ── LIBERAR DESDE LA PÁGINA ───────────────────────────────────
@@ -812,6 +837,7 @@ async function enviarLiberar() {
   const x = libActual;
   if (!x) return;
   const go = document.getElementById('lib-go'); go.disabled = true; go.textContent = 'Liberando…';
+  const url = linkLiberarWA(x);   // se arma antes de cambiar el estado
   const err = document.getElementById('lib-error');
   try {
     const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'liberar_cliente', codigo: x.codigo }) });
@@ -821,9 +847,12 @@ async function enviarLiberar() {
       err.style.display = 'block'; go.textContent = 'Sí, liberar';
       return;
     }
-    if (r.ok) delete misData[`${x.fecha}|${nh(x.hora)}|${x.cancha}`];
+    if (r.ok) {
+      const anotada = ['reservada', 'confirmada'].includes(x.estado);
+      Object.assign(x, { estado: 'liberada_cliente', anotadaAntes: anotada, liberable: false,
+                         deshacerHasta: (misSrv && misSrv.ahora ? misSrv.ahora + (Date.now() - misSrv.recibido) : Date.now()) + 30 * 60000 });
+    }
   } catch(e) { /* si falla, igual se avisa por WhatsApp */ }
-  const url = linkLiberarWA(x);
   cerrarLiberar();
   render();
   window.location.href = url;
@@ -954,14 +983,12 @@ function render() {
 
   const btnNext = document.getElementById('btn-next');
   const btnPrev = document.getElementById('btn-prev');
-  if (currentWeekOffset === 0) {
-    btnNext.style.display = 'flex'; btnPrev.style.display = 'none';
-    const nextStart = new Date(today); nextStart.setDate(today.getDate() + 7);
-    const maxDate = new Date(today); maxDate.setDate(today.getDate() + 13);
-    btnNext.disabled = nextStart > maxDate;
-  } else {
-    btnNext.style.display = 'none'; btnPrev.style.display = 'flex';
-  }
+  const hayMas = currentWeekOffset < MAX_OFFSET;
+  btnNext.style.display = hayMas ? 'flex' : 'none';
+  btnNext.disabled = !hayMas;
+  btnNext.textContent = currentWeekOffset === MAX_OFFSET - 1 ? 'Ver días siguientes →' : 'Ver siguientes 7 días →';
+  btnPrev.style.display = currentWeekOffset > 0 ? 'flex' : 'none';
+  btnPrev.textContent = currentWeekOffset === 1 ? '← Semana actual' : '← 7 días anteriores';
 
   const waIconSVG = `<svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>`;
 
@@ -1065,9 +1092,10 @@ function render() {
   const bottomWrap = document.getElementById('btn-next-bottom-wrap');
   const bottomBtn  = document.getElementById('btn-next-bottom');
   if (bottomWrap && bottomBtn) {
-    if (currentWeekOffset === 0 && !btnNext.disabled) {
+    if (hayMas) {
       bottomWrap.style.display = 'block';
       bottomBtn.disabled = false;
+      bottomBtn.textContent = btnNext.textContent;
     } else {
       bottomWrap.style.display = 'none';
     }
@@ -1075,8 +1103,8 @@ function render() {
 }
 
 // ── NAVEGACIÓN ────────────────────────────────────────────────
-function nextWeek() { currentWeekOffset = 1; render(); }
-function prevWeek() { currentWeekOffset = 0; render(); }
+function nextWeek() { currentWeekOffset = Math.min(MAX_OFFSET, currentWeekOffset + 1); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+function prevWeek() { currentWeekOffset = Math.max(0, currentWeekOffset - 1); render(); }
 
 // ── INSTALL MODAL ─────────────────────────────────────────────
 function showInstall() {
