@@ -478,7 +478,8 @@ function crearObstaculo() {
   }
   // Distancia hasta el siguiente, en segundos de carrera, para que siempre sea esquivable
   const dif = Math.min(1, S.puntos / 130);
-  const seg = 0.98 - dif * 0.2 + Math.random() * (0.85 - dif * 0.35);
+  const extra = Math.min(1, Math.max(0, (S.puntos - 70) / 60));   // 0 hasta los 70 puntos, sube de a poco hasta 1 a los 130
+  const seg = 0.98 - dif * 0.2 - extra * 0.06 + Math.random() * (0.85 - dif * 0.35 - extra * 0.2);
   const hueco = S.vel * seg;
   S.prox = o.w + hueco;
   if (seg >= 1.2 && Math.random() < 0.5) {
