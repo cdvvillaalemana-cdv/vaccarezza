@@ -169,6 +169,7 @@
     </div>
     <div class="updated" id="updated"></div>
 
+    <div id="rev-zona"></div>
     <div id="avisar-zona"></div>
 
     <div class="section-title">📝 Por anotar <span class="count" id="c-pend">0</span></div>
@@ -188,16 +189,18 @@
           <li><b>Reserva para 2 días o más:</b> el mensaje "✅ ¡Reservado!" con las condiciones de confirmación. Con eso queda listo.</li>
           <li><b>Reserva para hoy o mañana:</b> no se envía el "Reservado". El mensaje pregunta si <b>ambos equipos están 100% confirmados</b>. Cuando el cliente responda que sí, envíale la respuesta rápida <code>/listohoy</code>.</li>
         </ul>
-        <div class="tip">⚠️ En las reservas para hoy o mañana el nombre ya queda anotado en el Sheet. Si el cliente no confirma (para mañana: antes de las 17:00 de hoy), <b>borra su nombre del Sheet</b> para liberar la cancha.</div>
+        <div class="tip">⚠️ En las reservas para hoy o mañana el nombre ya queda anotado en el Sheet. Si el cliente no confirma (para mañana: antes de las 17:00 de hoy), <b>borra su nombre del Sheet</b> para dejar libre la cancha.</div>
         <h4>Otros casos</h4>
         <ul>
           <li><b>Varias solicitudes para el mismo horario:</b> se atiende primero al <b>"1° en la fila"</b>. Al anotarlo, los demás pasan a <b>📣 Avisar: cupo tomado</b>: escríbeles ofreciendo otro horario y toca <b>Ya avisé</b>.</li>
-          <li><b>Liberar:</b> úsalo si una solicitud nunca llegó por WhatsApp (el cliente no envió el mensaje) o si el cliente desistió. Si liberaste uno por error, ábrelo en <b>🗂️ Liberados</b> (más abajo) y toca <b>Restaurar</b>: vuelve a su mismo lugar en la fila.</li>
+          <li><b>Anular:</b> úsalo si una solicitud nunca llegó por WhatsApp (el cliente no envió el mensaje) o si el cliente desistió. Si anulaste una por error, ábrela en <b>🗂️ Anulados</b> (más abajo) y toca <b>Restaurar</b>: vuelve a su mismo lugar en la fila.</li>
           <li><b>👤 Mismo cliente con varias solicitudes:</b> aparecen juntas en una tarjeta azul. Toca <b>Anotar todas</b>: se anotan de una vez y se abre <b>un solo WhatsApp</b> con todas sus reservas. Si quieres anotar solo algunas, usa el botón Anotar de cada una.</li>
           <li><b>📋 Lista de espera de reservas anotadas:</b> clientes que pidieron quedar en espera de una reserva que ya está anotada pero sin confirmar (celda en blanco). No hay que hacer nada con ellos. Si borras esa reserva del Sheet, llega un aviso por Telegram y pasan solos a "Por anotar", con el 1° marcado <b>🔔 Subió a 1°</b>. Si la reserva se confirma, no se les avisa.</li>
           <li><b>⚠️ Pidió ambas canchas / ℹ️ Pidió más de un horario este día:</b> el mismo nombre tiene otra solicitud (o reserva anotada en las últimas 24 h) ese mismo día. Confirma con el cliente si de verdad quiere todas antes de anotar.</li>
           <li><b>Confirmación desde la página:</b> el día anterior (hasta las 17:00) el cliente puede tocar <b>Confirmar asistencia</b> en su reserva. La celda se pinta sola de <b>verde claro</b>, llega un aviso por Telegram y también te llega su WhatsApp de confirmación.</li>
-          <li><b>Liberación desde la página:</b> hasta 5 horas antes, el cliente puede tocar <b>Liberar</b> en su reserva o solicitud. Se libera sola (si estaba anotada, se borra del Sheet y sube la lista de espera), llega un aviso por Telegram y también su WhatsApp. En <b>🗂️ Liberados</b> aparece como "(liberó el cliente)". Durante 30 minutos el cliente puede <b>Deshacer</b> desde su celular (llega un aviso). Si el WhatsApp nunca llegó, pudo ser un error: puedes restaurarla tú en Liberados.</li>
+          <li><b>Anulación desde la página:</b> hasta 5 horas antes, el cliente puede tocar <b>Anular</b> en su reserva o solicitud. Se anula sola (si estaba anotada, se borra del Sheet y sube la lista de espera), llega un aviso por Telegram y también su WhatsApp. En <b>🗂️ Anulados</b> aparece como "(anuló el cliente)". Durante 30 minutos el cliente puede <b>Deshacer</b> desde su celular (llega un aviso). Si el WhatsApp nunca llegó, pudo ser un error: puedes restaurarla tú en Anulados.</li>
+          <li><b>Si borras una reserva del Sheet,</b> ese cliente queda dado de baja: ya no la ve como suya ni puede anularla o confirmarla.</li>
+          <li><b>❓ ¿Es la misma persona?:</b> si cambias el nombre de una reserva anotada por otro distinto (ej. "Katherine Fem" → "Katherine C."), llega un aviso y aparece arriba una pregunta. <b>Sí</b>: el cliente sigue gestionando su reserva desde la página. <b>No</b>: queda dado de baja. Mientras no respondas, si el cliente toca Anular o Confirmar no se cambia nada en el Sheet; te llega un aviso y su WhatsApp. Las mayúsculas, tildes y espacios no cuentan como cambio.</li>
           <li><b>"Además, tienes las siguientes reservas":</b> el mensaje "¡Reservado!" agrega las otras reservas de los próximos 16 días que estén en el Sheet con el mismo nombre y apellido. Revisa la lista antes de enviar: si en el Sheet lo anotaron distinto no aparece, y si hay alguien con el mismo nombre puede salir una ajena.</li>
           <li><b>Confirmación con lluvia:</b> si ese día hay pronóstico de lluvia, la celda <b>no</b> se pinta sola: llega un aviso por Telegram y su WhatsApp pregunta si corresponde abono. Píntala tú cuando corresponda.</li>
           <li><b>✅ Anotados:</b> las reservas anotadas en las últimas 24 h. Si se te olvidó enviar el mensaje, toca <b>Abrir WhatsApp de nuevo</b>.</li>
@@ -220,7 +223,7 @@
     </details>
 
     <details class="section hidden" id="lib-sec">
-      <summary>🗂️ Liberados <span class="count" id="c-lib">0</span> <span class="sec-sub">· últimas 24 h, por si liberaste alguno por error</span></summary>
+      <summary>🗂️ Anulados <span class="count" id="c-lib">0</span> <span class="sec-sub">· últimas 24 h, por si anulaste alguno por error</span></summary>
       <div class="lib-list" id="lib-zona"></div>
     </details>
 
@@ -242,8 +245,8 @@
           <h4>¿Y después?</h4>
           <ul>
             <li><b>Si consiguen rival:</b> busca el cupo en Por anotar, escribe el nombre y toca <b>Anotar</b>.</li>
-            <li><b>Si desisten:</b> toca <b>Liberar</b>.</li>
-            <li><b>Si no responden:</b> al cumplirse los minutos el cupo se libera solo y llega un aviso al celular: <i>"⏱️ Venció el cupo guardado"</i>. Si había alguien esperando ese horario, el aviso dice quién quedó 1° para que le escribas. Si venció antes de tiempo, puedes restaurarlo en <b>🗂️ Liberados</b>.</li>
+            <li><b>Si desisten:</b> toca <b>Anular</b>.</li>
+            <li><b>Si no responden:</b> al cumplirse los minutos el cupo se libera solo y llega un aviso al celular: <i>"⏱️ Venció el cupo guardado"</i>. Si había alguien esperando ese horario, el aviso dice quién quedó 1° para que le escribas. Si venció antes de tiempo, puedes restaurarlo en <b>🗂️ Anulados</b>.</li>
           </ul>
           <div class="tip">Si alguien solicita ese horario mientras está guardado, queda en lista de espera detrás de tu cupo.</div>
         </div>
@@ -439,6 +442,21 @@ function render(borradores = {}) {
   document.getElementById('stat-pend').classList.toggle('alert', clientes > 0);
   document.getElementById('stat-avisar').classList.toggle('alert', avisar.length > 0);
 
+  // ¿Es la misma persona? (cambios de nombre en el Sheet)
+  const revs = datos.revisiones || [];
+  document.getElementById('rev-zona').innerHTML = revs.length
+    ? `<div class="section-title">❓ ¿Es la misma persona? <span class="count">${revs.length}</span></div>` +
+      revs.map(x => `<div class="notify-card" style="border-left-color:#3b82f6;border-color:#bfdbfe">
+        <span class="code">${esc(x.codigo)}</span>
+        <div class="notify-info">${CANCHA[x.cancha]} · ${dia(x.fecha)} · ${esc(x.hora)}<br>
+          Se anotó como <b>${esc(x.nombre)}</b> y en el Sheet ahora dice <b>${esc(x.nuevo)}</b>.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;width:100%">
+          <button class="btn btn-primary" style="flex:1" onclick="accion('misma_persona','${esc(x.codigo)}',this)">Sí, es la misma persona</button>
+          <button class="btn btn-ghost" style="flex:1" onclick="accion('otra_persona','${esc(x.codigo)}',this)">No, es otra persona</button>
+        </div>
+      </div>`).join('')
+    : '';
+
   // Por avisar
   const az = document.getElementById('avisar-zona');
   if (avisar.length) {
@@ -495,7 +513,7 @@ function render(borradores = {}) {
       <div class="lib-info"><b>${esc(x.nombre)}</b> · ${x.posicion}° en espera<br>
         ${CANCHA[x.cancha]} · ${dia(x.fecha)} · ${esc(x.hora)}<br>
         <small>Reserva actual: ${esc(x.celda || '—')} · pidió ${hace(x.creado)}</small></div>
-      <button class="btn btn-ghost" onclick="liberar('${esc(x.codigo)}',this)">Liberar</button>
+      <button class="btn btn-ghost" onclick="liberar('${esc(x.codigo)}',this)">Anular</button>
     </div>`).join('');
 
   // Historial de anotados (24 h)
@@ -515,7 +533,7 @@ function render(borradores = {}) {
   document.getElementById('c-lib').textContent = libs.length;
   document.getElementById('lib-zona').innerHTML = libs.map(x => {
     const hora = horaCL(x.cerrado);
-    const que = x.estado === 'vencido' ? `venció a las ${hora}` : `liberado a las ${hora}${String(x.por || '').indexOf('cliente') === 0 ? ' · <b>(liberó el cliente)</b>' : ''}`;
+    const que = x.estado === 'vencido' ? `venció a las ${hora}` : `anulado a las ${hora}${String(x.por || '').indexOf('cliente') === 0 ? ' · <b>(anuló el cliente)</b>' : ''}`;
     return `<div class="lib-card">
       <span class="code">${esc(x.codigo)}</span>
       <div class="lib-info"><b>${esc(x.nombre)}</b>${x.tipo === 'guardado' ? ' · 📌' : ''}<br>
@@ -563,7 +581,7 @@ function tarjetaCliente(k, lista, borradores) {
       ${x.celda ? `<div class="slot-warn">⚠️ En el Sheet esta celda ya dice "<b>${esc(x.celda)}</b>".</div>` : ''}
       <div class="req-row mini">
         <button class="btn btn-ghost btn-sm" onclick="anotar('${esc(x.codigo)}',this)">✍️ Anotar solo esta</button>
-        <button class="btn btn-ghost btn-sm" onclick="liberar('${esc(x.codigo)}',this)">Liberar</button>
+        <button class="btn btn-ghost btn-sm" onclick="liberar('${esc(x.codigo)}',this)">Anular</button>
       </div>
     </div>`;
   }).join('');
@@ -601,7 +619,7 @@ function fila(x, borradores) {
     <div class="req-row">
       <input class="name-input" data-cod="${esc(x.codigo)}" value="${esc(valor)}" placeholder="Nombre para anotar" maxlength="60" aria-label="Nombre para anotar">
       <button class="btn btn-primary" onclick="anotar('${esc(x.codigo)}',this)">✍️ Anotar</button>
-      <button class="btn btn-ghost" onclick="liberar('${esc(x.codigo)}',this)" title="Liberar">Liberar</button>
+      <button class="btn btn-ghost" onclick="liberar('${esc(x.codigo)}',this)" title="Anular">Anular</button>
     </div>
   </div>`;
 }
@@ -610,23 +628,30 @@ function fila(x, borradores) {
 function hoyYMD() { return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(new Date(ahora())); }
 function diasHasta(fecha) { return Math.round((new Date(fecha + 'T12:00:00') - new Date(hoyYMD() + 'T12:00:00')) / 86400000); }
 
+function diaLargo(fecha) {
+  const L = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  const d = new Date(fecha + 'T12:00:00');
+  return `${L[d.getDay()]} ${fecha.slice(8, 10)}/${fecha.slice(5, 7)}`;
+}
+
 function mensajeAnotado(x, nombreAnotado) {
   // Primer nombre del cliente; en cupos guardados se deja el espacio vacío para escribirlo
   const pn = x.tipo === 'cliente' ? (nombreAnotado.trim().split(/\s+/)[0] || '') : '';
   const d = diasHasta(x.fecha);
   if (d >= 2) {
     return `Hola ${pn} ✅ ¡Reservado!\n` +
-      `🤝 *Trabajamos con reserva sin abono*. Por eso, confirmar tu asistencia antes de las 17:00 hrs del día anterior es tu responsabilidad.\n` +
-      `⚠️ Si no confirmas, la reserva se da de baja automáticamente, aunque no te hayamos escrito.\n\n` +
+      `📅 ${diaLargo(x.fecha)} · ${x.hora}\n` +
+      `🤝 *Trabajamos con reserva sin abono. Por eso, confirmar tu asistencia antes de las 17:00 hrs del día anterior es tu responsabilidad.*\n` +
+      `⚠️ Si no confirmas, la reserva se da de baja.\n\n` +
       (x.tipo === 'cliente' ? bloqueOtras(nombreAnotado, [x]) : '') +
-      (x.tipo === 'cliente' ? `📲 Puedes ver tu reserva y confirmar tu asistencia desde la página de disponibilidad, en el mismo celular desde donde la pediste\n\n` : '') +
+      (x.tipo === 'cliente' ? `📲 Anula o confirma tu asistencia desde la página de disponibilidad, en el mismo celular desde donde la pediste.\n\n` : '') +
       `Gracias por reservar en CDV 🟢🟠`;
   }
   if (d === 1) return `Hola ${pn}\nOk! *Ambos equipos 100% confirmados* para mañana o me confirmas hoy antes de las 5 pm?`;
   return `Hola ${pn}\nOk! ¿*Ambos equipos 100% confirmados* para hoy?`;
 }
 
-// Otras reservas del mismo cliente en el Sheet (próximos 16 días), por nombre y apellido
+// Otras reservas del mismo cliente en el Sheet (próximos 15 días), por nombre y apellido
 function mismoNombreCli(a, b) {
   const ta = claveNombre(a).replace(/[^a-zñ0-9 ]/g, ' ').split(' ').filter(Boolean);
   const tb = claveNombre(b).replace(/[^a-zñ0-9 ]/g, ' ').split(' ').filter(Boolean);
@@ -651,10 +676,10 @@ function mensajeVarios(lista, nombreAnotado) {
   const partes = [];
   if (lejos.length) {
     partes.push(`Hola ${pn} ✅ ¡Reservado!\n` + lejos.map(linea).join('\n') + '\n' +
-      `🤝 *Trabajamos con reserva sin abono*. Por eso, confirmar tu asistencia antes de las 17:00 hrs del día anterior es tu responsabilidad.\n` +
-      `⚠️ Si no confirmas, la reserva se da de baja automáticamente, aunque no te hayamos escrito.\n\n` +
+      `🤝 *Trabajamos con reserva sin abono. Por eso, confirmar tu asistencia antes de las 17:00 hrs del día anterior es tu responsabilidad.*\n` +
+      `⚠️ Si no confirmas, la reserva se da de baja.\n\n` +
       bloqueOtras(nombreAnotado, lista) +
-      `📲 Puedes ver tu reserva y confirmar tu asistencia desde la página de disponibilidad, en el mismo celular desde donde la pediste\n\n` +
+      `📲 Anula o confirma tu asistencia desde la página de disponibilidad, en el mismo celular desde donde la pediste.\n\n` +
       `Gracias por reservar en CDV 🟢🟠`);
   }
   if (cerca.length) {
@@ -779,7 +804,7 @@ async function accion(action, codigo, btn) {
     toast(r.motivo === 'ocupada' ? `No se puede restaurar: la celda ya dice "${r.actual}"`
         : r.motivo === 'pasado' ? 'Ese horario ya pasó' : 'Ya no estaba disponible para esta acción', 'warn');
   } else if (action === 'liberar') {
-    toast(r.subio ? `Liberado ✓ · Ahora 1°: ${r.subio.nombre}. Avísale.` : 'Liberado ✓ · Si fue un error, está en "Liberados"', r.subio ? 'warn' : '');
+    toast(r.subio ? `Anulado ✓ · Ahora 1°: ${r.subio.nombre}. Avísale.` : 'Anulado ✓ · Si fue un error, está en "Anulados"', r.subio ? 'warn' : '');
   } else if (action === 'restaurar') toast('Restaurado ✓ · Volvió a su lugar en la fila');
   else toast('Listo ✓');
   await refrescar(r);
