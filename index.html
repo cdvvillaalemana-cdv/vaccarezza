@@ -180,8 +180,6 @@
   .espera-link .n { color: #9a5b00; text-decoration: none; }
   .servicio { text-align: center; font-size: 12px; color: var(--gray-text); margin-top: 14px; line-height: 1.6; }
   .servicio a { color: var(--green-dark); font-weight: 600; }
-  .jueguito { text-align: center; margin-top: 26px; }
-  .jueguito a { font-size: 15px; text-decoration: none; opacity: 0.45; padding: 8px 14px; }
 
   .mis-wrap { display: flex; justify-content: flex-end; margin: -6px 0 14px; }
   .mis-btn { background: #fff; border: 2px solid var(--green); color: var(--green-dark); border-radius: 20px; padding: 7px 14px; font-family: 'Barlow', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; }
@@ -209,6 +207,13 @@
   .mine-pill.liberada { background: #f3f4f6; color: #4b5563; border: 1px dashed #9ca3af; font-weight: 600; font-size: 12px; }
   .deshacer-btn { display: block; margin-top: 5px; background: #374151; color: #fff; border: none; border-radius: 6px; padding: 5px 9px; font-family: 'Barlow', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; }
   .deshacer-nota { display: block; margin-top: 3px; font-size: 10px; color: var(--gray-text); }
+  .prox-sem { display: block; font-size: 15px; color: #1e40af; margin-bottom: 2px; }
+  .reenv-link { display: block; margin-top: 4px; background: none; border: none; padding: 0; font-family: 'Barlow', sans-serif; font-size: 11px; font-weight: 700; color: var(--green-dark); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+  .wa-check { background: #fff7e6; border: 2px solid #f5a623; border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; font-size: 14px; color: #4a2d00; line-height: 1.5; }
+  .wa-check-t { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .wa-check-b { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .wa-check-go { flex: 1; text-align: center; background: #25d366; color: #fff; border-radius: 8px; padding: 10px; font-weight: 700; text-decoration: none; }
+  .wa-check-ok { flex: 1; background: #fff; border: 1px solid var(--gray-mid); border-radius: 8px; padding: 10px; font-family: 'Barlow', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; }
   .lib-link { display: block; margin-top: 4px; background: none; border: none; padding: 0; font-family: 'Barlow', sans-serif; font-size: 11px; font-weight: 600; color: #9b2c2c; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
   .conf-env { display: block; margin-top: 4px; font-size: 11px; font-weight: 700; color: #1e40af; }
   .conf-venc { display: block; margin-top: 4px; font-size: 11px; font-weight: 600; color: #9b2c2c; }
@@ -286,6 +291,15 @@
     <div class="attention-note">⚠️ Los mensajes recibidos fuera de horario se atienden al día siguiente a partir de las 11:00.</div>
   </div>
 
+  <div class="wa-check" id="wa-check" style="display:none">
+    <div class="wa-check-t">⚠️ ¿Enviaste el WhatsApp?</div>
+    <div id="wa-check-txt"></div>
+    <div class="wa-check-b">
+      <a class="wa-check-go" id="wa-check-go" href="#">📲 Enviar WhatsApp</a>
+      <button type="button" class="wa-check-ok" onclick="ackUltima()">Sí, ya lo envié</button>
+    </div>
+  </div>
+
   <div class="date-nav">
     <div class="date-nav-label" id="week-label">Cargando...</div>
     <div class="nav-buttons">
@@ -356,7 +370,6 @@
       💻 ¿Te gustaría una página como esta para tu recinto o negocio?<br>
       <a id="link-servicio" href="#" target="_blank">Escríbeme y conversemos</a>
     </div>
-    <div class="jueguito"><a href="el-juego.html" title="¿Un jueguito?" aria-label="El Jueguito de CDV">👻</a></div>
 
   </div>
 </div>
@@ -374,7 +387,7 @@
       <button class="sol-btn cancel" type="button" id="sol-cancel" onclick="cerrarSolicitud()">Cancelar</button>
       <button class="sol-btn go" type="button" id="sol-go" onclick="enviarSolicitud()">Enviar por WhatsApp</button>
     </div>
-    <div class="sol-aviso">Se abrirá WhatsApp con tu solicitud lista. <strong>Recuerda enviar el mensaje</strong>; la cancha queda reservada solo cuando te respondemos.</div>
+    <div class="sol-aviso">Se abrirá WhatsApp con tu solicitud lista. <strong>Recuerda enviar el mensaje</strong>: si no nos llega tu WhatsApp, tu solicitud será anulada. La cancha queda reservada solo cuando te respondemos.</div>
   </div>
 </div>
 
@@ -399,15 +412,15 @@
 <!-- LIBERAR MODAL -->
 <div class="sol-modal" id="lib-modal" onclick="if(event.target===this)cerrarLiberar()">
   <div class="sol-box" role="dialog" aria-modal="true" aria-labelledby="lib-title">
-    <div class="sol-title" id="lib-title">Liberar reserva</div>
+    <div class="sol-title" id="lib-title">Anular reserva</div>
     <div class="sol-resumen" id="lib-resumen"></div>
     <div class="conf-aviso" id="lib-texto"></div>
     <div class="sol-error" id="lib-error"></div>
     <div class="sol-actions">
       <button class="sol-btn cancel" type="button" onclick="cerrarLiberar()">No, mantener</button>
-      <button class="sol-btn go" type="button" id="lib-go" style="background:#e05555" onclick="enviarLiberar()">Sí, liberar</button>
+      <button class="sol-btn go" type="button" id="lib-go" style="background:#e05555" onclick="enviarLiberar()">Sí, anular</button>
     </div>
-    <div class="sol-aviso">Se abrirá WhatsApp para avisarnos. Se puede liberar desde aquí hasta 5 horas antes.</div>
+    <div class="sol-aviso">Se abrirá WhatsApp para avisarnos. Se puede anular desde aquí hasta 5 horas antes.</div>
   </div>
 </div>
 
@@ -441,8 +454,9 @@ let misSrv            = null; // hora del servidor (Chile) para saber si se pued
 let confActual        = null;
 let anotData          = {};   // "fecha|hora|cancha" -> personas en lista de espera de una reserva anotada sin confirmar
 let currentWeekOffset = 0;
-const DIAS_VISIBLES   = 16;   // hoy + 15 días
-const MAX_OFFSET      = Math.floor((DIAS_VISIBLES - 1) / 7);
+const DIAS_VISIBLES   = 15;   // página 1: hoy + 7 días · página 2: los 7 días siguientes
+const DIAS_PAGINA_1   = 8;
+const MAX_OFFSET      = 1;
 let solActual         = null; // solicitud abierta en el modal
 
 function nh(h) { return String(h).padStart(5, '0'); }
@@ -474,9 +488,9 @@ function getToday() {
 function getWindowDates() {
   const today = getToday();
   const maxDate = new Date(today); maxDate.setDate(today.getDate() + DIAS_VISIBLES - 1);
-  const start = new Date(today); start.setDate(today.getDate() + currentWeekOffset * 7);
+  const start = new Date(today); start.setDate(today.getDate() + (currentWeekOffset === 0 ? 0 : DIAS_PAGINA_1));
   const dates = [];
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < (currentWeekOffset === 0 ? DIAS_PAGINA_1 : 7); i++) {
     const d = new Date(start); d.setDate(start.getDate() + i);
     if (d <= maxDate) dates.push(d);
   }
@@ -492,9 +506,22 @@ function diaLabel(fecha) {
 }
 
 function hoyChile() { return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(new Date()); }
+function diasDesdeHoy(fecha) { return Math.round((new Date(fecha + 'T12:00:00') - new Date(hoyChile() + 'T12:00:00')) / 86400000); }
 function etiquetaDia(fecha) {
-  const d = Math.round((new Date(fecha + 'T12:00:00') - new Date(hoyChile() + 'T12:00:00')) / 86400000);
+  const d = diasDesdeHoy(fecha);
+  if (d >= 7) return 'Próximo ' + diaLabel(fecha).toLowerCase();   // ej: "Próximo jueves 26/11"
   return (d === 0 ? 'HOY · ' : d === 1 ? 'MAÑANA · ' : '') + diaLabel(fecha);
+}
+// Aviso cuando piden un día de la próxima semana (para no confundirlo con el de esta semana)
+function avisoProximo(fecha) {
+  const d = diasDesdeHoy(fecha);
+  if (d < 7) return '';
+  const antes = new Date(fecha + 'T12:00:00'); antes.setDate(antes.getDate() - 7);
+  const ymd = `${antes.getFullYear()}-${String(antes.getMonth()+1).padStart(2,'0')}-${String(antes.getDate()).padStart(2,'0')}`;
+  const dd = `${String(antes.getDate()).padStart(2,'0')}/${String(antes.getMonth()+1).padStart(2,'0')}`;
+  const nombre = DIAS[new Date(fecha + 'T12:00:00').getDay()].toLowerCase();
+  const cual = ymd === hoyChile() ? `de hoy (${dd})` : `de esta semana (${dd})`;
+  return `<div class="sol-dup info">⚠️ <b>Ojo: es el ${nombre} de la próxima semana</b>, no el ${cual}.</div>`;
 }
 
 function waLink({ fecha, hora, cancha, nombre, codigo, posicion, tipo }) {
@@ -601,7 +628,7 @@ function abrirSolicitud(fecha, hora, cancha, tipo) {
       Alguien pidió esta cancha antes que tú y estamos esperando su confirmación. Si envías tu solicitud, quedarás <strong>en lista de espera (posición ${n + 1})</strong> y el cupo <strong>no</strong> queda asegurado.<br>
       <strong>Solo te avisaremos si el cupo se libera.</strong> Si no se libera, no te contactaremos.</div>`;
   }
-  document.getElementById('sol-espera').innerHTML = aviso;
+  document.getElementById('sol-espera').innerHTML = avisoProximo(fecha) + aviso;
   const go = document.getElementById('sol-go');
   go.textContent = solActual.enEspera ? 'Entiendo, quedar en espera' : 'Enviar por WhatsApp';
   go.classList.toggle('espera', solActual.enEspera);
@@ -658,6 +685,7 @@ async function enviarSolicitud() {
       if (r.ok) {
         codigo = r.codigo; posicion = r.posicion;
         agregarMis({ codigo, fecha, hora, cancha, tipo, t: Date.now() });
+        guardarUltima({ codigo, fecha, hora, cancha, tipo, posicion, t: Date.now() });
       } else if (r.motivo === 'ocupado') {
         mostrarError('Este horario acaba de ser reservado. Actualizaremos la página.');
         setTimeout(() => location.reload(), 2200); return;
@@ -742,6 +770,26 @@ async function loadSheet() {
   }
 }
 
+// ── ¿ENVIASTE EL WHATSAPP? ────────────────────────────────────
+function guardarUltima(x) { try { localStorage.setItem('cdv_ult', JSON.stringify(x)); } catch(e) {} }
+function leerUltima() { try { return JSON.parse(localStorage.getItem('cdv_ult') || 'null'); } catch(e) { return null; } }
+function ackUltima() { try { localStorage.removeItem('cdv_ult'); } catch(e) {} document.getElementById('wa-check').style.display = 'none'; }
+function linkReenviar(x) { return waLink({ fecha: x.fecha, hora: x.hora, cancha: x.cancha, nombre: leerNombre(), codigo: x.codigo, posicion: x.posicion, tipo: x.tipo }); }
+function mostrarChequeoWA() {
+  const u = leerUltima();
+  const caja = document.getElementById('wa-check');
+  if (!u || Date.now() - u.t > 30 * 60000 || slotPasadoLocal(u.fecha, u.hora)) { caja.style.display = 'none'; return; }
+  document.getElementById('wa-check-txt').innerHTML =
+    `Tu solicitud <b>${esc(u.codigo)}</b> — ${etiquetaDia(u.fecha)} · ${u.hora} · Cancha ${CANCHA_LABEL[u.cancha]} — solo nos llega si envías el mensaje. <b>Si no nos llega tu WhatsApp, tu solicitud será anulada.</b>`;
+  document.getElementById('wa-check-go').href = linkReenviar(u);
+  caja.style.display = 'block';
+}
+function reenviarWA(codigo) {
+  const loc = leerMis().find(i => i.codigo === codigo) || {};
+  const est = Object.values(misData).find(i => i.codigo === codigo) || {};
+  window.location.href = linkReenviar(Object.assign({}, loc, { posicion: est.posicion }));
+}
+
 // ── MIS RESERVAS (solo las pedidas desde este celular) ────────
 async function loadMis() {
   const locales = leerMis();
@@ -775,12 +823,12 @@ function msgWA(titulo, x, extras) {
 }
 function linkLiberarWA(x) {
   const anotada = ['reservada', 'confirmada'].includes(x.estado);
-  return msgWA(`Hola! Quiero liberar mi ${anotada ? 'reserva' : 'solicitud'} 🙏`, x, [`_Código de solicitud: ${x.codigo}_`]);
+  return msgWA(`Hola! Quiero anular mi ${anotada ? 'reserva' : 'solicitud'} 🙏`, x, [`_Código de solicitud: ${x.codigo}_`]);
 }
 
 function accionLiberar(x) {
-  if (x.liberable) return `<button type="button" class="lib-link" onclick="abrirLiberar('${x.codigo}')">Liberar</button>`;
-  return `<a class="lib-link" href="${linkLiberarWA(x)}" target="_blank">Para liberar ahora, escríbenos</a>`;
+  if (x.liberable) return `<button type="button" class="lib-link" onclick="abrirLiberar('${x.codigo}')">Anular</button>`;
+  return `<a class="lib-link" href="${linkLiberarWA(x)}" target="_blank">Para anular ahora, escríbenos</a>`;
 }
 
 function celdaPropia(x) {
@@ -796,12 +844,13 @@ function celdaPropia(x) {
   }
   if (x.estado === 'liberada_cliente') {
     const min = Math.max(1, Math.ceil((x.deshacerHasta - (misSrv && misSrv.ahora ? misSrv.ahora + (Date.now() - misSrv.recibido) : Date.now())) / 60000));
-    return `<span class="mine-pill liberada">Liberaste esta ${x.anotadaAntes ? 'reserva' : 'solicitud'}</span>` +
+    return `<span class="mine-pill liberada">Anulaste esta ${x.anotadaAntes ? 'reserva' : 'solicitud'}</span>` +
       `<button type="button" class="deshacer-btn" onclick="deshacer('${x.codigo}', this)">↩️ Deshacer</button>` +
       `<span class="deshacer-nota">${desErr[x.codigo] ? desErr[x.codigo] : `Disponible por ${min} min más`}</span>`;
   }
-  if (x.estado === 'pendiente') return `<span class="mine-pill pendiente">⏳ Tu solicitud${x.posicion > 1 ? ` · ${x.posicion}°` : ''}</span>${accionLiberar(x)}`;
-  if (x.estado === 'espera') return `<span class="mine-pill espera">📋 En espera${x.posicion ? ` · ${x.posicion}°` : ''}</span>${accionLiberar(x)}`;
+  const reenviar = `<button type="button" class="reenv-link" onclick="reenviarWA('${x.codigo}')">📲 Reenviar WhatsApp</button>`;
+  if (x.estado === 'pendiente') return `<span class="mine-pill pendiente">⏳ Tu solicitud${x.posicion > 1 ? ` · ${x.posicion}°` : ''}</span>${reenviar}${accionLiberar(x)}`;
+  if (x.estado === 'espera') return `<span class="mine-pill espera">📋 En espera${x.posicion ? ` · ${x.posicion}°` : ''}</span>${reenviar}${accionLiberar(x)}`;
   return '';
 }
 
@@ -826,12 +875,12 @@ function abrirLiberar(codigo) {
   if (!x) return;
   libActual = x;
   const anotada = ['reservada', 'confirmada'].includes(x.estado);
-  document.getElementById('lib-title').textContent = anotada ? 'Liberar reserva' : 'Liberar solicitud';
+  document.getElementById('lib-title').textContent = anotada ? 'Anular reserva' : 'Anular solicitud';
   document.getElementById('lib-resumen').innerHTML =
     `📅 Día: <b>${etiquetaDia(x.fecha)}</b><br>🕗 Hora: <b>${x.hora}</b><br>🏟️ Cancha: <b>${CANCHA_LABEL[x.cancha]}</b>`;
-  document.getElementById('lib-texto').innerHTML = `¿Seguro que quieres liberar esta ${anotada ? 'reserva' : 'solicitud'}? <b>El cupo quedará disponible para otras personas.</b>`;
+  document.getElementById('lib-texto').innerHTML = `¿Seguro que quieres anular esta ${anotada ? 'reserva' : 'solicitud'}? <b>El cupo quedará disponible para otras personas.</b>`;
   document.getElementById('lib-error').style.display = 'none';
-  const go = document.getElementById('lib-go'); go.disabled = false; go.textContent = 'Sí, liberar';
+  const go = document.getElementById('lib-go'); go.disabled = false; go.textContent = 'Sí, anular';
   document.getElementById('lib-modal').classList.add('open');
 }
 function cerrarLiberar() { document.getElementById('lib-modal').classList.remove('open'); libActual = null; }
@@ -839,15 +888,15 @@ function cerrarLiberar() { document.getElementById('lib-modal').classList.remove
 async function enviarLiberar() {
   const x = libActual;
   if (!x) return;
-  const go = document.getElementById('lib-go'); go.disabled = true; go.textContent = 'Liberando…';
+  const go = document.getElementById('lib-go'); go.disabled = true; go.textContent = 'Anulando…';
   const url = linkLiberarWA(x);   // se arma antes de cambiar el estado
   const err = document.getElementById('lib-error');
   try {
     const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'liberar_cliente', codigo: x.codigo }) });
     const r = await res.json();
     if (!r.ok && r.motivo === 'plazo') {
-      err.innerHTML = `Faltan menos de 5 horas: para liberar ahora, <a href="${linkLiberarWA(x)}" target="_blank">escríbenos por WhatsApp</a>.`;
-      err.style.display = 'block'; go.textContent = 'Sí, liberar';
+      err.innerHTML = `Faltan menos de 5 horas: para anular ahora, <a href="${linkLiberarWA(x)}" target="_blank">escríbenos por WhatsApp</a>.`;
+      err.style.display = 'block'; go.textContent = 'Sí, anular';
       return;
     }
     if (r.ok) {
@@ -886,13 +935,13 @@ async function enviarConfirmacion() {
   try {
     const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'confirmar', codigo: x.codigo, lluvia }) });
     const r = await res.json();
-    if (!r.ok) {
+    if (!r.ok && r.motivo !== 'revisar') {
       err.textContent = r.motivo === 'plazo_vencido' ? 'El plazo para confirmar (17:00 del día anterior) ya pasó. Escríbenos por WhatsApp.'
                       : 'No pudimos confirmar esta reserva desde la página. Escríbenos por WhatsApp.';
       err.style.display = 'block'; go.textContent = 'Confirmar por WhatsApp';
       return;
     }
-    if (r.pintada === false) marcarConfEnviada(x.codigo); else x.estado = 'confirmada';
+    if (r.pintada === false || r.motivo === 'revisar') marcarConfEnviada(x.codigo); else x.estado = 'confirmada';
   } catch(e) { marcarConfEnviada(x.codigo); /* si falla el registro, igual se envía la confirmación por WhatsApp */ }
   const lineas = [
     'Hola! Confirmo asistencia ✅',
@@ -981,7 +1030,7 @@ function render() {
   const todayKey = dateKey(today);
 
   const first = dates[0], last = dates[dates.length - 1];
-  document.getElementById('week-label').innerHTML =
+  document.getElementById('week-label').innerHTML = (currentWeekOffset === 1 ? '<span class="prox-sem">📆 Próxima semana</span>' : '') +
     `${first.getDate()} de ${MESES[first.getMonth()]} &ndash; ${last.getDate()} de ${MESES[last.getMonth()]}`;
 
   const btnNext = document.getElementById('btn-next');
@@ -989,9 +1038,9 @@ function render() {
   const hayMas = currentWeekOffset < MAX_OFFSET;
   btnNext.style.display = hayMas ? 'flex' : 'none';
   btnNext.disabled = !hayMas;
-  btnNext.textContent = currentWeekOffset === MAX_OFFSET - 1 ? 'Ver días siguientes →' : 'Ver siguientes 7 días →';
+  btnNext.textContent = 'Ver próxima semana →';
   btnPrev.style.display = currentWeekOffset > 0 ? 'flex' : 'none';
-  btnPrev.textContent = currentWeekOffset === 1 ? '← Semana actual' : '← 7 días anteriores';
+  btnPrev.textContent = '← Semana actual';
 
   const waIconSVG = `<svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>`;
 
@@ -1319,6 +1368,7 @@ async function init() {
   initMenu();
   await Promise.all([loadSheet(), loadWeather(), loadPendientes(), loadMis()]);
   render();
+  mostrarChequeoWA();
 }
 
 document.getElementById('link-noveo').href = `https://wa.me/${WA_NUMBER}?text=` +
@@ -1330,6 +1380,7 @@ document.getElementById('link-servicio').href = `https://wa.me/${WA_NUMBER}?text
 
 // Al volver desde WhatsApp, refrescar los pendientes
 document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') mostrarChequeoWA();
   if (document.visibilityState === 'visible' && allData.length) Promise.all([loadPendientes(), loadMis()]).then(render);
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { cerrarSolicitud(); cerrarConf(); cerrarLiberar(); } });
